@@ -1,12 +1,12 @@
-// @ts-check
 import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import unusedImports from 'eslint-plugin-unused-imports';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs'],
+    ignores: ['eslint.config.mjs', '**/*.d.ts'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -25,11 +25,65 @@ export default tseslint.config(
     },
   },
   {
+    plugins: {
+      'unused-imports': unusedImports,
+    },
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-floating-promises': 'warn',
+      // ==================== Prettier ====================
+      'prettier/prettier': [
+        'error',
+        {
+          endOfLine: 'auto',
+        },
+      ],
+
+      // ==================== TypeScript rules ====================
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-var-requires': 'error',
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/require-await': 'error',
+      '@typescript-eslint/await-thenable': 'error',
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-shadow': 'error',
+      '@typescript-eslint/no-misused-new': 'error',
+      '@typescript-eslint/return-await': ['error', 'never'],
+      '@typescript-eslint/prefer-for-of': 'error',
       '@typescript-eslint/no-unsafe-argument': 'warn',
-      'prettier/prettier': ['error', { endOfLine: 'auto' }],
+
+      // ==================== Unused imports ====================
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': [
+        'error',
+        {
+          vars: 'all',
+          varsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+        },
+      ],
+
+      // ==================== General rules ====================
+      'no-var': 'error',
+      'prefer-const': 'error',
+      'no-console': ['error', { allow: ['warn'] }],
+      'no-debugger': 'error',
+      curly: ['error', 'all'],
+      'guard-for-in': 'error',
+      eqeqeq: 'off',
+      'default-case': 'error',
+      'no-fallthrough': 'error',
+      'arrow-body-style': ['error', 'as-needed'],
+
+      // ==================== Code quality ====================
+      'no-duplicate-case': 'error',
+      'no-template-curly-in-string': 'error',
+      'no-this-before-super': 'error',
+      'no-cond-assign': 'error',
+
+      // ==================== Code style ====================
+      'max-len': ['error', { code: 120, ignoreUrls: true, ignoreStrings: true }],
+      quotes: ['error', 'single', { avoidEscape: true }],
+      semi: ['error', 'always'],
     },
   },
 );

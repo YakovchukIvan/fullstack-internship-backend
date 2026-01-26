@@ -1,8 +1,8 @@
 {
   "name": "backend",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "Backend development for internship",
+  "author": "Yakovchuk Ivan",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
@@ -21,8 +21,10 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "eslint-plugin-unused-imports": "^4.3.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
