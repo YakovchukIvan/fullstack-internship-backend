@@ -8,8 +8,8 @@ async function bootstrap(): Promise<void> {
 
   const configService = app.get(ConfigService);
 
-  const port = Number(configService.get<string>('PORT')) || 5000;
-  const host = configService.get<string>('APP_HOST') || 'localhost';
+  const port = Number(configService.get('PORT', 5000));
+  const host = configService.get<string>('APP_HOST', '0.0.0.0');
 
   app.enableCors(getCorsConfig(configService));
 
