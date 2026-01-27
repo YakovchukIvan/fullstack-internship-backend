@@ -6,6 +6,9 @@ services:
       target: development
     container_name: nestjs-app
     ports:
-      - '${PORT:-5000}:5000'
+      - '5000:5000'
     env_file:
       - .env
+    volumes:
+      - .:/app
+      - /app/node_modules
