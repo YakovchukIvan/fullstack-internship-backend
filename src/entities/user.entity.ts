@@ -1,4 +1,4 @@
-// !! Тестовий варіант файлу !!
+// !! Test version of the file. After "BE #5 - Add User CRUD" it will be deleted !!
 
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
