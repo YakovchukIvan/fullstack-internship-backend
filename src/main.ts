@@ -5,6 +5,7 @@ import { getCorsConfig } from './config/cors.config';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
+  app.setGlobalPrefix('api');
 
   const configService = app.get(ConfigService);
 
