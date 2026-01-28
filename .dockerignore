@@ -57,7 +57,7 @@ report.*.json
 # Docs (optional)
 docs
 *.md
-!README.md
+README.md
 
 # CI/CD
 .github
