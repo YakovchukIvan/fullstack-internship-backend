@@ -43,8 +43,8 @@ The application will be available at: `http://localhost:5000`
 ### Launching individual services
 
 ```bash
-# Start container
-docker-compose up --build
+# Build and start container in background
+docker-compose up -d --build
 
 # Stop container
 docker-compose stop
@@ -54,6 +54,9 @@ docker-compose restart
 
 # Stop and delete container
 docker-compose down
+
+# Stop and delete containers + volumes (deletes database data)
+docker-compose down -v
 ```
 
 ## Code verification
