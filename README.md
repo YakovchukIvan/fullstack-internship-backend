@@ -59,6 +59,27 @@ docker-compose down
 docker-compose down -v
 ```
 
+## Migrations
+
+### Teams for working with migrations
+
+```bash
+# Migration generation
+npm run migration:generate src/database/migrations/YourMigrationName
+
+# Creating an empty migration
+npm run migration:create src/database/migrations/YourMigrationName
+
+# Applying migrations
+npm run migration:run
+
+# Rollback of the last migration
+npm run migration:revert
+
+# View all migrations and their status
+npm run migration:show
+```
+
 ## Code verification
 
 ### Format code
