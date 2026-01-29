@@ -43,8 +43,8 @@ The application will be available at: `http://localhost:5000`
 ### Launching individual services
 
 ```bash
-# Start container
-docker-compose up --build
+# Build and start container in background
+docker-compose up -d --build
 
 # Stop container
 docker-compose stop
@@ -54,6 +54,30 @@ docker-compose restart
 
 # Stop and delete container
 docker-compose down
+
+# Stop and delete containers + volumes (deletes database data)
+docker-compose down -v
+```
+
+## Migrations
+
+### Teams for working with migrations
+
+```bash
+# Migration generation
+npm run migration:generate src/database/migrations/YourMigrationName
+
+# Creating an empty migration
+npm run migration:create src/database/migrations/YourMigrationName
+
+# Applying migrations
+npm run migration:run
+
+# Rollback of the last migration
+npm run migration:revert
+
+# View all migrations and their status
+npm run migration:show
 ```
 
 ## Code verification
