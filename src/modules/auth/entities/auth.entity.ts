@@ -1,4 +1,3 @@
-import { User } from 'src/modules/users/entities/user.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -9,12 +8,12 @@ import {
   JoinColumn,
   Check,
 } from 'typeorm';
+import { User } from '@/modules/users/entities/user.entity';
 
 @Entity('auth')
 @Check(`
   "password_hash" IS NOT NULL 
   OR "google_id" IS NOT NULL 
-  OR "github_id" IS NOT NULL
 `)
 export class Auth {
   @PrimaryGeneratedColumn('uuid')
@@ -25,9 +24,6 @@ export class Auth {
 
   @Column({ name: 'google_id', type: 'varchar', length: 64, nullable: true, unique: true })
   googleId: string | null;
-
-  @Column({ name: 'github_id', type: 'varchar', length: 64, nullable: true, unique: true })
-  githubId: string | null;
 
   @Column({ name: 'reset_password_token', type: 'varchar', length: 255, nullable: true })
   resetPasswordToken: string | null;

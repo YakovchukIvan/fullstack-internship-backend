@@ -24,19 +24,16 @@ services:
     restart: always
     ports:
       - '5000:5000'
-
     env_file:
       - .env
-
+    environment:
+      POSTGRES_HOST: postgres
     volumes:
       - .:/app
       - /app/node_modules
-
     depends_on:
       postgres:
         condition: service_healthy
-
     command: npm run start:dev
-
 volumes:
   postgres_data:

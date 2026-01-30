@@ -1,4 +1,3 @@
-import { Auth } from 'src/modules/auth/entities/auth.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -9,6 +8,7 @@ import {
   DeleteDateColumn,
 } from 'typeorm';
 import { UserRole } from '../enums/user-role.enum';
+import { Auth } from '@/modules/auth/entities/auth.entity';
 
 @Entity('users')
 export class User {
