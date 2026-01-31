@@ -22,14 +22,25 @@ export class AuthCredentialsService {
   }
 
   async setPassword(user: User, plainPassword: string): Promise<Auth> {
+    return this.upsertPassword(this.authRepository, user, plainPassword);
+  }
+
+  async setPasswordTx(manager: EntityManager, user: User, plainPassword: string): Promise<Auth> {
+    const authRepo = manager.getRepository(Auth);
+    return this.upsertPassword(authRepo, user, plainPassword);
+  }
+
+  // Private Helper Methods
+
+  private async upsertPassword(authRepo: Repository<Auth>, user: User, plainPassword: string): Promise<Auth> {
     const passwordHash = await this.passwordService.hash(plainPassword);
 
     if (user.auth) {
       user.auth.passwordHash = passwordHash;
-      return this.authRepository.save(user.auth);
+      return authRepo.save(user.auth);
     }
 
-    const auth = this.authRepository.create({ user, passwordHash });
-    return this.authRepository.save(auth);
+    const auth = authRepo.create({ user, passwordHash });
+    return authRepo.save(auth);
   }
 }

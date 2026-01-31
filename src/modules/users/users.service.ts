@@ -4,8 +4,8 @@ import { Repository, DataSource } from 'typeorm';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/req/create-user.req.dto';
 import { UpdateUserDto } from './dto/req/update-user.req.dto';
+import { AuthCredentialsService } from '@/modules/auth/services/auth-credentials.service';
 import { normalizeEmail } from '@/common/helpers/normalize-email.helper';
-import { AuthCredentialsService } from '../auth/services/auth-credentials.service';
 
 @Injectable()
 export class UsersService {
@@ -17,21 +17,19 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    createUserDto.email = this.normalizedEmail(createUserDto.email);
+    const normalizedEmail = normalizeEmail(createUserDto.email);
 
     return this.dataSource.transaction(async (manager) => {
-      const user = manager.create(User, {
-        email: createUserDto.email,
+      const createdUser = manager.create(User, {
+        email: normalizedEmail,
         firstName: createUserDto.firstName,
         lastName: createUserDto.lastName,
         role: createUserDto.role,
       });
 
-      const savedUser = await manager.save(User, user);
-
-      await this.authCredentialsService.createForUser(manager, savedUser, createUserDto.password);
-
-      return savedUser;
+      const user = await manager.save(User, createdUser);
+      await this.authCredentialsService.createForUser(manager, user, createUserDto.password);
+      return user;
     });
   }
 
@@ -42,46 +40,49 @@ export class UsersService {
   }
 
   async findOne(id: string): Promise<User> {
-    return this.findUserByIdOrFail(id);
+    return this.findUserByIdOrThrow(id);
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-    const user = await this.findUserByIdOrFail(id, ['auth']);
+  async update(id: string, dto: UpdateUserDto): Promise<User> {
+    return this.dataSource.transaction(async (manager) => {
+      const userRepo = manager.getRepository(User);
 
-    if (updateUserDto.email !== undefined) {
-      updateUserDto.email = normalizeEmail(updateUserDto.email);
-    }
+      const relations = dto.password ? ['auth'] : [];
+      const user = await this.findUserByIdOrThrow(id, relations, userRepo);
 
-    Object.assign(user, {
-      ...(updateUserDto.email && { email: updateUserDto.email }),
-      ...(updateUserDto.firstName && { firstName: updateUserDto.firstName }),
-      ...(updateUserDto.lastName && { lastName: updateUserDto.lastName }),
-      ...(updateUserDto.role && { role: updateUserDto.role }),
+      if (dto.email !== undefined) {
+        user.email = normalizeEmail(dto.email);
+      }
+      if (dto.firstName !== undefined) {
+        user.firstName = dto.firstName;
+      }
+      if (dto.lastName !== undefined) {
+        user.lastName = dto.lastName;
+      }
+      if (dto.role !== undefined) {
+        user.role = dto.role;
+      }
+      if (dto.password) {
+        await this.authCredentialsService.setPasswordTx(manager, user, dto.password);
+      }
+
+      return userRepo.save(user);
     });
-
-    if (updateUserDto.password) {
-      await this.authCredentialsService.setPassword(user, updateUserDto.password);
-    }
-
-    return this.usersRepository.save(user);
   }
 
   async remove(id: string): Promise<void> {
-    const user = await this.findUserByIdOrFail(id);
+    const user = await this.findUserByIdOrThrow(id);
     await this.usersRepository.softDelete(user.id);
   }
 
   // Private Helper Methods
 
-  private normalizedEmail(email: string): string {
-    return normalizeEmail(email);
-  }
-
-  private async findUserByIdOrFail(id: string, relations: string[] = []): Promise<User> {
-    const user = await this.usersRepository.findOne({
-      where: { id },
-      relations,
-    });
+  private async findUserByIdOrThrow(
+    id: string,
+    relations: string[] = [],
+    repo: Repository<User> = this.usersRepository,
+  ): Promise<User> {
+    const user = await repo.findOne({ where: { id }, relations });
 
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
