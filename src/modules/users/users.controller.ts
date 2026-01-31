@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Delete, HttpCode, HttpStatus } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/req/create-user.req.dto';
 import { UpdateUserDto } from './dto/req/update-user.req.dto';
 import { User } from './entities/user.entity';
 import { ApiResponse } from '@/common/dto/api-response.interface';
+import { UUIDParam } from '@/common/decorators/uuid-param.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -36,7 +37,7 @@ export class UsersController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  async findOne(@Param('id') id: string): Promise<ApiResponse<{ user: User }>> {
+  async findOne(@UUIDParam() id: string): Promise<ApiResponse<{ user: User }>> {
     const user = await this.usersService.findOne(id);
 
     return new ApiResponse<{ user: User }>({
@@ -48,7 +49,7 @@ export class UsersController {
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<ApiResponse<{ user: User }>> {
+  async update(@UUIDParam() id: string, @Body() updateUserDto: UpdateUserDto): Promise<ApiResponse<{ user: User }>> {
     const user = await this.usersService.update(id, updateUserDto);
 
     return new ApiResponse<{ user: User }>({
@@ -61,7 +62,7 @@ export class UsersController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  async remove(@Param('id') id: string): Promise<ApiResponse<{ message: string }>> {
+  async remove(@UUIDParam() id: string): Promise<ApiResponse<{ message: string }>> {
     await this.usersService.remove(id);
 
     return new ApiResponse<{ message: string }>({
