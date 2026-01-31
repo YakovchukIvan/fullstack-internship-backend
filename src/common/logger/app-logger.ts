@@ -1,10 +1,11 @@
 import { Injectable, ConsoleLogger } from '@nestjs/common';
 
 type EndTimer = (extraMessage?: string) => void;
+
 @Injectable()
 export class AppLogger extends ConsoleLogger {
-  constructor(context = 'App') {
-    super(context);
+  constructor(context?: string) {
+    super(context || 'Logger');
   }
 
   setLoggerContext(context: string): void {
@@ -12,9 +13,9 @@ export class AppLogger extends ConsoleLogger {
   }
 
   time(label: string): EndTimer {
-    const start = Date.now();
+    const start = performance.now();
     return (extraMessage?: string) => {
-      const ms = Date.now() - start;
+      const ms = (performance.now() - start).toFixed(2);
       const suffix = extraMessage ? ` | ${extraMessage}` : '';
       this.log(`${label} - ${ms}ms${suffix}`);
     };
@@ -32,11 +33,8 @@ export class AppLogger extends ConsoleLogger {
     }
   }
 
-  errorUnknown(message: string, err: unknown): void {
-    if (err instanceof Error) {
-      this.error(message, err.stack);
-    } else {
-      this.error(message, String(err));
-    }
+  logError(message: string, error: unknown): void {
+    const stack = error instanceof Error ? error.stack : undefined;
+    this.error(message, stack);
   }
 }

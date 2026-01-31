@@ -4,16 +4,17 @@ import { AppLogger } from '@/common/logger/app-logger';
 import { ApiResponse } from '@/common/dto/api-response.interface';
 
 interface HttpExceptionResponse {
-  message: string | string[];
+  message?: string | string[] | object;
   error?: string;
   statusCode?: number;
 }
 
-function isHttpExceptionResponse(value: unknown): value is HttpExceptionResponse {
-  return typeof value === 'object' && value !== null && 'message' in value;
+interface ParsedExceptionData {
+  status: number;
+  message: string;
+  detail?: unknown;
+  error_code?: string;
 }
-
-type RequestWithId = Request & { id?: string };
 
 @Injectable()
 @Catch()
@@ -22,55 +23,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
     this.logger.setLoggerContext(AllExceptionsFilter.name);
   }
 
-  catch(exception: unknown, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<RequestWithId>();
+    const request = ctx.getRequest<Request>();
 
-    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    const { status, message, detail, error_code } = this.parseException(exception);
 
-    let message: string | undefined = 'Internal server error';
-    let detail: unknown;
-    let error_code: string | undefined;
-
-    if (exception instanceof HttpException) {
-      status = exception.getStatus();
-      const exceptionResponse = exception.getResponse();
-
-      if (typeof exceptionResponse === 'string') {
-        message = exceptionResponse;
-      } else if (isHttpExceptionResponse(exceptionResponse)) {
-        if (Array.isArray(exceptionResponse.message)) {
-          message = 'Validation failed';
-          detail = { errors: exceptionResponse.message };
-        } else {
-          message = exceptionResponse.message;
-        }
-
-        error_code = exceptionResponse.error;
-      } else {
-        message = 'Request failed';
-        detail = exceptionResponse;
-      }
-    } else if (exception instanceof Error) {
-      status = HttpStatus.INTERNAL_SERVER_ERROR;
-      message = exception.message || 'Internal server error';
-    } else {
-      status = HttpStatus.INTERNAL_SERVER_ERROR;
-      message = 'An unexpected error occurred';
-    }
-
-    const logMessage = `[${request.method}] ${request.url} - Status: ${status} - Message: ${JSON.stringify({
-      message,
-      detail,
-      error_code,
-    })}`;
-
-    if (exception instanceof Error) {
-      this.logger.error(logMessage, exception.stack);
-    } else {
-      this.logger.error(logMessage);
-    }
+    this.logException(request, status, message, detail, error_code, exception);
 
     const errorResponse = new ApiResponse({
       success: false,
@@ -82,5 +42,63 @@ export class AllExceptionsFilter implements ExceptionFilter {
     });
 
     response.status(status).json(errorResponse);
+  }
+
+  private parseException(exception: unknown): ParsedExceptionData {
+    if (exception instanceof HttpException) {
+      return this.parseHttpException(exception);
+    }
+
+    if (exception instanceof Error) {
+      return this.createParsedData(HttpStatus.INTERNAL_SERVER_ERROR, exception.message || 'Internal server error');
+    }
+
+    return this.createParsedData(HttpStatus.INTERNAL_SERVER_ERROR, 'An unexpected error occurred');
+  }
+
+  private parseHttpException(exception: HttpException): ParsedExceptionData {
+    const status = exception.getStatus();
+    const exceptionResponse = exception.getResponse();
+
+    if (typeof exceptionResponse === 'string') {
+      return this.createParsedData(status, exceptionResponse);
+    }
+
+    const responseObj: HttpExceptionResponse = exceptionResponse;
+    const messages = responseObj.message;
+    const errorCode = responseObj.error;
+
+    if (Array.isArray(messages)) {
+      return this.createParsedData(status, 'Validation failed', { errors: messages }, errorCode);
+    }
+
+    if (typeof messages === 'string') {
+      return this.createParsedData(status, messages || 'Request failed', undefined, errorCode);
+    }
+
+    return this.createParsedData(status, 'Request failed', messages, errorCode);
+  }
+
+  private createParsedData(
+    status: number,
+    message: string,
+    detail?: unknown,
+    error_code?: string,
+  ): ParsedExceptionData {
+    return { status, message, detail, error_code };
+  }
+
+  private logException(
+    request: Request,
+    status: number,
+    message: string,
+    detail: unknown,
+    error_code: string | undefined,
+    exception: unknown,
+  ): void {
+    const logMessage = `[${request.method}] ${request.url} - Status: ${status} - ${message}`;
+    const context = detail || error_code ? JSON.stringify({ detail, error_code }) : '';
+
+    this.logger.logError(`${logMessage}${context ? ` - ${context}` : ''}`, exception);
   }
 }
