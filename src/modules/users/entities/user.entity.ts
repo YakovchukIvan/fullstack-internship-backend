@@ -28,7 +28,7 @@ export class User {
   role: UserRole;
 
   @OneToOne(() => Auth, (auth) => auth.user)
-  auth: Auth;
+  auth?: Auth;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
