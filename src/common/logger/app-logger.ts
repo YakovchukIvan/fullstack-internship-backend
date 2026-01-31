@@ -1,10 +1,14 @@
-import { Logger } from '@nestjs/common';
+import { Injectable, ConsoleLogger } from '@nestjs/common';
 
 type EndTimer = (extraMessage?: string) => void;
-
-export class AppLogger extends Logger {
+@Injectable()
+export class AppLogger extends ConsoleLogger {
   constructor(context = 'App') {
     super(context);
+  }
+
+  setLoggerContext(context: string): void {
+    this.context = context;
   }
 
   time(label: string): EndTimer {

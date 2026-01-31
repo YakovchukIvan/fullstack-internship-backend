@@ -3,11 +3,15 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { getCorsConfig } from './config/cors.config';
 import { AppLogger } from './common/logger/app-logger';
+import { ValidationPipe } from '@nestjs/common';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap(): Promise<void> {
   const logger = new AppLogger('Bootstrap');
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger,
+  });
   app.setGlobalPrefix('api');
 
   const configService = app.get(ConfigService);
@@ -16,7 +20,21 @@ async function bootstrap(): Promise<void> {
 
   app.enableCors(getCorsConfig(configService));
 
-  await logger.measure('HTTP server listen', () => app.listen(port, host));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
+
+  const appLogger = app.get(AppLogger);
+  app.useGlobalFilters(new AllExceptionsFilter(appLogger));
+
+  await logger.measure('✅ [LOGGER] HTTP server listen', () => app.listen(port, host));
 
   logger.log(`✅ [LOGGER] http://${host}:${port}`);
 }
