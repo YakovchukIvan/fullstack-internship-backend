@@ -75,8 +75,6 @@ export class UsersService {
     await this.usersRepository.softDelete(user.id);
   }
 
-  // Private Helper Methods
-
   private async findUserByIdOrThrow(
     id: string,
     relations: string[] = [],

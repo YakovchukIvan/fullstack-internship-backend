@@ -3,7 +3,7 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/req/create-user.req.dto';
 import { UpdateUserDto } from './dto/req/update-user.req.dto';
 import { User } from './entities/user.entity';
-import { ApiResponseEnvelope } from '@/common/dto/api-response-envelope.dto';
+import { ApiResponseEnvelope } from '@/common/dto/api-response-envelope';
 import { UUIDParam } from '@/common/decorators/uuid-param.decorator';
 
 @Controller('users')

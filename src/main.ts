@@ -41,6 +41,6 @@ async function bootstrap(): Promise<void> {
 
 bootstrap().catch((err: unknown) => {
   const logger = new AppLogger('Bootstrap');
-  logger.errorUnknown('❌ [LOGGER] Application failed to start', err);
+  logger.logError('❌ [LOGGER] Application failed to start', err);
   process.exit(1);
 });

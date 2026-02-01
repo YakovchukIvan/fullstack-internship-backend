@@ -30,8 +30,6 @@ export class AuthCredentialsService {
     return this.upsertPassword(authRepo, user, plainPassword);
   }
 
-  // Private Helper Methods
-
   private async upsertPassword(authRepo: Repository<Auth>, user: User, plainPassword: string): Promise<Auth> {
     const passwordHash = await this.passwordService.hash(plainPassword);
 

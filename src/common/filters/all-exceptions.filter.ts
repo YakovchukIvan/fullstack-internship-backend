@@ -1,7 +1,7 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AppLogger } from '@/common/logger/app-logger';
-import { ApiResponse } from '@/common/dto/api-response-envelope.dto';
+import { ApiResponseEnvelope } from '@/common/dto/api-response-envelope';
 
 interface HttpExceptionResponse {
   message?: string | string[] | object;
@@ -13,7 +13,7 @@ interface ParsedExceptionData {
   status: number;
   message: string;
   detail?: unknown;
-  error_code?: string;
+  errorCode?: string;
 }
 
 @Injectable()
@@ -28,16 +28,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const { status, message, detail, error_code } = this.parseException(exception);
+    const { status, message, detail, errorCode } = this.parseException(exception);
 
-    this.logException(request, status, message, detail, error_code, exception);
+    this.logException(request, status, message, detail, errorCode, exception);
 
-    const errorResponse = new ApiResponse({
+    const errorResponse = new ApiResponseEnvelope({
       success: false,
-      status_code: status,
+      statusCode: status,
       message,
       detail,
-      error_code,
+      errorCode,
       path: request.url,
     });
 
@@ -79,13 +79,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
     return this.createParsedData(status, 'Request failed', messages, errorCode);
   }
 
-  private createParsedData(
-    status: number,
-    message: string,
-    detail?: unknown,
-    error_code?: string,
-  ): ParsedExceptionData {
-    return { status, message, detail, error_code };
+  private createParsedData(status: number, message: string, detail?: unknown, errorCode?: string): ParsedExceptionData {
+    return { status, message, detail, errorCode };
   }
 
   private logException(
@@ -93,11 +88,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     status: number,
     message: string,
     detail: unknown,
-    error_code: string | undefined,
+    errorCode: string | undefined,
     exception: unknown,
   ): void {
     const logMessage = `[${request.method}] ${request.url} - Status: ${status} - ${message}`;
-    const context = detail || error_code ? JSON.stringify({ detail, error_code }) : '';
+    const context = detail || errorCode ? JSON.stringify({ detail, errorCode }) : '';
 
     this.logger.logError(`${logMessage}${context ? ` - ${context}` : ''}`, exception);
   }
