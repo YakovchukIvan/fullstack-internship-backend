@@ -1,7 +1,7 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AppLogger } from '@/common/logger/app-logger';
-import { ApiResponse } from '@/common/dto/api-response.interface';
+import { ApiResponse } from '@/common/dto/api-response-envelope.dto';
 
 interface HttpExceptionResponse {
   message?: string | string[] | object;

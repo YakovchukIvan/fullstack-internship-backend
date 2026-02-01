@@ -1,18 +1,18 @@
-export class ApiResponse<T = unknown> {
+export class ApiResponseEnvelope<T = unknown> {
   readonly success: boolean;
-  readonly status_code: number;
+  readonly statusCode: number;
   readonly message: string;
   readonly detail?: T;
-  readonly error_code?: string;
+  readonly errorCode?: string;
   readonly path?: string;
   readonly timestamp: string;
 
   constructor(params: {
     success: boolean;
-    status_code: number;
+    statusCode: number;
     message: string;
     detail?: T;
-    error_code?: string;
+    errorCode?: string;
     path?: string;
   }) {
     Object.assign(this, params);

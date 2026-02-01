@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/req/create-user.req.dto';
 import { UpdateUserDto } from './dto/req/update-user.req.dto';
 import { User } from './entities/user.entity';
-import { ApiResponse } from '@/common/dto/api-response.interface';
+import { ApiResponseEnvelope } from '@/common/dto/api-response-envelope.dto';
 import { UUIDParam } from '@/common/decorators/uuid-param.decorator';
 
 @Controller('users')
@@ -12,12 +12,12 @@ export class UsersController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createUserDto: CreateUserDto): Promise<ApiResponse<{ user: User }>> {
-    const user = await this.usersService.create(createUserDto);
+  async create(@Body() dto: CreateUserDto): Promise<ApiResponseEnvelope<{ user: User }>> {
+    const user = await this.usersService.create(dto);
 
-    return new ApiResponse<{ user: User }>({
+    return new ApiResponseEnvelope({
       success: true,
-      status_code: HttpStatus.CREATED,
+      statusCode: HttpStatus.CREATED,
       message: 'User created',
       detail: { user },
     });
@@ -25,36 +25,38 @@ export class UsersController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  async findAll(): Promise<ApiResponse<{ users: User[] }>> {
+  async findAll(): Promise<ApiResponseEnvelope<{ users: User[] }>> {
     const users = await this.usersService.findAll();
 
-    return new ApiResponse<{ users: User[] }>({
+    return new ApiResponseEnvelope({
       success: true,
-      status_code: HttpStatus.OK,
+      statusCode: HttpStatus.OK,
+      message: 'Users fetched',
       detail: { users },
     });
   }
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  async findOne(@UUIDParam() id: string): Promise<ApiResponse<{ user: User }>> {
+  async findOne(@UUIDParam() id: string): Promise<ApiResponseEnvelope<{ user: User }>> {
     const user = await this.usersService.findOne(id);
 
-    return new ApiResponse<{ user: User }>({
+    return new ApiResponseEnvelope({
       success: true,
-      status_code: HttpStatus.OK,
+      statusCode: HttpStatus.OK,
+      message: 'User fetched',
       detail: { user },
     });
   }
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
-  async update(@UUIDParam() id: string, @Body() updateUserDto: UpdateUserDto): Promise<ApiResponse<{ user: User }>> {
-    const user = await this.usersService.update(id, updateUserDto);
+  async update(@UUIDParam() id: string, @Body() dto: UpdateUserDto): Promise<ApiResponseEnvelope<{ user: User }>> {
+    const user = await this.usersService.update(id, dto);
 
-    return new ApiResponse<{ user: User }>({
+    return new ApiResponseEnvelope({
       success: true,
-      status_code: HttpStatus.OK,
+      statusCode: HttpStatus.OK,
       message: 'User updated',
       detail: { user },
     });
@@ -62,13 +64,14 @@ export class UsersController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  async remove(@UUIDParam() id: string): Promise<ApiResponse<{ message: string }>> {
+  async remove(@UUIDParam() id: string): Promise<ApiResponseEnvelope<{ id: string }>> {
     await this.usersService.remove(id);
 
-    return new ApiResponse<{ message: string }>({
+    return new ApiResponseEnvelope({
       success: true,
-      status_code: HttpStatus.OK,
-      detail: { message: `User with ID ${id} has been successfully deleted` },
+      statusCode: HttpStatus.OK,
+      message: 'User deleted',
+      detail: { id },
     });
   }
 }
