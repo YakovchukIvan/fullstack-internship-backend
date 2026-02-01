@@ -8,17 +8,18 @@ import { globalValidationPipe } from './common/pipes/global-validation.pipe';
 import { getAppConfig } from './config/app.config';
 
 async function bootstrap(): Promise<void> {
-  const logger = new AppLogger('MAIN');
-  const app = await NestFactory.create(AppModule, { logger });
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const logger = app.get(AppLogger);
+  logger.setLoggerContext('MAIN');
+  app.useLogger(logger);
+
   const configService = app.get(ConfigService);
   const config = getAppConfig(configService);
 
   app.setGlobalPrefix(config.globalPrefix);
   app.enableCors(getCorsConfig(configService));
   app.useGlobalPipes(globalValidationPipe);
-
-  const appLogger = app.get(AppLogger);
-  app.useGlobalFilters(new AllExceptionsFilter(appLogger));
+  app.useGlobalFilters(new AllExceptionsFilter(logger));
 
   await logger.measure('✅ HTTP server listen', () => app.listen(config.port, config.host));
   logger.log(`✅ http://${config.host}:${config.port}`);

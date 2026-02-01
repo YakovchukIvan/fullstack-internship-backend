@@ -5,7 +5,7 @@ type EndTimer = (extraMessage?: string) => void;
 @Injectable()
 export class AppLogger extends ConsoleLogger {
   constructor(context?: string) {
-    super(context || 'Logger');
+    super(context || 'AppLogger');
   }
 
   setLoggerContext(context: string): void {
