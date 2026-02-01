@@ -6,6 +6,7 @@ import { CreateUserDto } from './dto/req/create-user.req.dto';
 import { UpdateUserDto } from './dto/req/update-user.req.dto';
 import { AuthCredentialsService } from '@/modules/auth/services/auth-credentials.service';
 import { normalizeEmail } from '@/common/helpers/normalize-email.helper';
+import { AppLogger } from '@/common/logger/app-logger';
 
 @Injectable()
 export class UsersService {
@@ -14,7 +15,10 @@ export class UsersService {
     private readonly usersRepository: Repository<User>,
     private readonly dataSource: DataSource,
     private readonly authCredentialsService: AuthCredentialsService,
-  ) {}
+    private readonly logger: AppLogger,
+  ) {
+    this.logger.setLoggerContext(UsersService.name);
+  }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     const normalizedEmail = normalizeEmail(createUserDto.email);
@@ -34,6 +38,8 @@ export class UsersService {
   }
 
   async findAll(): Promise<User[]> {
+    this.logger.log('LOL');
+
     return this.usersRepository.find({
       order: { createdAt: 'DESC' },
     });

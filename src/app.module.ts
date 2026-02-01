@@ -5,7 +5,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { getDatabaseConfig } from './config/database.config';
 import { UsersModule } from './modules/users/users.module';
-import { AppLogger } from './common/logger/app-logger';
+import { APP_FILTER } from '@nestjs/core';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { LoggerModule } from './common/logger/logger.module';
 
 @Module({
   imports: [
@@ -13,17 +15,21 @@ import { AppLogger } from './common/logger/app-logger';
       isGlobal: true,
       envFilePath: '.env',
     }),
-
+    LoggerModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: getDatabaseConfig,
     }),
-
     UsersModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AppLogger],
-  exports: [AppLogger],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
+  ],
 })
 export class AppModule {}

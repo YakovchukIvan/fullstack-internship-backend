@@ -1,7 +1,7 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AppLogger } from '@/common/logger/app-logger';
-import { ApiResponseEnvelope } from '@/common/dto/api-response-envelope';
+import { ApiResponseEnvelope } from '@/common/responses/api-response-envelope';
 
 interface HttpExceptionResponse {
   message?: string | string[] | object;
@@ -19,9 +19,7 @@ interface ParsedExceptionData {
 @Injectable()
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  constructor(private readonly logger: AppLogger) {
-    this.logger.setLoggerContext(AllExceptionsFilter.name);
-  }
+  constructor(private readonly logger: AppLogger) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
