@@ -4,7 +4,6 @@ echo "🚀 Running pre-push checks..."
 npm run lint:all || exit 1
 
 echo "📦 Checking TypeScript compilation..."
-
 npx tsc --noEmit || exit 1
 
 echo "✅ All pre-push checks passed! Ready to push."
