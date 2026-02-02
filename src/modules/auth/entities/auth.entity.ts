@@ -1,24 +1,13 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToOne,
-  JoinColumn,
-  Check,
-} from 'typeorm';
+import { Entity, Column, OneToOne, JoinColumn, Check } from 'typeorm';
 import { User } from '@/modules/users/entities/user.entity';
+import { BaseEntity } from '@/common/entities/base.entity';
 
 @Entity('auth')
 @Check(`
   "password_hash" IS NOT NULL 
   OR "google_id" IS NOT NULL 
 `)
-export class Auth {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class Auth extends BaseEntity {
   @Column({ name: 'password_hash', type: 'varchar', length: 255, nullable: true })
   passwordHash: string | null;
 
@@ -40,10 +29,4 @@ export class Auth {
   @OneToOne(() => User, (user) => user.auth, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
-
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
-  createdAt: Date;
-
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
-  updatedAt: Date;
 }

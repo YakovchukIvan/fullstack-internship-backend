@@ -1,20 +1,10 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToOne,
-  DeleteDateColumn,
-} from 'typeorm';
+import { Entity, Column, OneToOne, DeleteDateColumn } from 'typeorm';
+import { BaseEntity } from '@/common/entities/base.entity';
 import { UserRole } from '../enums/user-role.enum';
 import { Auth } from '@/modules/auth/entities/auth.entity';
 
 @Entity('users')
-export class User {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 255, unique: true, nullable: false })
   email: string;
 
@@ -27,15 +17,9 @@ export class User {
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   role: UserRole;
 
-  @OneToOne(() => Auth, (auth) => auth.user)
-  auth?: Auth;
-
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
-  createdAt: Date;
-
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
-  updatedAt: Date;
-
   @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz' })
   deletedAt: Date | null;
+
+  @OneToOne(() => Auth, (auth) => auth.user)
+  auth?: Auth;
 }
