@@ -7,8 +7,11 @@ export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOp
   username: configService.getOrThrow<string>('POSTGRES_USER'),
   password: configService.getOrThrow<string>('POSTGRES_PASSWORD'),
   host: configService.getOrThrow<string>('POSTGRES_HOST'),
-  port: configService.getOrThrow<number>('POSTGRES_PORT'),
-  entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-  synchronize: true,
+  port: Number(configService.getOrThrow<string>('POSTGRES_PORT')),
+
+  entities: [__dirname + '/../modules/**/entities/*.entity{.ts,.js}'],
+  synchronize: false,
   logging: process.env.NODE_ENV === 'development',
+  migrationsRun: true,
+  migrations: ['dist/database/migrations/**/*{.ts,.js}'],
 });
