@@ -6,6 +6,6 @@ export class UserResponseDto {
   firstName: string;
   lastName: string;
   role: UserRole;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }

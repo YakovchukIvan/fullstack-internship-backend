@@ -8,7 +8,7 @@ export function toUserResponseDto(user: User): UserResponseDto {
     firstName: user.firstName,
     lastName: user.lastName,
     role: user.role,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
+    createdAt: user.createdAt.toISOString(),
+    updatedAt: user.updatedAt.toISOString(),
   };
 }

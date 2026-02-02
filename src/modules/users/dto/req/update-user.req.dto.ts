@@ -1,5 +1,4 @@
-import { IsEmail, IsString, MinLength, MaxLength, IsEnum, IsOptional } from 'class-validator';
-import { UserRole } from '../../enums/user-role.enum';
+import { IsEmail, IsString, MinLength, MaxLength, IsOptional } from 'class-validator';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -21,8 +20,4 @@ export class UpdateUserDto {
   @IsString({ message: 'Last name must be a string' })
   @MaxLength(100, { message: 'Last name must not exceed 100 characters' })
   lastName?: string;
-
-  @IsOptional()
-  @IsEnum(UserRole, { message: 'Role must be a valid user role' })
-  role?: UserRole;
 }

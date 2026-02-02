@@ -7,6 +7,7 @@ import { UpdateUserDto } from './dto/req/update-user.req.dto';
 import { AuthCredentialsService } from '@/modules/auth/services/auth-credentials.service';
 import { normalizeEmail } from '@/common/helpers/normalize-email.helper';
 import { AppLogger } from '@/common/logger/app-logger';
+import { UserRole } from './enums/user-role.enum';
 
 @Injectable()
 export class UsersService {
@@ -28,7 +29,7 @@ export class UsersService {
         email: normalizedEmail,
         firstName: createUserDto.firstName,
         lastName: createUserDto.lastName,
-        role: createUserDto.role,
+        role: UserRole.USER,
       });
 
       const user = await manager.save(User, createdUser);
@@ -64,9 +65,6 @@ export class UsersService {
       }
       if (dto.lastName !== undefined) {
         user.lastName = dto.lastName;
-      }
-      if (dto.role !== undefined) {
-        user.role = dto.role;
       }
       if (dto.password) {
         await this.authCredentialsService.setPasswordTx(manager, user, dto.password);
