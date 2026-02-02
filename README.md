@@ -67,9 +67,6 @@ docker-compose down -v
 # Migration generation
 npm run migration:generate src/database/migrations/YourMigrationName
 
-# Creating an empty migration
-npm run migration:create src/database/migrations/YourMigrationName
-
 # Applying migrations
 npm run migration:run
 
