@@ -37,22 +37,29 @@ export class UsersService {
 
       const user = await manager.save(User, createdUser);
       await this.authCredentialsService.createForUser(manager, user, createUserDto.password);
-      this.logger.log(user, 'user created successfully');
+
+      this.logger.log({ userId: user.id, email: user.email }, 'User created successfully');
       return user;
     });
   }
 
   async findAll(paginationQuery: UsersPaginationQueryDto): Promise<PaginatedResult<User>> {
-    return createPaginatedResult(this.usersRepository, {
+    const result = await createPaginatedResult(this.usersRepository, {
       page: paginationQuery.page,
       limit: paginationQuery.limit,
       sortBy: paginationQuery.sortBy,
       order: paginationQuery.order,
     });
+
+    this.logger.log('Users fetched successfully');
+    return result;
   }
 
   async findOne(id: string): Promise<User> {
-    return this.findUserByIdOrThrow(id);
+    const user = await this.findUserByIdOrThrow(id);
+
+    this.logger.log({ userId: id }, 'Fetching user by ID');
+    return user;
   }
 
   async update(id: string, dto: UpdateUserDto): Promise<User> {
@@ -72,16 +79,22 @@ export class UsersService {
         user.lastName = dto.lastName;
       }
       if (dto.password) {
+        this.logger.log({ userId: id }, 'Updating user password');
         await this.authCredentialsService.setPasswordTx(manager, user, dto.password);
       }
 
-      return userRepo.save(user);
+      const updatedUser = await userRepo.save(user);
+
+      this.logger.log({ userId: updatedUser.id, email: updatedUser.email }, 'User updated successfully');
+      return updatedUser;
     });
   }
 
   async remove(id: string): Promise<void> {
     const user = await this.findUserByIdOrThrow(id);
     await this.usersRepository.softDelete(user.id);
+
+    this.logger.log({ userId: id, email: user.email }, 'User removed successfully');
   }
 
   private async findUserByIdOrThrow(
@@ -92,6 +105,7 @@ export class UsersService {
     const user = await repo.findOne({ where: { id }, relations });
 
     if (!user) {
+      this.logger.warn({ userId: id }, 'User not found');
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
