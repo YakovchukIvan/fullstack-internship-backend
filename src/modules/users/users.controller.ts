@@ -34,7 +34,7 @@ export class UsersController {
       success: true,
       statusCode: HttpStatus.OK,
       message: 'Users fetched',
-      detail: { users: users.map(toUserResponseDto) }, // ✅ Мапимо масив
+      detail: { users: users.map(toUserResponseDto) },
     });
   }
 
