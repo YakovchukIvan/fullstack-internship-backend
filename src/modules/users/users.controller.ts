@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/req/create-user.req.dto';
 import { UpdateUserDto } from './dto/req/update-user.req.dto';
@@ -7,6 +7,8 @@ import { ApiResponseEnvelope } from '@/common/responses/api-response-envelope';
 import { UUIDParam } from '@/common/decorators/uuid-param.decorator';
 import { toUserResponseDto } from './mappers/user.mapper';
 import { UsersRoutes } from './enums/users.routes';
+import { PaginationMetadata } from '@/common/interfaces/pagination-metadata.interface';
+import { UsersPaginationQueryDto } from './dto/req/users-pagination-query.dto';
 
 @Controller(UsersRoutes.ROOT)
 export class UsersController {
@@ -27,14 +29,19 @@ export class UsersController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  async findAll(): Promise<ApiResponseEnvelope<{ users: UserResponseDto[] }>> {
-    const users = await this.usersService.findAll();
+  async findAll(
+    @Query() paginationQuery: UsersPaginationQueryDto,
+  ): Promise<ApiResponseEnvelope<{ users: UserResponseDto[]; pagination: PaginationMetadata }>> {
+    const result = await this.usersService.findAll(paginationQuery);
 
     return new ApiResponseEnvelope({
       success: true,
       statusCode: HttpStatus.OK,
       message: 'Users fetched',
-      detail: { users: users.map(toUserResponseDto) },
+      detail: {
+        users: result.data.map(toUserResponseDto),
+        pagination: result.pagination,
+      },
     });
   }
 

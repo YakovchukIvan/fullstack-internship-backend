@@ -5,7 +5,6 @@ export class ApiResponseEnvelope<T = unknown> {
   readonly detail?: T;
   readonly errorCode?: string;
   readonly path?: string;
-  readonly timestamp: string;
 
   constructor(params: {
     success: boolean;
@@ -16,6 +15,5 @@ export class ApiResponseEnvelope<T = unknown> {
     path?: string;
   }) {
     Object.assign(this, params);
-    this.timestamp = new Date().toISOString();
   }
 }

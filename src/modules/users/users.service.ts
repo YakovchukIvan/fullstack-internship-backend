@@ -7,7 +7,10 @@ import { UpdateUserDto } from './dto/req/update-user.req.dto';
 import { AuthCredentialsService } from '@/modules/auth/services/auth-credentials.service';
 import { normalizeEmail } from '@/common/helpers/normalize-email.helper';
 import { AppLogger } from '@/common/logger/app-logger';
-import { UserRole } from './enums/user-role.enum';
+import { UserRole } from '../../common/enums/user-role.enum';
+import { PaginatedResult } from '@/common/interfaces/paginated-result.interface';
+import { createPaginatedResult } from '@/common/helpers/create-paginated-result.helper';
+import { UsersPaginationQueryDto } from './dto/req/users-pagination-query.dto';
 
 @Injectable()
 export class UsersService {
@@ -34,15 +37,17 @@ export class UsersService {
 
       const user = await manager.save(User, createdUser);
       await this.authCredentialsService.createForUser(manager, user, createUserDto.password);
+      this.logger.log(user, 'user created successfully');
       return user;
     });
   }
 
-  async findAll(): Promise<User[]> {
-    this.logger.log('LOL');
-
-    return this.usersRepository.find({
-      order: { createdAt: 'DESC' },
+  async findAll(paginationQuery: UsersPaginationQueryDto): Promise<PaginatedResult<User>> {
+    return createPaginatedResult(this.usersRepository, {
+      page: paginationQuery.page,
+      limit: paginationQuery.limit,
+      sortBy: paginationQuery.sortBy,
+      order: paginationQuery.order,
     });
   }
 

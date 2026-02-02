@@ -1,6 +1,6 @@
 import { Entity, Column, OneToOne, DeleteDateColumn } from 'typeorm';
 import { BaseEntity } from '@/common/entities/base.entity';
-import { UserRole } from '../enums/user-role.enum';
+import { UserRole } from '../../../common/enums/user-role.enum';
 import { Auth } from '@/modules/auth/entities/auth.entity';
 
 @Entity('users')
