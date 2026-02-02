@@ -38,7 +38,7 @@ export class UsersService {
       const user = await manager.save(User, createdUser);
       await this.authCredentialsService.createForUser(manager, user, createUserDto.password);
 
-      this.logger.log({ userId: user.id, email: user.email }, 'User created successfully');
+      this.logger.log({ userId: user.id, email: user.email }, 'User created successfully', UsersService.name);
       return user;
     });
   }
@@ -51,7 +51,7 @@ export class UsersService {
       order: paginationQuery.order,
     });
 
-    this.logger.log('Users fetched successfully');
+    this.logger.log('Users fetched successfully', UsersService.name);
     return result;
   }
 
@@ -79,22 +79,26 @@ export class UsersService {
         user.lastName = dto.lastName;
       }
       if (dto.password) {
-        this.logger.log({ userId: id }, 'Updating user password');
+        this.logger.log({ userId: id }, 'Updating user password', UsersService.name);
         await this.authCredentialsService.setPasswordTx(manager, user, dto.password);
       }
 
       const updatedUser = await userRepo.save(user);
 
-      this.logger.log({ userId: updatedUser.id, email: updatedUser.email }, 'User updated successfully');
+      this.logger.log(
+        { userId: updatedUser.id, email: updatedUser.email },
+        'User updated successfully',
+        UsersService.name,
+      );
       return updatedUser;
     });
   }
 
   async remove(id: string): Promise<void> {
     const user = await this.findUserByIdOrThrow(id);
-    await this.usersRepository.softDelete(user.id);
+    await this.usersRepository.delete(user.id);
 
-    this.logger.log({ userId: id, email: user.email }, 'User removed successfully');
+    this.logger.log({ userId: id, email: user.email }, 'User removed successfully', UsersService.name);
   }
 
   private async findUserByIdOrThrow(
@@ -105,7 +109,7 @@ export class UsersService {
     const user = await repo.findOne({ where: { id }, relations });
 
     if (!user) {
-      this.logger.warn({ userId: id }, 'User not found');
+      this.logger.warn({ userId: id }, 'User not found', UsersService.name);
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 

@@ -1,4 +1,4 @@
-import { Entity, Column, OneToOne, DeleteDateColumn } from 'typeorm';
+import { Entity, Column, OneToOne } from 'typeorm';
 import { BaseEntity } from '@/common/entities/base.entity';
 import { UserRole } from '../../../common/enums/user-role.enum';
 import { Auth } from '@/modules/auth/entities/auth.entity';
@@ -16,9 +16,6 @@ export class User extends BaseEntity {
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   role: UserRole;
-
-  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz' })
-  deletedAt: Date | null;
 
   @OneToOne(() => Auth, (auth) => auth.user)
   auth?: Auth;

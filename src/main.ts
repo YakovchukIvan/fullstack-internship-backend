@@ -6,6 +6,7 @@ import { AppLogger } from './common/logger/app-logger';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { globalValidationPipe } from './common/pipes/global-validation.pipe';
 import { getAppConfig } from './config/app.config';
+import { setupSwagger } from './config/swagger.config';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -20,6 +21,8 @@ async function bootstrap(): Promise<void> {
   app.enableCors(getCorsConfig(configService));
   app.useGlobalPipes(globalValidationPipe);
   app.useGlobalFilters(new AllExceptionsFilter(logger));
+
+  setupSwagger(app, config.globalPrefix);
 
   await logger.measure('✅ HTTP server listen', () => app.listen(config.port, config.host));
   logger.log(`✅ http://${config.host}:${config.port}`);
