@@ -13,6 +13,7 @@ describe('AppController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api');
     await app.init();
   });
 
@@ -20,8 +21,8 @@ describe('AppController (e2e)', () => {
     await app.close();
   });
 
-  it('/ (GET) - health check', () =>
-    request(app.getHttpServer()).get('/').expect(200).expect({
+  it('/api  (GET) - health check', () =>
+    request(app.getHttpServer()).get('/api').expect(200).expect({
       status_code: 200,
       detail: 'ok',
       result: 'working',
