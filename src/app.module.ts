@@ -9,6 +9,7 @@ import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { LoggerModule } from './common/logger/logger.module';
 import { globalValidationPipe } from './common/pipes/global-validation.pipe';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { globalValidationPipe } from './common/pipes/global-validation.pipe';
       inject: [ConfigService],
       useFactory: getDatabaseConfig,
     }),
+    AuthModule,
     UsersModule,
   ],
   controllers: [AppController],

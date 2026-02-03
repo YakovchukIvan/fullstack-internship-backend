@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/req/create-user.req.dto';
 import { UpdateUserDto } from './dto/req/update-user.req.dto';
@@ -9,8 +9,10 @@ import { toUserResponseDto } from './mappers/user.mapper';
 import { UsersRoutes } from './enums/users.routes';
 import { PaginationMetadata } from '@/common/interfaces/pagination-metadata.interface';
 import { UsersPaginationQueryDto } from './dto/req/users-pagination-query.dto';
+import { UniversalAuthGuard } from '../auth/guards/universal-auth.guard';
 
 @Controller(UsersRoutes.ROOT)
+@UseGuards(UniversalAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
