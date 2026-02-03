@@ -5,7 +5,6 @@ import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/req/create-user.req.dto';
 import { UpdateUserDto } from './dto/req/update-user.req.dto';
 import { AuthCredentialsService } from '@/modules/auth/services/auth-credentials.service';
-import { normalizeEmail } from '@/common/helpers/normalize-email.helper';
 import { AppLogger } from '@/common/logger/app-logger';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { PaginatedResult } from '@/common/interfaces/paginated-result.interface';
@@ -25,11 +24,9 @@ export class UsersService {
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const normalizedEmail = normalizeEmail(createUserDto.email);
-
     return this.dataSource.transaction(async (manager) => {
       const createdUser = manager.create(User, {
-        email: normalizedEmail,
+        email: createUserDto.email,
         firstName: createUserDto.firstName,
         lastName: createUserDto.lastName,
         role: UserRole.USER,
@@ -70,7 +67,7 @@ export class UsersService {
       const user = await this.findUserByIdOrThrow(id, relations, userRepo);
 
       if (dto.email !== undefined) {
-        user.email = normalizeEmail(dto.email);
+        user.email = dto.email;
       }
       if (dto.firstName !== undefined) {
         user.firstName = dto.firstName;

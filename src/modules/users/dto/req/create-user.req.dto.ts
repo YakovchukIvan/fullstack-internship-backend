@@ -1,6 +1,8 @@
 import { IsEmail, IsNotEmpty, IsString, MinLength, MaxLength } from 'class-validator';
+import { NormalizeEmail } from '@/common/decorators/normalize-email.decorator';
 
 export class CreateUserDto {
+  @NormalizeEmail()
   @IsEmail({}, { message: 'Email must be a valid email address' })
   @IsNotEmpty({ message: 'Email is required' })
   email: string;

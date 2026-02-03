@@ -75,15 +75,8 @@ export class UsersController {
   }
 
   @Delete(UsersRoutes.ID)
-  @HttpCode(HttpStatus.OK)
-  async remove(@UUIDParam() id: string): Promise<ApiResponseEnvelope<{ id: string }>> {
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@UUIDParam() id: string): Promise<void> {
     await this.usersService.remove(id);
-
-    return new ApiResponseEnvelope({
-      success: true,
-      statusCode: HttpStatus.OK,
-      message: 'User deleted',
-      detail: { id },
-    });
   }
 }
