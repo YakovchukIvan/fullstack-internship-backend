@@ -1,10 +1,19 @@
 # Backend Internship Project
 
-## Description
+<p align="left">
+  <img src="https://img.shields.io/badge/NestJS-11-red" />
+  <img src="https://img.shields.io/badge/TypeORM-0.3.28-orange" />
+  <img src="https://img.shields.io/badge/PostgreSQL-pg%208.17.2-blue" />
+  <img src="https://img.shields.io/badge/Swagger-11.2.5-green" />
+  <img src="https://img.shields.io/badge/TypeScript-5.7.3-3178C6" />
+  <img src="https://img.shields.io/badge/Docker-compose-2496ED" />
+</p>
+
+## 📖 Description
 
 Backend application created on NestJS for internships.
 
-## Installation
+## ⚙️ Installation
 
 ```bash
 # 1. Clone the repository:
@@ -21,7 +30,7 @@ copy .env.sample .env # Windows (PowerShell)
 code .env # Open the file in your editor, e.g.:
 ```
 
-## Launching the application
+## 🚀 Launching the application
 
 ### Development mode
 
@@ -38,7 +47,18 @@ npm run start:prod
 
 The application will be available at: `http://localhost:5000`
 
-## Docker
+## 📘 API Documentation (Swagger)
+
+This project uses Swagger for automatic API documentation.
+Swagger UI provides an interactive interface for exploring and testing API endpoints.
+
+```bash
+# Swagger documentation is generated automatically
+# from controllers and DTOs using decorators and metadata.
+http://localhost:5000/api/docs
+```
+
+## 🐳 Docker
 
 ### Launching individual services
 
@@ -59,7 +79,7 @@ docker-compose down
 docker-compose down -v
 ```
 
-## Migrations
+## 🗄️ Migrations
 
 ### Teams for working with migrations
 
@@ -77,7 +97,7 @@ npm run migration:revert
 npm run migration:show
 ```
 
-## Code verification
+## ✅ Code verification
 
 ### Format code
 
@@ -100,10 +120,11 @@ npm run lint
 npm run test
 ```
 
-## Technology stack
+## 🛠️ Technology stack
 
 - NestJS
 - TypeScript
 - Docker
 - PostgreSQL
 - TypeORM
+- Swagger
