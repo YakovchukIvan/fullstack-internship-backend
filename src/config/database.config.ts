@@ -9,7 +9,7 @@ export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOp
   host: configService.getOrThrow<string>('POSTGRES_HOST'),
   port: Number(configService.getOrThrow<string>('POSTGRES_PORT')),
 
-  entities: [__dirname + '/../modules/**/entities/*.entity{.ts,.js}'],
+  autoLoadEntities: true,
   synchronize: false,
   logging: process.env.NODE_ENV === 'development',
   migrationsRun: true,
