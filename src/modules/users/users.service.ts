@@ -66,9 +66,6 @@ export class UsersService {
       const relations = dto.password ? ['auth'] : [];
       const user = await this.findUserByIdOrThrow(id, relations, userRepo);
 
-      if (dto.email !== undefined) {
-        user.email = dto.email;
-      }
       if (dto.firstName !== undefined) {
         user.firstName = dto.firstName;
       }

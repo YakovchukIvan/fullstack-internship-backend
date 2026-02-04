@@ -11,14 +11,27 @@ import { toUserResponseDto } from '../users/mappers/user.mapper';
 import { UserResponseDto } from '../users/dto/res/user.res.dto';
 import { AuthRoutes } from './routes/auth.routes';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { RegisterDto } from './dto/req/register.dto';
 
 @Controller(AuthRoutes.ROOT)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Post(AuthRoutes.REGISTER)
   @ApiEndpoint(AuthResponseDto, HttpStatus.CREATED, true)
+  async register(@Body() registerDto: RegisterDto): Promise<ApiResponseEnvelope<AuthResponseDto>> {
+    const authResponse = await this.authService.register(registerDto);
+
+    return new ApiResponseEnvelope({
+      success: true,
+      statusCode: HttpStatus.CREATED,
+      message: 'User registered successfully',
+      detail: authResponse,
+    });
+  }
+
   @Post(AuthRoutes.LOGIN)
+  @ApiEndpoint(AuthResponseDto, HttpStatus.CREATED, true)
   @UseGuards(LocalAuthGuard)
   async login(@Body() loginDto: LoginDto): Promise<ApiResponseEnvelope<AuthResponseDto>> {
     const authResponse = await this.authService.login(loginDto);
@@ -31,9 +44,8 @@ export class AuthController {
     });
   }
 
-  // @ApiEndpoint(UserResponseDto)
-  @ApiBearerAuth('bearer')
   @Get(AuthRoutes.ME)
+  @ApiEndpoint(UserResponseDto)
   @UseGuards(UniversalAuthGuard)
   getCurrentUser(@CurrentUser() user: User): ApiResponseEnvelope<{ user: UserResponseDto }> {
     return new ApiResponseEnvelope({

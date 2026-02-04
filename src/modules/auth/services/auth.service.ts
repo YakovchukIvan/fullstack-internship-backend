@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { User } from '@/modules/users/entities/user.entity';
 import { Auth } from '../entities/auth.entity';
 import { PasswordService } from '../password.service';
@@ -10,6 +10,7 @@ import { AuthResponseDto } from '../dto/auth-response.dto';
 import { toUserResponseDto } from '@/modules/users/mappers/user.mapper';
 import { Auth0Payload } from '../dto/jwt-payload.dto';
 import { UserRole } from '@/common/enums/user-role.enum';
+import { RegisterDto } from '../dto/req/register.dto';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +21,52 @@ export class AuthService {
     private readonly authRepository: Repository<Auth>,
     private readonly passwordService: PasswordService,
     private readonly tokenService: TokenService,
+    private readonly dataSource: DataSource, // Додаємо для транзакції
   ) {}
+
+  async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
+    const email = registerDto.email.toLowerCase();
+
+    const existingUser = await this.userRepository.findOne({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    const user = await this.dataSource.transaction(async (manager) => {
+      const newUser = manager.getRepository(User).create({
+        email,
+        firstName: registerDto.firstName,
+        lastName: registerDto.lastName,
+        role: UserRole.USER,
+      });
+
+      const savedUser = await manager.getRepository(User).save(newUser);
+
+      const passwordHash = await this.passwordService.hash(registerDto.password);
+
+      const auth = manager.getRepository(Auth).create({
+        user: savedUser,
+        passwordHash,
+      });
+
+      await manager.getRepository(Auth).save(auth);
+
+      return savedUser;
+    });
+
+    const accessToken = this.tokenService.generateAccessToken(user);
+    const refreshToken = this.tokenService.generateRefreshToken(user);
+
+    return {
+      accessToken,
+      refreshToken,
+      user: toUserResponseDto(user),
+      expiresIn: this.tokenService.getTokenExpirationTime(),
+    };
+  }
 
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.userRepository.findOne({

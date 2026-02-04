@@ -15,6 +15,8 @@ import { getJwtConfig } from '@/config/jwt.config';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { Auth0Strategy } from './strategies/auth0.strategy';
+import { RolesGuard } from './guards/roles.guard';
+import { ResourceOwnerGuard } from './guards/resource-owner.guard';
 
 @Module({
   imports: [
@@ -35,7 +37,18 @@ import { Auth0Strategy } from './strategies/auth0.strategy';
     LocalStrategy,
     JwtStrategy,
     Auth0Strategy,
+    RolesGuard,
+    ResourceOwnerGuard,
   ],
-  exports: [AuthService, AuthCredentialsService, PasswordService, TokenService, JwtModule, PassportModule],
+  exports: [
+    AuthService,
+    AuthCredentialsService,
+    PasswordService,
+    TokenService,
+    JwtModule,
+    PassportModule,
+    RolesGuard,
+    ResourceOwnerGuard,
+  ],
 })
 export class AuthModule {}

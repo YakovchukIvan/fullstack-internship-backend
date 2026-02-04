@@ -11,6 +11,9 @@ import { PaginationMetadata } from '@/common/interfaces/pagination-metadata.inte
 import { UsersPaginationQueryDto } from './dto/req/users-pagination-query.dto';
 import { UniversalAuthGuard } from '../auth/guards/universal-auth.guard';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { UserRole } from '@/common/enums/user-role.enum';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller(UsersRoutes.ROOT)
 @UseGuards(UniversalAuthGuard)
@@ -18,8 +21,9 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
   @ApiEndpoint(CreateUserDto, HttpStatus.CREATED)
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER)
   async create(@Body() dto: CreateUserDto): Promise<ApiResponseEnvelope<{ user: UserResponseDto }>> {
     const user = await this.usersService.create(dto);
 
@@ -80,6 +84,8 @@ export class UsersController {
 
   @Delete(UsersRoutes.ID)
   @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER)
   async remove(@UUIDParam() id: string): Promise<void> {
     await this.usersService.remove(id);
   }

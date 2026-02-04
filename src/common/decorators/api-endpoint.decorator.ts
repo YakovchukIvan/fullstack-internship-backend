@@ -11,7 +11,7 @@ export const ApiEndpoint = <TModel extends Type<unknown>>(
   const decorators = [HttpCode(status)];
 
   if (!isPublic) {
-    decorators.push(ApiBearerAuth('bearer'), ApiUnauthorizedResponse({ description: 'Unauthorized' }));
+    decorators.push(ApiBearerAuth('JWT-auth'), ApiUnauthorizedResponse({ description: 'Unauthorized' }));
   }
 
   const detailSchema = isArray
