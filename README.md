@@ -53,8 +53,7 @@ This project uses Swagger for automatic API documentation.
 Swagger UI provides an interactive interface for exploring and testing API endpoints.
 
 ```bash
-# Swagger documentation is generated automatically
-# from controllers and DTOs using decorators and metadata.
+# Swagger docs are auto-generated from controllers and DTOs via decorators.
 http://localhost:5000/api/docs
 ```
 

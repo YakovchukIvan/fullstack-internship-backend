@@ -9,7 +9,7 @@ import { CurrentUser } from './decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { toUserResponseDto } from '../users/mappers/user.mapper';
 import { UserResponseDto } from '../users/dto/res/user.res.dto';
-import { AuthRoutes } from './enums/auth.routes';
+import { AuthRoutes } from './routes/auth.routes';
 
 @Controller(AuthRoutes.ROOT)
 export class AuthController {

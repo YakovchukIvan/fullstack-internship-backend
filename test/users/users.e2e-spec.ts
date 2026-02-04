@@ -3,7 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '@/app.module';
-import { UsersRoutes } from '@/modules/users/enums/users.routes';
+import { UsersRoutes } from '@/modules/users/routes/users.routes';
 
 const USERS_URL = `/api/${UsersRoutes.ROOT}`;
 

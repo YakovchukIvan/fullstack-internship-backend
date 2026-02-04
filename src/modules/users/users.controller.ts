@@ -6,7 +6,7 @@ import { UserResponseDto } from './dto/res/user.res.dto';
 import { ApiResponseEnvelope } from '@/common/responses/api-response-envelope';
 import { UUIDParam } from '@/common/decorators/uuid-param.decorator';
 import { toUserResponseDto } from './mappers/user.mapper';
-import { UsersRoutes } from './enums/users.routes';
+import { UsersRoutes } from './routes/users.routes';
 import { PaginationMetadata } from '@/common/interfaces/pagination-metadata.interface';
 import { UsersPaginationQueryDto } from './dto/req/users-pagination-query.dto';
 import { UniversalAuthGuard } from '../auth/guards/universal-auth.guard';
