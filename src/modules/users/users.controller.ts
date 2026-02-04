@@ -10,6 +10,7 @@ import { UsersRoutes } from './routes/users.routes';
 import { PaginationMetadata } from '@/common/interfaces/pagination-metadata.interface';
 import { UsersPaginationQueryDto } from './dto/req/users-pagination-query.dto';
 import { UniversalAuthGuard } from '../auth/guards/universal-auth.guard';
+import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 
 @Controller(UsersRoutes.ROOT)
 @UseGuards(UniversalAuthGuard)
@@ -18,6 +19,7 @@ export class UsersController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiEndpoint(CreateUserDto, HttpStatus.CREATED)
   async create(@Body() dto: CreateUserDto): Promise<ApiResponseEnvelope<{ user: UserResponseDto }>> {
     const user = await this.usersService.create(dto);
 
@@ -30,7 +32,7 @@ export class UsersController {
   }
 
   @Get()
-  @HttpCode(HttpStatus.OK)
+  @ApiEndpoint(UserResponseDto, HttpStatus.OK)
   async findAll(
     @Query() paginationQuery: UsersPaginationQueryDto,
   ): Promise<ApiResponseEnvelope<{ users: UserResponseDto[]; pagination: PaginationMetadata }>> {
@@ -48,7 +50,7 @@ export class UsersController {
   }
 
   @Get(UsersRoutes.ID)
-  @HttpCode(HttpStatus.OK)
+  @ApiEndpoint(UserResponseDto, HttpStatus.OK)
   async findOne(@UUIDParam() id: string): Promise<ApiResponseEnvelope<{ user: UserResponseDto }>> {
     const user = await this.usersService.findOne(id);
 
@@ -61,7 +63,7 @@ export class UsersController {
   }
 
   @Patch(UsersRoutes.ID)
-  @HttpCode(HttpStatus.OK)
+  @ApiEndpoint(UpdateUserDto, HttpStatus.OK)
   async update(
     @UUIDParam() id: string,
     @Body() dto: UpdateUserDto,

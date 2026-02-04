@@ -12,9 +12,9 @@ import { PasswordService } from './password.service';
 import { TokenService } from './services/token.service';
 
 import { getJwtConfig } from '@/config/jwt.config';
-import { LocalStrategy } from '../strategies/local.strategy';
-import { JwtStrategy } from '../strategies/jwt.strategy';
-import { Auth0Strategy } from '../strategies/auth0.strategy';
+import { LocalStrategy } from './strategies/local.strategy';
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { Auth0Strategy } from './strategies/auth0.strategy';
 
 @Module({
   imports: [

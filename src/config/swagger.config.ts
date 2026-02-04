@@ -6,11 +6,24 @@ export function setupSwagger(app: INestApplication, globalPrefix: string): void 
     .setTitle('API Documentation')
     .setDescription('Fullstack Internship Backend API documentation')
     .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        in: 'header',
+      },
+      'bearer',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
 
   const swaggerPath = `${globalPrefix}/docs`;
 
-  SwaggerModule.setup(swaggerPath, app, document);
+  SwaggerModule.setup(swaggerPath, app, document, {
+    swaggerOptions: {
+      persistAuthorization: false,
+    },
+  });
 }
