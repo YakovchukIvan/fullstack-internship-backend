@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { Auth } from '../entities/auth.entity';
 import { User } from '@/modules/users/entities/user.entity';
-import { PasswordService } from '../password.service';
+import { PasswordService } from './password.service';
 
 @Injectable()
 export class AuthCredentialsService {

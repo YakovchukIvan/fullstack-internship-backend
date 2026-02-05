@@ -8,8 +8,9 @@ import { User } from '../users/entities/user.entity';
 import { AuthController } from './auth.controller';
 import { AuthService } from './services/auth.service';
 import { AuthCredentialsService } from './services/auth-credentials.service';
-import { PasswordService } from './password.service';
+import { PasswordService } from './services/password.service';
 import { TokenService } from './services/token.service';
+import { MailModule } from '../mail/mail.module';
 
 import { getJwtConfig } from '@/config/jwt.config';
 import { LocalStrategy } from './strategies/local.strategy';
@@ -27,6 +28,7 @@ import { ResourceOwnerGuard } from './guards/resource-owner.guard';
       inject: [ConfigService],
       useFactory: getJwtConfig,
     }),
+    MailModule,
   ],
   controllers: [AuthController],
   providers: [

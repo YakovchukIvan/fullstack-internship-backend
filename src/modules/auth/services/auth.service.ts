@@ -1,29 +1,35 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { User } from '@/modules/users/entities/user.entity';
 import { Auth } from '../entities/auth.entity';
-import { PasswordService } from '../password.service';
+import { PasswordService } from './password.service';
 import { TokenService } from './token.service';
 import { LoginDto } from '../dto/login.dto';
-import { AuthResponseDto } from '../dto/auth-response.dto';
+import { AuthResponseDto } from '../dto/res/auth-response.dto';
 import { toUserResponseDto } from '@/modules/users/mappers/user.mapper';
 import { Auth0Payload } from '../dto/jwt-payload.dto';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { RegisterDto } from '../dto/req/register.dto';
 import { AppLogger } from '@/common/logger/app-logger';
 
+export interface ForgotPasswordResult {
+  resetToken?: string;
+  isOAuthUser: boolean;
+  provider?: string;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly logger: AppLogger,
     @InjectRepository(Auth)
     private readonly authRepository: Repository<Auth>,
     private readonly passwordService: PasswordService,
     private readonly tokenService: TokenService,
     private readonly dataSource: DataSource,
-    private readonly logger: AppLogger,
   ) {
     this.logger.setLoggerContext(AuthService.name);
   }
@@ -31,10 +37,7 @@ export class AuthService {
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     const email = registerDto.email.toLowerCase();
 
-    const existingUser = await this.userRepository.findOne({
-      where: { email },
-    });
-
+    const existingUser = await this.userRepository.findOne({ where: { email } });
     if (existingUser) {
       throw new ConflictException('User with this email already exists');
     }
@@ -50,7 +53,6 @@ export class AuthService {
       const savedUser = await manager.getRepository(User).save(newUser);
 
       const passwordHash = await this.passwordService.hash(registerDto.password);
-
       const auth = manager.getRepository(Auth).create({
         user: savedUser,
         passwordHash,
@@ -83,7 +85,6 @@ export class AuthService {
     }
 
     const isPasswordValid = await this.passwordService.compare(password, user.auth.passwordHash);
-
     if (!isPasswordValid) {
       return null;
     }
@@ -107,6 +108,77 @@ export class AuthService {
       user: toUserResponseDto(user),
       expiresIn: this.tokenService.getTokenExpirationTime(),
     };
+  }
+
+  async forgotPassword(email: string): Promise<ForgotPasswordResult> {
+    const normalizedEmail = email.toLowerCase();
+
+    const resetToken = this.passwordService.generateResetToken();
+    const resetTokenHash = this.passwordService.hashResetToken(resetToken);
+    const expiresAt = this.passwordService.getResetTokenExpiryDate();
+
+    const user = await this.userRepository.findOne({
+      where: { email: normalizedEmail },
+      relations: ['auth'],
+    });
+
+    if (!user || !user.auth) {
+      this.logger.log(`🚫 Forgot password: User not found - ${normalizedEmail}`, AuthService.name);
+      return { isOAuthUser: false };
+    }
+
+    if (user.auth.googleId && !user.auth.passwordHash) {
+      this.logger.log(
+        `🔐 Forgot password: OAuth user detected - ${normalizedEmail} (${user.auth.googleId})`,
+        AuthService.name,
+      );
+      return {
+        isOAuthUser: true,
+        provider: 'Google',
+      };
+    }
+
+    if (!user.auth.passwordHash) {
+      this.logger.log(`⚠️ Forgot password: No password hash found - ${normalizedEmail}`, AuthService.name);
+      return { isOAuthUser: false };
+    }
+
+    user.auth.resetPasswordTokenHash = resetTokenHash;
+    user.auth.resetPasswordExpiresAt = expiresAt;
+    await this.authRepository.save(user.auth);
+
+    this.logger.log(`✅ Forgot password: Reset token generated for - ${normalizedEmail}`, AuthService.name);
+
+    return {
+      resetToken,
+      isOAuthUser: false,
+    };
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const tokenHash = this.passwordService.hashResetToken(token);
+
+    const auth = await this.authRepository.findOne({
+      where: { resetPasswordTokenHash: tokenHash },
+      relations: ['user'],
+    });
+
+    if (!auth) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    if (!auth.resetPasswordExpiresAt || this.passwordService.isResetTokenExpired(auth.resetPasswordExpiresAt)) {
+      throw new BadRequestException('Reset token has expired');
+    }
+
+    const passwordHash = await this.passwordService.hash(newPassword);
+    auth.passwordHash = passwordHash;
+    auth.resetPasswordTokenHash = null;
+    auth.resetPasswordExpiresAt = null;
+
+    auth.refreshTokenHash = null;
+
+    await this.authRepository.save(auth);
   }
 
   async validateAuth0User(auth0Payload: Auth0Payload): Promise<User> {

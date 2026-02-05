@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { getDatabaseConfig } from './config/database.config';
 import { UsersModule } from './modules/users/users.module';
-import { APP_FILTER, APP_PIPE } from '@nestjs/core';
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { LoggerModule } from './common/logger/logger.module';
-import { globalValidationPipe } from './common/pipes/global-validation.pipe';
 import { AuthModule } from './modules/auth/auth.module';
 import { MailModule } from './modules/mail/mail.module';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { throttlerConfig } from './config/throttler.config';
+import { databaseConfig } from './config/database.config';
+import { appProviders } from './app.providers';
 
 @Module({
   imports: [
@@ -18,27 +18,14 @@ import { MailModule } from './modules/mail/mail.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    TypeOrmModule.forRootAsync(databaseConfig),
+    ThrottlerModule.forRootAsync(throttlerConfig),
     LoggerModule,
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: getDatabaseConfig,
-    }),
     AuthModule,
     UsersModule,
     MailModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    {
-      provide: APP_FILTER,
-      useClass: AllExceptionsFilter,
-    },
-    {
-      provide: APP_PIPE,
-      useValue: globalValidationPipe,
-    },
-  ],
+  providers: [AppService, ...appProviders],
 })
 export class AppModule {}
