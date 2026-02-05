@@ -11,6 +11,7 @@ import { toUserResponseDto } from '@/modules/users/mappers/user.mapper';
 import { Auth0Payload } from '../dto/jwt-payload.dto';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { RegisterDto } from '../dto/req/register.dto';
+import { AppLogger } from '@/common/logger/app-logger';
 
 @Injectable()
 export class AuthService {
@@ -21,8 +22,11 @@ export class AuthService {
     private readonly authRepository: Repository<Auth>,
     private readonly passwordService: PasswordService,
     private readonly tokenService: TokenService,
-    private readonly dataSource: DataSource, // Додаємо для транзакції
-  ) {}
+    private readonly dataSource: DataSource,
+    private readonly logger: AppLogger,
+  ) {
+    this.logger.setLoggerContext(AuthService.name);
+  }
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     const email = registerDto.email.toLowerCase();

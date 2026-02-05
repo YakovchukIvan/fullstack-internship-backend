@@ -12,13 +12,15 @@ import { UserResponseDto } from '../users/dto/res/user.res.dto';
 import { AuthRoutes } from './routes/auth.routes';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { RegisterDto } from './dto/req/register.dto';
+import { ApiSecurity } from '@nestjs/swagger';
 
 @Controller(AuthRoutes.ROOT)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post(AuthRoutes.REGISTER)
-  @ApiEndpoint(AuthResponseDto, HttpStatus.CREATED, true)
+  @ApiSecurity({})
+  @ApiEndpoint(AuthResponseDto, HttpStatus.CREATED)
   async register(@Body() registerDto: RegisterDto): Promise<ApiResponseEnvelope<AuthResponseDto>> {
     const authResponse = await this.authService.register(registerDto);
 
@@ -31,7 +33,8 @@ export class AuthController {
   }
 
   @Post(AuthRoutes.LOGIN)
-  @ApiEndpoint(AuthResponseDto, HttpStatus.CREATED, true)
+  @ApiSecurity({})
+  @ApiEndpoint(AuthResponseDto, HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
   async login(@Body() loginDto: LoginDto): Promise<ApiResponseEnvelope<AuthResponseDto>> {
     const authResponse = await this.authService.login(loginDto);

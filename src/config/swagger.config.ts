@@ -17,6 +17,7 @@ export function setupSwagger(app: INestApplication, globalPrefix: string): void 
       },
       'JWT-auth',
     )
+    .addSecurityRequirements('JWT-auth')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
