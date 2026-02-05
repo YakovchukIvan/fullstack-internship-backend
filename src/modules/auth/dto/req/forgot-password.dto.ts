@@ -1,13 +1,4 @@
-import { IsEmail } from 'class-validator';
-// import { ApiProperty } from '@nestjs/swagger';
-import { NormalizeEmail } from '@/common/decorators/normalize-email.decorator';
+import { EmailPasswordDto } from '@/common/dto/email-password.dto';
+import { OmitType } from '@nestjs/swagger';
 
-export class ForgotPasswordDto {
-  // @ApiProperty({
-  //   description: 'User email address',
-  //   example: 'user@example.com',
-  // })
-  @IsEmail({}, { message: 'Invalid email format' })
-  @NormalizeEmail()
-  email: string;
-}
+export class ForgotPasswordDto extends OmitType(EmailPasswordDto, ['password'] as const) {}

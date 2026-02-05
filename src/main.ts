@@ -7,16 +7,18 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { globalValidationPipe } from './common/pipes/global-validation.pipe';
 import { getAppConfig } from './config/app.config';
 import { setupSwagger } from './config/swagger.config';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const logger = app.get(AppLogger);
   logger.setLoggerContext('MAIN');
-  app.useLogger(logger);
 
   const configService = app.get(ConfigService);
   const config = getAppConfig(configService);
 
+  app.useLogger(logger);
+  app.use(cookieParser());
   app.setGlobalPrefix(config.globalPrefix);
   app.enableCors(getCorsConfig(configService));
   app.useGlobalPipes(globalValidationPipe);

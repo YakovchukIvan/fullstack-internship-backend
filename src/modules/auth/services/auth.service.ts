@@ -1,3 +1,4 @@
+import type { Response } from 'express';
 import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
@@ -5,7 +6,7 @@ import { User } from '@/modules/users/entities/user.entity';
 import { Auth } from '../entities/auth.entity';
 import { PasswordService } from './password.service';
 import { TokenService } from './token.service';
-import { LoginDto } from '../dto/login.dto';
+import { LoginDto } from '../dto/req/login.dto';
 import { AuthResponseDto } from '../dto/res/auth-response.dto';
 import { toUserResponseDto } from '@/modules/users/mappers/user.mapper';
 import { Auth0Payload } from '../dto/jwt-payload.dto';
@@ -110,6 +111,12 @@ export class AuthService {
     };
   }
 
+  async logout(userId: string, response: Response): Promise<void> {
+    this.tokenService.clearAuthCookies(response);
+
+    await this.authRepository.update({ user: { id: userId } }, { refreshTokenHash: null });
+  }
+
   async forgotPassword(email: string): Promise<ForgotPasswordResult> {
     const normalizedEmail = email.toLowerCase();
 
@@ -123,7 +130,7 @@ export class AuthService {
     });
 
     if (!user || !user.auth) {
-      this.logger.log(`🚫 Forgot password: User not found - ${normalizedEmail}`, AuthService.name);
+      this.logger.log(`❌ Forgot password: User not found - ${normalizedEmail}`, AuthService.name);
       return { isOAuthUser: false };
     }
 

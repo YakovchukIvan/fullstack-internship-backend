@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { User } from '@/modules/users/entities/user.entity';
 import { JwtPayload } from '../dto/jwt-payload.dto';
+import { Response } from 'express';
 
 @Injectable()
 export class TokenService {
@@ -64,5 +65,28 @@ export class TokenService {
     };
 
     return value * (multipliers[unit] || 3600);
+  }
+
+  setAuthCookies(response: Response, accessToken: string, refreshToken: string): void {
+    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+
+    response.cookie('access_token', accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'strict' : 'lax',
+      maxAge: this.getTokenExpirationTime() * 1000,
+    });
+
+    response.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'strict' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+  }
+
+  clearAuthCookies(response: Response): void {
+    response.clearCookie('access_token');
+    response.clearCookie('refresh_token');
   }
 }

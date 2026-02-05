@@ -1,6 +1,7 @@
-import { Body, Controller, Get, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import type { Response } from 'express';
+import { Body, Controller, Get, HttpStatus, Post, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './services/auth.service';
-import { LoginDto } from './dto/login.dto';
+import { LoginDto } from './dto/req/login.dto';
 import { AuthResponseDto } from './dto/res/auth-response.dto';
 import { ApiResponseEnvelope } from '@/common/responses/api-response-envelope';
 import { LocalAuthGuard } from './guards/local-auth.guard';
@@ -16,19 +17,26 @@ import { ApiSecurity } from '@nestjs/swagger';
 import { MailService } from '../mail/mail.service';
 import { ForgotPasswordDto } from './dto/req/forgot-password.dto';
 import { ResetPasswordDto } from './dto/req/reset-password.dto';
+import { TokenService } from './services/token.service';
 
 @Controller(AuthRoutes.ROOT)
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly mailService: MailService,
+    private readonly tokenService: TokenService,
   ) {}
 
   @Post(AuthRoutes.REGISTER)
   @ApiSecurity({})
   @ApiEndpoint(AuthResponseDto, HttpStatus.CREATED)
-  async register(@Body() registerDto: RegisterDto): Promise<ApiResponseEnvelope<AuthResponseDto>> {
+  async register(
+    @Body() registerDto: RegisterDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<ApiResponseEnvelope<AuthResponseDto>> {
     const authResponse = await this.authService.register(registerDto);
+
+    this.tokenService.setAuthCookies(response, authResponse.accessToken, authResponse.refreshToken!);
 
     return new ApiResponseEnvelope({
       success: true,
@@ -42,28 +50,19 @@ export class AuthController {
   @ApiSecurity({})
   @ApiEndpoint(AuthResponseDto, HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
-  async login(@Body() loginDto: LoginDto): Promise<ApiResponseEnvelope<AuthResponseDto>> {
+  async login(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<ApiResponseEnvelope<AuthResponseDto>> {
     const authResponse = await this.authService.login(loginDto);
+
+    this.tokenService.setAuthCookies(response, authResponse.accessToken, authResponse.refreshToken!);
 
     return new ApiResponseEnvelope({
       success: true,
       statusCode: HttpStatus.OK,
       message: 'Login successful',
       detail: authResponse,
-    });
-  }
-
-  @Get(AuthRoutes.ME)
-  @ApiEndpoint(UserResponseDto)
-  @UseGuards(UniversalAuthGuard)
-  getCurrentUser(@CurrentUser() user: User): ApiResponseEnvelope<{ user: UserResponseDto }> {
-    return new ApiResponseEnvelope({
-      success: true,
-      statusCode: HttpStatus.OK,
-      message: 'Current user fetched',
-      detail: {
-        user: toUserResponseDto(user),
-      },
     });
   }
 
@@ -76,7 +75,6 @@ export class AuthController {
     const result = await this.authService.forgotPassword(forgotPasswordDto.email);
 
     if (result.isOAuthUser && result.provider) {
-      // OAuth користувач - відправляємо інший лист
       await this.mailService.sendOAuthLoginReminderEmail(forgotPasswordDto.email, result.provider);
 
       return new ApiResponseEnvelope({
@@ -90,11 +88,9 @@ export class AuthController {
     }
 
     if (result.resetToken) {
-      // Звичайний користувач - відправляємо reset link
       await this.mailService.sendPasswordResetEmail(forgotPasswordDto.email, result.resetToken);
     }
 
-    // Завжди повертаємо нейтральну відповідь (безпека)
     return new ApiResponseEnvelope({
       success: true,
       statusCode: HttpStatus.OK,
@@ -117,6 +113,36 @@ export class AuthController {
       message: 'Password has been reset successfully',
       detail: {
         message: 'You can now login with your new password',
+      },
+    });
+  }
+
+  @Post(AuthRoutes.LOGOUT)
+  @UseGuards(UniversalAuthGuard)
+  async logout(
+    @CurrentUser() user: User,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<ApiResponseEnvelope<{ message: string }>> {
+    await this.authService.logout(user.id, response);
+
+    return new ApiResponseEnvelope({
+      success: true,
+      statusCode: HttpStatus.OK,
+      message: 'Logout successful',
+      detail: { message: 'You have been logged out successfully' },
+    });
+  }
+
+  @Get(AuthRoutes.ME)
+  @ApiEndpoint(UserResponseDto)
+  @UseGuards(UniversalAuthGuard)
+  getCurrentUser(@CurrentUser() user: User): ApiResponseEnvelope<{ user: UserResponseDto }> {
+    return new ApiResponseEnvelope({
+      success: true,
+      statusCode: HttpStatus.OK,
+      message: 'Current user fetched',
+      detail: {
+        user: toUserResponseDto(user),
       },
     });
   }
