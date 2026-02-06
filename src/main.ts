@@ -24,7 +24,7 @@ async function bootstrap(): Promise<void> {
   app.useGlobalPipes(globalValidationPipe);
   app.useGlobalFilters(new AllExceptionsFilter(logger));
 
-  setupSwagger(app, config.globalPrefix);
+  setupSwagger(app, config.globalPrefix, configService);
 
   await logger.measure('✅ HTTP server listen', () => app.listen(config.port, config.host));
   logger.log(`✅ http://${config.host}:${config.port}`);
