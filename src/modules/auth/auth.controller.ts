@@ -14,18 +14,12 @@ import { AuthRoutes } from './routes/auth.routes';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { RegisterDto } from './dto/req/register.dto';
 import { ApiSecurity } from '@nestjs/swagger';
-import { MailService } from '../mail/mail.service';
 import { ForgotPasswordDto } from './dto/req/forgot-password.dto';
 import { ResetPasswordDto } from './dto/req/reset-password.dto';
-import { TokenService } from './services/token.service';
 
 @Controller(AuthRoutes.ROOT)
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly mailService: MailService,
-    private readonly tokenService: TokenService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Post(AuthRoutes.REGISTER)
   @ApiSecurity({})
@@ -34,9 +28,7 @@ export class AuthController {
     @Body() registerDto: RegisterDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<ApiResponseEnvelope<AuthResponseDto>> {
-    const authResponse = await this.authService.register(registerDto);
-
-    this.tokenService.setAuthCookies(response, authResponse.accessToken, authResponse.refreshToken!);
+    const authResponse = await this.authService.handleRegister(registerDto, response);
 
     return new ApiResponseEnvelope({
       success: true,
@@ -54,9 +46,7 @@ export class AuthController {
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<ApiResponseEnvelope<AuthResponseDto>> {
-    const authResponse = await this.authService.login(loginDto);
-
-    this.tokenService.setAuthCookies(response, authResponse.accessToken, authResponse.refreshToken!);
+    const authResponse = await this.authService.handleLogin(loginDto, response);
 
     return new ApiResponseEnvelope({
       success: true,
@@ -72,31 +62,14 @@ export class AuthController {
   async forgotPassword(
     @Body() forgotPasswordDto: ForgotPasswordDto,
   ): Promise<ApiResponseEnvelope<{ message: string }>> {
-    const result = await this.authService.forgotPassword(forgotPasswordDto.email);
-
-    if (result.isOAuthUser && result.provider) {
-      await this.mailService.sendOAuthLoginReminderEmail(forgotPasswordDto.email, result.provider);
-
-      return new ApiResponseEnvelope({
-        success: true,
-        statusCode: HttpStatus.OK,
-        message: 'Login instructions sent',
-        detail: {
-          message: `This account uses ${result.provider} Sign In. Please check your email for login instructions.`,
-        },
-      });
-    }
-
-    if (result.resetToken) {
-      await this.mailService.sendPasswordResetEmail(forgotPasswordDto.email, result.resetToken);
-    }
+    const result = await this.authService.handleForgotPassword(forgotPasswordDto.email);
 
     return new ApiResponseEnvelope({
       success: true,
       statusCode: HttpStatus.OK,
-      message: 'Password reset email sent successfully',
+      message: result.isOAuthUser ? 'Login instructions sent' : 'Password reset email sent successfully',
       detail: {
-        message: 'If an account exists with this email, you will receive instructions shortly',
+        message: result.message,
       },
     });
   }
@@ -123,7 +96,7 @@ export class AuthController {
     @CurrentUser() user: User,
     @Res({ passthrough: true }) response: Response,
   ): Promise<ApiResponseEnvelope<{ message: string }>> {
-    await this.authService.logout(user.id, response);
+    await this.authService.handleLogout(user.id, response);
 
     return new ApiResponseEnvelope({
       success: true,

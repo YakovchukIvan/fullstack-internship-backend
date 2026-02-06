@@ -1,14 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 
-export interface Auth0Config {
-  domain: string;
-  audience: string;
-  clientId: string;
-  clientSecret: string;
-  issuerUrl: string;
-}
-
-export const getAuth0Config = (configService: ConfigService): Auth0Config => ({
+export const getAuth0Config = (configService: ConfigService) => ({
   domain: configService.getOrThrow<string>('AUTH0_DOMAIN'),
   audience: configService.getOrThrow<string>('AUTH0_AUDIENCE'),
   clientId: configService.getOrThrow<string>('AUTH0_CLIENT_ID'),

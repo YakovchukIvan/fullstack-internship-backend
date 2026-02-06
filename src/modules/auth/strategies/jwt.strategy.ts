@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Repository } from 'typeorm';
 import { User } from '@/modules/users/entities/user.entity';
-import { JwtPayload } from '../dto/jwt-payload.dto';
+import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { Request } from 'express';
 interface JwtCookies {
   access_token?: string;

@@ -1,13 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 
-interface AppConfig {
-  port: number;
-  host: string;
-  globalPrefix: string;
-  environment: string;
-}
-
-export function getAppConfig(configService: ConfigService): AppConfig {
+export function getAppConfig(configService: ConfigService) {
   return {
     port: Number(configService.get('PORT', 5000)),
     host: configService.get<string>('APP_HOST', '0.0.0.0'),
