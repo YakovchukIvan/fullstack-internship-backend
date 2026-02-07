@@ -11,6 +11,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { throttlerConfig } from './config/throttler.config';
 import { databaseConfig } from './config/database.config';
 import { appProviders } from './app.providers';
+import { CompaniesModule } from './modules/companies/companies.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { appProviders } from './app.providers';
     AuthModule,
     UsersModule,
     MailModule,
+    CompaniesModule,
   ],
   controllers: [AppController],
   providers: [AppService, ...appProviders],
