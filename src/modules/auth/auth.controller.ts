@@ -3,7 +3,6 @@ import { Body, Controller, Get, HttpStatus, Post, Res, UseGuards } from '@nestjs
 import { AuthService } from './services/auth.service';
 import { LoginDto } from './dto/req/login.dto';
 import { AuthResponseDto } from './dto/res/auth-response.dto';
-import { ApiResponseEnvelope } from '@/common/responses/api-response-envelope';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { UniversalAuthGuard } from './guards/universal-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -16,6 +15,7 @@ import { RegisterDto } from './dto/req/register.dto';
 import { ApiSecurity } from '@nestjs/swagger';
 import { ForgotPasswordDto } from './dto/req/forgot-password.dto';
 import { ResetPasswordDto } from './dto/req/reset-password.dto';
+import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 
 @Controller(AuthRoutes.ROOT)
 export class AuthController {
@@ -24,99 +24,65 @@ export class AuthController {
   @Post(AuthRoutes.REGISTER)
   @ApiSecurity({})
   @ApiEndpoint(AuthResponseDto, HttpStatus.CREATED)
+  @ResponseMessage('User registered successfully')
   async register(
     @Body() registerDto: RegisterDto,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<ApiResponseEnvelope<AuthResponseDto>> {
-    const authResponse = await this.authService.handleRegister(registerDto, response);
-
-    return new ApiResponseEnvelope({
-      success: true,
-      statusCode: HttpStatus.CREATED,
-      message: 'User registered successfully',
-      detail: authResponse,
-    });
+  ): Promise<AuthResponseDto> {
+    return this.authService.handleRegister(registerDto, response);
   }
 
   @Post(AuthRoutes.LOGIN)
   @ApiSecurity({})
   @ApiEndpoint(AuthResponseDto, HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
-  async login(
-    @Body() loginDto: LoginDto,
-    @Res({ passthrough: true }) response: Response,
-  ): Promise<ApiResponseEnvelope<AuthResponseDto>> {
-    const authResponse = await this.authService.handleLogin(loginDto, response);
-
-    return new ApiResponseEnvelope({
-      success: true,
-      statusCode: HttpStatus.OK,
-      message: 'Login successful',
-      detail: authResponse,
-    });
+  @ResponseMessage('Login successful')
+  async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) response: Response): Promise<AuthResponseDto> {
+    return this.authService.handleLogin(loginDto, response);
   }
 
   @Post(AuthRoutes.FORGOT_PASSWORD)
   @ApiSecurity({})
   @ApiEndpoint(Object, HttpStatus.OK)
-  async forgotPassword(
-    @Body() forgotPasswordDto: ForgotPasswordDto,
-  ): Promise<ApiResponseEnvelope<{ message: string }>> {
+  @ResponseMessage('Password reset request processed')
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto): Promise<{ message: string }> {
     const result = await this.authService.handleForgotPassword(forgotPasswordDto.email);
-
-    return new ApiResponseEnvelope({
-      success: true,
-      statusCode: HttpStatus.OK,
-      message: result.isOAuthUser ? 'Login instructions sent' : 'Password reset email sent successfully',
-      detail: {
-        message: result.message,
-      },
-    });
+    return {
+      message: result.message,
+    };
   }
 
   @Post(AuthRoutes.RESET_PASSWORD)
   @ApiSecurity({})
   @ApiEndpoint(Object, HttpStatus.OK)
-  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<ApiResponseEnvelope<{ message: string }>> {
+  @ResponseMessage('Password has been reset successfully')
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
     await this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);
-
-    return new ApiResponseEnvelope({
-      success: true,
-      statusCode: HttpStatus.OK,
-      message: 'Password has been reset successfully',
-      detail: {
-        message: 'You can now login with your new password',
-      },
-    });
+    return {
+      message: 'You can now login with your new password',
+    };
   }
 
   @Post(AuthRoutes.LOGOUT)
   @UseGuards(UniversalAuthGuard)
+  @ResponseMessage('Logout successful')
   async logout(
     @CurrentUser() user: User,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<ApiResponseEnvelope<{ message: string }>> {
+  ): Promise<{ message: string }> {
     await this.authService.handleLogout(user.id, response);
-
-    return new ApiResponseEnvelope({
-      success: true,
-      statusCode: HttpStatus.OK,
-      message: 'Logout successful',
-      detail: { message: 'You have been logged out successfully' },
-    });
+    return {
+      message: 'You have been logged out successfully',
+    };
   }
 
   @Get(AuthRoutes.ME)
   @ApiEndpoint(UserResponseDto)
   @UseGuards(UniversalAuthGuard)
-  getCurrentUser(@CurrentUser() user: User): ApiResponseEnvelope<{ user: UserResponseDto }> {
-    return new ApiResponseEnvelope({
-      success: true,
-      statusCode: HttpStatus.OK,
-      message: 'Current user fetched',
-      detail: {
-        user: toUserResponseDto(user),
-      },
-    });
+  @ResponseMessage('Current user fetched')
+  getCurrentUser(@CurrentUser() user: User): { user: UserResponseDto } {
+    return {
+      user: toUserResponseDto(user),
+    };
   }
 }

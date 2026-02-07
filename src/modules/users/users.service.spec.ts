@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
+import { User } from './entities/user.entity';
 
 describe('UsersController', () => {
   let usersController: UsersController;
@@ -41,17 +42,17 @@ describe('UsersController', () => {
       updatedAt: new Date(),
     };
 
-    jest.spyOn(usersService, 'create').mockResolvedValue(createdUser as never);
+    jest.spyOn(usersService, 'create').mockResolvedValue(createdUser as User);
 
     const result = await usersController.create(dto);
 
-    expect(result.detail).toBeDefined();
-    expect(result.detail!.user.id).toEqual(createdUser.id);
-    expect(result.detail!.user.email).toEqual(createdUser.email);
-    expect(result.detail!.user.firstName).toEqual(createdUser.firstName);
-    expect(result.detail!.user.lastName).toEqual(createdUser.lastName);
-    expect(result.detail!.user.role).toEqual(createdUser.role);
-    expect(result.detail!.user.createdAt).toBeDefined();
-    expect(result.detail!.user.updatedAt).toBeDefined();
+    expect(result.user).toBeDefined();
+    expect(result.user.id).toEqual(createdUser.id);
+    expect(result.user.email).toEqual(createdUser.email);
+    expect(result.user.firstName).toEqual(createdUser.firstName);
+    expect(result.user.lastName).toEqual(createdUser.lastName);
+    expect(result.user.role).toEqual(createdUser.role);
+    expect(result.user.createdAt).toBeDefined();
+    expect(result.user.updatedAt).toBeDefined();
   });
 });

@@ -3,7 +3,6 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/req/create-user.req.dto';
 import { UpdateUserDto } from './dto/req/update-user.req.dto';
 import { UserResponseDto } from './dto/res/user.res.dto';
-import { ApiResponseEnvelope } from '@/common/responses/api-response-envelope';
 import { UUIDParam } from '@/common/decorators/uuid-param.decorator';
 import { toUserResponseDto } from './mappers/user.mapper';
 import { UsersRoutes } from './routes/users.routes';
@@ -14,6 +13,7 @@ import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 
 @Controller(UsersRoutes.ROOT)
 @UseGuards(UniversalAuthGuard)
@@ -24,62 +24,43 @@ export class UsersController {
   @ApiEndpoint(CreateUserDto, HttpStatus.CREATED)
   @UseGuards(RolesGuard)
   @Roles(UserRole.OWNER)
-  async create(@Body() dto: CreateUserDto): Promise<ApiResponseEnvelope<{ user: UserResponseDto }>> {
+  @ResponseMessage('User created successfully')
+  async create(@Body() dto: CreateUserDto): Promise<{ user: UserResponseDto }> {
     const user = await this.usersService.create(dto);
-
-    return new ApiResponseEnvelope({
-      success: true,
-      statusCode: HttpStatus.CREATED,
-      message: 'User created',
-      detail: { user: toUserResponseDto(user) },
-    });
+    return {
+      user: toUserResponseDto(user),
+    };
   }
 
   @Get()
   @ApiEndpoint(UserResponseDto, HttpStatus.OK)
   async findAll(
     @Query() paginationQuery: UsersPaginationQueryDto,
-  ): Promise<ApiResponseEnvelope<{ users: UserResponseDto[]; pagination: PaginationMetadata }>> {
+  ): Promise<{ users: UserResponseDto[]; pagination: PaginationMetadata }> {
     const result = await this.usersService.findAll(paginationQuery);
-
-    return new ApiResponseEnvelope({
-      success: true,
-      statusCode: HttpStatus.OK,
-      message: 'Users fetched',
-      detail: {
-        users: result.data.map(toUserResponseDto),
-        pagination: result.pagination,
-      },
-    });
+    return {
+      users: result.data.map(toUserResponseDto),
+      pagination: result.pagination,
+    };
   }
 
   @Get(UsersRoutes.ID)
   @ApiEndpoint(UserResponseDto, HttpStatus.OK)
-  async findOne(@UUIDParam() id: string): Promise<ApiResponseEnvelope<{ user: UserResponseDto }>> {
+  async findOne(@UUIDParam() id: string): Promise<{ user: UserResponseDto }> {
     const user = await this.usersService.findOne(id);
-
-    return new ApiResponseEnvelope({
-      success: true,
-      statusCode: HttpStatus.OK,
-      message: 'User fetched',
-      detail: { user: toUserResponseDto(user) },
-    });
+    return {
+      user: toUserResponseDto(user),
+    };
   }
 
   @Patch(UsersRoutes.ID)
   @ApiEndpoint(UpdateUserDto, HttpStatus.OK)
-  async update(
-    @UUIDParam() id: string,
-    @Body() dto: UpdateUserDto,
-  ): Promise<ApiResponseEnvelope<{ user: UserResponseDto }>> {
+  @ResponseMessage('User updated successfully')
+  async update(@UUIDParam() id: string, @Body() dto: UpdateUserDto): Promise<{ user: UserResponseDto }> {
     const user = await this.usersService.update(id, dto);
-
-    return new ApiResponseEnvelope({
-      success: true,
-      statusCode: HttpStatus.OK,
-      message: 'User updated',
-      detail: { user: toUserResponseDto(user) },
-    });
+    return {
+      user: toUserResponseDto(user),
+    };
   }
 
   @Delete(UsersRoutes.ID)

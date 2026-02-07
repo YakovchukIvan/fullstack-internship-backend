@@ -1,4 +1,4 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { getCorsConfig } from './config/cors.config';
@@ -8,6 +8,7 @@ import { globalValidationPipe } from './common/pipes/global-validation.pipe';
 import { getAppConfig } from './config/app.config';
 import { setupSwagger } from './config/swagger.config';
 import cookieParser from 'cookie-parser';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -19,8 +20,9 @@ async function bootstrap(): Promise<void> {
 
   app.useLogger(logger);
   app.use(cookieParser());
-  app.setGlobalPrefix(config.globalPrefix);
   app.enableCors(getCorsConfig(configService));
+  app.useGlobalInterceptors(new ResponseInterceptor(app.get(Reflector)));
+  app.setGlobalPrefix(config.globalPrefix);
   app.useGlobalPipes(globalValidationPipe);
   app.useGlobalFilters(new AllExceptionsFilter(logger));
 
