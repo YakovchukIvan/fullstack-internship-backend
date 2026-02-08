@@ -1,8 +1,9 @@
-import { Entity, Column, OneToOne } from 'typeorm';
+import { Entity, Column, OneToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from '@/common/entities/base.entity';
 import { UserRole } from '../../../common/enums/user-role.enum';
 import { Auth } from '@/modules/auth/entities/auth.entity';
 import { Exclude } from 'class-transformer';
+import { Company } from '@/modules/companies/entities/company.entity';
 
 @Entity('users')
 export class User extends BaseEntity {
@@ -24,4 +25,7 @@ export class User extends BaseEntity {
   @OneToOne(() => Auth, (auth) => auth.user)
   @Exclude()
   auth?: Auth;
+
+  @OneToMany(() => Company, (company) => company.owner)
+  companies?: Company[];
 }

@@ -45,8 +45,8 @@ export class AuthController {
   @ApiSecurity({})
   @ApiEndpoint(Object, HttpStatus.OK)
   @ResponseMessage('Password reset request processed')
-  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto): Promise<{ message: string }> {
-    const result = await this.authService.handleForgotPassword(forgotPasswordDto.email);
+  async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<{ message: string }> {
+    const result = await this.authService.handleForgotPassword(dto.email);
     return {
       message: result.message,
     };
@@ -56,8 +56,8 @@ export class AuthController {
   @ApiSecurity({})
   @ApiEndpoint(Object, HttpStatus.OK)
   @ResponseMessage('Password has been reset successfully')
-  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
-    await this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);
+  async resetPassword(@Body() dto: ResetPasswordDto): Promise<{ message: string }> {
+    await this.authService.resetPassword(dto.token, dto.newPassword);
     return {
       message: 'You can now login with your new password',
     };
