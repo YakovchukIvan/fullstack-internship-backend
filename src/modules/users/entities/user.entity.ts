@@ -2,6 +2,7 @@ import { Entity, Column, OneToOne } from 'typeorm';
 import { BaseEntity } from '@/common/entities/base.entity';
 import { UserRole } from '../../../common/enums/user-role.enum';
 import { Auth } from '@/modules/auth/entities/auth.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity('users')
 export class User extends BaseEntity {
@@ -18,5 +19,6 @@ export class User extends BaseEntity {
   role: UserRole;
 
   @OneToOne(() => Auth, (auth) => auth.user)
+  @Exclude()
   auth?: Auth;
 }

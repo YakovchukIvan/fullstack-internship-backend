@@ -115,6 +115,7 @@ export class AuthFlowService {
       return null;
     }
 
+    delete user.auth;
     return user;
   }
 
@@ -229,7 +230,6 @@ export class AuthFlowService {
 
   async refreshAccessToken(refreshToken: string): Promise<AuthResponseDto> {
     const payload = await this.tokenService.verifyRefreshToken(refreshToken);
-
     const refreshTokenHash = this.passwordService.hashResetToken(refreshToken);
 
     const auth = await this.authRepository.findOne({
@@ -245,7 +245,7 @@ export class AuthFlowService {
     }
 
     const newAccessToken = this.tokenService.generateAccessToken(auth.user);
-
+    delete auth.user.auth;
     return {
       accessToken: newAccessToken,
       user: toUserResponseDto(auth.user),

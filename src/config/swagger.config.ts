@@ -3,7 +3,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 
 export function setupSwagger(app: INestApplication, globalPrefix: string, configService: ConfigService): void {
-  const nodeEnv = configService.get<string>('NODE_ENV', 'development');
+  const nodeEnv = configService.get<string>('NODE_ENV');
 
   if (nodeEnv === 'production') {
     return;
