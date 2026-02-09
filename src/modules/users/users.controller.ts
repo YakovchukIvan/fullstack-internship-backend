@@ -68,8 +68,7 @@ export class UsersController {
 
   @Delete(UsersRoutes.ID)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER)
+  @UseGuards(ResourceOwnerGuard)
   async remove(@UUIDParam() id: string): Promise<void> {
     await this.usersService.remove(id);
   }
