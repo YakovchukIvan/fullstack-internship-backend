@@ -4,6 +4,8 @@ import { CreateUserDto } from './dto/req/create-user.req.dto';
 import { UpdateUserDto } from './dto/req/update-user.req.dto';
 import { UserResponseDto } from './dto/res/user.res.dto';
 import { UUIDParam } from '@/common/decorators/uuid-param.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { toUserResponseDto } from './mappers/user.mapper';
 import { UsersRoutes } from './routes/users.routes';
 import { PaginationMetadata } from '@/common/interfaces/pagination-metadata.interface';
@@ -44,8 +46,18 @@ export class UsersController {
     };
   }
 
+  @Get(UsersRoutes.ME)
+  @Roles(UserRole.USER)
+  @ApiEndpoint(UserResponseDto, HttpStatus.OK)
+  async findMe(@CurrentUser() currentUser: JwtPayload): Promise<{ user: UserResponseDto }> {
+    const user = await this.usersService.findOne(currentUser.sub);
+    return {
+      user: toUserResponseDto(user),
+    };
+  }
+
   @Get(UsersRoutes.ID)
-  @Roles(UserRole.OWNER, UserRole.USER)
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiEndpoint(UserResponseDto, HttpStatus.OK)
   async findOne(@UUIDParam() id: string): Promise<{ user: UserResponseDto }> {
     const user = await this.usersService.findOne(id);
@@ -54,21 +66,25 @@ export class UsersController {
     };
   }
 
-  @Patch(UsersRoutes.ID)
-  @Roles(UserRole.OWNER, UserRole.USER)
+  @Patch(UsersRoutes.ME)
+  @Roles(UserRole.USER)
   @ApiEndpoint(UpdateUserDto, HttpStatus.OK)
-  @ResponseMessage('User updated successfully')
-  async update(@UUIDParam() id: string, @Body() dto: UpdateUserDto): Promise<{ user: UserResponseDto }> {
-    const user = await this.usersService.update(id, dto);
+  @ResponseMessage('Profile updated successfully')
+  async updateMe(
+    @CurrentUser() currentUser: JwtPayload,
+    @Body() dto: UpdateUserDto,
+  ): Promise<{ user: UserResponseDto }> {
+    const user = await this.usersService.update(currentUser.sub, dto);
     return {
       user: toUserResponseDto(user),
     };
   }
 
-  @Delete(UsersRoutes.ID)
+  @Delete(UsersRoutes.ME)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(UserRole.OWNER, UserRole.USER)
-  async remove(@UUIDParam() id: string): Promise<void> {
-    await this.usersService.remove(id);
+  @Roles(UserRole.USER)
+  @ResponseMessage('Profile deleted successfully')
+  async removeMe(@CurrentUser() currentUser: JwtPayload): Promise<void> {
+    await this.usersService.remove(currentUser.sub);
   }
 }
