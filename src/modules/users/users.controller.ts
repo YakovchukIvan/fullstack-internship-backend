@@ -14,15 +14,15 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
+import { ResourceOwnerGuard } from '../auth/guards/resource-owner.guard';
 
 @Controller(UsersRoutes.ROOT)
-@UseGuards(UniversalAuthGuard)
+@UseGuards(UniversalAuthGuard, RolesGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
   @ApiEndpoint(CreateUserDto, HttpStatus.CREATED)
-  @UseGuards(RolesGuard)
   @Roles(UserRole.OWNER)
   @ResponseMessage('User created successfully')
   async create(@Body() dto: CreateUserDto): Promise<{ user: UserResponseDto }> {
@@ -33,6 +33,7 @@ export class UsersController {
   }
 
   @Get()
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiEndpoint(UserResponseDto, HttpStatus.OK)
   async findAll(
     @Query() paginationQuery: UsersPaginationQueryDto,
@@ -45,6 +46,7 @@ export class UsersController {
   }
 
   @Get(UsersRoutes.ID)
+  @UseGuards(ResourceOwnerGuard)
   @ApiEndpoint(UserResponseDto, HttpStatus.OK)
   async findOne(@UUIDParam() id: string): Promise<{ user: UserResponseDto }> {
     const user = await this.usersService.findOne(id);
@@ -54,6 +56,7 @@ export class UsersController {
   }
 
   @Patch(UsersRoutes.ID)
+  @UseGuards(ResourceOwnerGuard)
   @ApiEndpoint(UpdateUserDto, HttpStatus.OK)
   @ResponseMessage('User updated successfully')
   async update(@UUIDParam() id: string, @Body() dto: UpdateUserDto): Promise<{ user: UserResponseDto }> {
