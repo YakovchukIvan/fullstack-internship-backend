@@ -14,7 +14,6 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
-import { ResourceOwnerGuard } from '../auth/guards/resource-owner.guard';
 
 @Controller(UsersRoutes.ROOT)
 @UseGuards(UniversalAuthGuard, RolesGuard)
@@ -46,7 +45,7 @@ export class UsersController {
   }
 
   @Get(UsersRoutes.ID)
-  @UseGuards(ResourceOwnerGuard)
+  @Roles(UserRole.OWNER, UserRole.USER)
   @ApiEndpoint(UserResponseDto, HttpStatus.OK)
   async findOne(@UUIDParam() id: string): Promise<{ user: UserResponseDto }> {
     const user = await this.usersService.findOne(id);
@@ -56,7 +55,7 @@ export class UsersController {
   }
 
   @Patch(UsersRoutes.ID)
-  @UseGuards(ResourceOwnerGuard)
+  @Roles(UserRole.OWNER, UserRole.USER)
   @ApiEndpoint(UpdateUserDto, HttpStatus.OK)
   @ResponseMessage('User updated successfully')
   async update(@UUIDParam() id: string, @Body() dto: UpdateUserDto): Promise<{ user: UserResponseDto }> {
@@ -68,7 +67,7 @@ export class UsersController {
 
   @Delete(UsersRoutes.ID)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @UseGuards(ResourceOwnerGuard)
+  @Roles(UserRole.OWNER, UserRole.USER)
   async remove(@UUIDParam() id: string): Promise<void> {
     await this.usersService.remove(id);
   }

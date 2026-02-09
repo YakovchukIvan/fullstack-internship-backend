@@ -1,13 +1,9 @@
 import type { Response } from 'express';
 import { Body, Controller, Get, HttpStatus, Post, Res, UseGuards } from '@nestjs/common';
-import { AuthService } from './services/auth.service';
 import { LoginDto } from './dto/req/login.dto';
 import { AuthResponseDto } from './dto/res/auth-response.dto';
-import { LocalAuthGuard } from './guards/local-auth.guard';
 import { UniversalAuthGuard } from './guards/universal-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
-import { User } from '../users/entities/user.entity';
-import { toUserResponseDto } from '../users/mappers/user.mapper';
 import { UserResponseDto } from '../users/dto/res/user.res.dto';
 import { AuthRoutes } from './routes/auth.routes';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
@@ -16,10 +12,13 @@ import { ApiSecurity } from '@nestjs/swagger';
 import { ForgotPasswordDto } from './dto/req/forgot-password.dto';
 import { ResetPasswordDto } from './dto/req/reset-password.dto';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
+import { AuthFlowService } from './services/auth-flow.service';
+import { CurrentUserResponseDto } from './dto/res/current-user.res.dto';
+import type { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Controller(AuthRoutes.ROOT)
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authFlowService: AuthFlowService) {}
 
   @Post(AuthRoutes.REGISTER)
   @ApiSecurity({})
@@ -29,16 +28,15 @@ export class AuthController {
     @Body() registerDto: RegisterDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<AuthResponseDto> {
-    return this.authService.handleRegister(registerDto, response);
+    return this.authFlowService.handleRegister(registerDto, response);
   }
 
   @Post(AuthRoutes.LOGIN)
   @ApiSecurity({})
   @ApiEndpoint(AuthResponseDto, HttpStatus.OK)
-  @UseGuards(LocalAuthGuard)
   @ResponseMessage('Login successful')
   async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) response: Response): Promise<AuthResponseDto> {
-    return this.authService.handleLogin(loginDto, response);
+    return this.authFlowService.handleLogin(loginDto, response);
   }
 
   @Post(AuthRoutes.FORGOT_PASSWORD)
@@ -46,7 +44,7 @@ export class AuthController {
   @ApiEndpoint(Object, HttpStatus.OK)
   @ResponseMessage('Password reset request processed')
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto): Promise<{ message: string }> {
-    const result = await this.authService.handleForgotPassword(forgotPasswordDto.email);
+    const result = await this.authFlowService.handleForgotPassword(forgotPasswordDto.email);
     return {
       message: result.message,
     };
@@ -57,7 +55,7 @@ export class AuthController {
   @ApiEndpoint(Object, HttpStatus.OK)
   @ResponseMessage('Password has been reset successfully')
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
-    await this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);
+    await this.authFlowService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);
     return {
       message: 'You can now login with your new password',
     };
@@ -67,10 +65,10 @@ export class AuthController {
   @UseGuards(UniversalAuthGuard)
   @ResponseMessage('Logout successful')
   async logout(
-    @CurrentUser() user: User,
+    @CurrentUser() user: JwtPayload,
     @Res({ passthrough: true }) response: Response,
   ): Promise<{ message: string }> {
-    await this.authService.handleLogout(user.id, response);
+    await this.authFlowService.handleLogout(user.sub, response);
     return {
       message: 'You have been logged out successfully',
     };
@@ -80,9 +78,13 @@ export class AuthController {
   @ApiEndpoint(UserResponseDto)
   @UseGuards(UniversalAuthGuard)
   @ResponseMessage('Current user fetched')
-  getCurrentUser(@CurrentUser() user: User): { user: UserResponseDto } {
+  getCurrentUser(@CurrentUser() user: JwtPayload): { user: CurrentUserResponseDto } {
     return {
-      user: toUserResponseDto(user),
+      user: {
+        id: user.sub,
+        email: user.email,
+        role: user.role,
+      },
     };
   }
 }

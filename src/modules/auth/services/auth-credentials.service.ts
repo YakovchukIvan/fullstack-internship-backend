@@ -21,10 +21,6 @@ export class AuthCredentialsService {
     return authRepo.save(auth);
   }
 
-  async setPassword(user: User, plainPassword: string): Promise<Auth> {
-    return this.upsertPassword(this.authRepository, user, plainPassword);
-  }
-
   async setPasswordTx(manager: EntityManager, user: User, plainPassword: string): Promise<Auth> {
     const authRepo = manager.getRepository(Auth);
     return this.upsertPassword(authRepo, user, plainPassword);
