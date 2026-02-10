@@ -4,7 +4,7 @@ export const globalValidationPipe = new ValidationPipe({
   whitelist: true,
   forbidNonWhitelisted: true,
   transform: true,
-  validateCustomDecorators: true,
+  validateCustomDecorators: false,
   transformOptions: {
     enableImplicitConversion: true,
   },

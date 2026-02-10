@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { Auth } from '../entities/auth.entity';
 import { User } from '@/modules/users/entities/user.entity';
-import { PasswordService } from '../password.service';
+import { PasswordService } from './password.service';
 
 @Injectable()
 export class AuthCredentialsService {
@@ -19,10 +19,6 @@ export class AuthCredentialsService {
 
     const auth = authRepo.create({ user, passwordHash });
     return authRepo.save(auth);
-  }
-
-  async setPassword(user: User, plainPassword: string): Promise<Auth> {
-    return this.upsertPassword(this.authRepository, user, plainPassword);
   }
 
   async setPasswordTx(manager: EntityManager, user: User, plainPassword: string): Promise<Auth> {
