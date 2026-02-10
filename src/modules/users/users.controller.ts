@@ -34,7 +34,7 @@ export class UsersController {
   }
 
   @Get()
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Roles(UserRole.OWNER)
   @ApiEndpoint(UserResponseDto, HttpStatus.OK)
   async findAll(
     @Query() paginationQuery: UsersPaginationQueryDto,
@@ -57,7 +57,7 @@ export class UsersController {
   }
 
   @Get(UsersRoutes.ID)
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @Roles(UserRole.OWNER)
   @ApiEndpoint(UserResponseDto, HttpStatus.OK)
   async findOne(@UUIDParam() id: string): Promise<{ user: UserResponseDto }> {
     const user = await this.usersService.findOne(id);

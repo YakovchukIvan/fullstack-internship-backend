@@ -1,4 +1,4 @@
 export const CompaniesRoutes = {
   ROOT: 'companies',
-  BY_ID: ':id',
+  BY_SLUG: ':slug',
 } as const;

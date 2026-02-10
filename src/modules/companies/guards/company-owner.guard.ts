@@ -1,17 +1,23 @@
+// src/modules/companies/guards/company-owner.guard.ts
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { UserRole } from '@/common/enums/user-role.enum';
-import { RequestWithUser } from '@/modules/auth/interfaces/request-with-user.interface';
+import { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
 import { CompaniesService } from '../companies.service';
+
+interface RequestWithUserAndParams {
+  user: JwtPayload;
+  params: { slug?: string };
+}
 
 @Injectable()
 export class CompanyOwnerGuard implements CanActivate {
   constructor(private readonly companiesService: CompaniesService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<RequestWithUser & { params: { id?: string } }>();
+    const request = context.switchToHttp().getRequest<RequestWithUserAndParams>();
 
     const user = request.user;
-    const companyId = request.params.id;
+    const slug = request.params.slug;
 
     if (!user) {
       throw new ForbiddenException('User not authenticated');
@@ -21,17 +27,19 @@ export class CompanyOwnerGuard implements CanActivate {
       return true;
     }
 
-    if (!companyId) {
-      throw new ForbiddenException('Company ID is required');
+    if (!slug) {
+      throw new ForbiddenException('Company slug is required');
     }
 
-    const company = await this.companiesService.findOne(companyId);
+    const company = await this.companiesService.findBySlug(slug);
 
     if (!company) {
       throw new NotFoundException('Company not found');
     }
 
-    if (company.ownerId !== user.sub) {
+    const isOwner = await this.companiesService.isCompanyOwner(user.sub, company.id);
+
+    if (!isOwner) {
       throw new ForbiddenException('You can only modify your own companies');
     }
 
