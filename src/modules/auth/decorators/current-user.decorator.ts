@@ -1,8 +1,8 @@
 import { createParamDecorator, ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { User } from '@/modules/users/entities/user.entity';
 import { RequestWithUser } from '../interfaces/request-with-user.interface';
+import type { JwtPayload } from '../interfaces/jwt-payload.interface';
 
-export const CurrentUser = createParamDecorator((_data: unknown, ctx: ExecutionContext): User => {
+export const CurrentUser = createParamDecorator((_data: unknown, ctx: ExecutionContext): JwtPayload => {
   const request = ctx.switchToHttp().getRequest<RequestWithUser>();
 
   if (!request.user) {

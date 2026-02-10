@@ -31,7 +31,7 @@ export class CompanyOwnerGuard implements CanActivate {
       throw new NotFoundException('Company not found');
     }
 
-    if (company.ownerId !== user.id) {
+    if (company.ownerId !== user.sub) {
       throw new ForbiddenException('You can only modify your own companies');
     }
 

@@ -15,19 +15,23 @@ export class AuthOAuthService {
     private readonly authRepository: Repository<Auth>,
   ) {}
 
-  async validateAuth0User(auth0Payload: Auth0Payload): Promise<User> {
+  async validateAuth0User(auth0Payload: Auth0Payload): Promise<{ id: string; email: string; role: UserRole }> {
     const email = auth0Payload.email.toLowerCase();
 
     let user = await this.userRepository.findOne({
       where: { email },
-      relations: ['auth'],
+      select: ['id', 'email', 'role'],
     });
 
     if (!user) {
       user = await this.createUserFromAuth0(auth0Payload);
     }
 
-    return user;
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    };
   }
 
   private async createUserFromAuth0(auth0Payload: Auth0Payload): Promise<User> {
