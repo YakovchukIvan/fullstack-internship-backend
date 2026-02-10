@@ -8,7 +8,7 @@ import { AuthCredentialsService } from '@/modules/auth/services/auth-credentials
 import { AppLogger } from '@/common/logger/app-logger';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { PaginatedResult } from '@/common/interfaces/paginated-result.interface';
-import { createPaginatedResult } from '@/common/helpers/create-paginated-result.helper';
+import { createPaginatedResult, PaginationOptions } from '@/common/helpers/create-paginated-result.helper';
 import { UsersPaginationQueryDto } from './dto/req/users-pagination-query.dto';
 
 @Injectable()
@@ -41,12 +41,7 @@ export class UsersService {
   }
 
   async findAll(paginationQuery: UsersPaginationQueryDto): Promise<PaginatedResult<User>> {
-    const result = await createPaginatedResult(this.usersRepository, {
-      page: paginationQuery.page,
-      limit: paginationQuery.limit,
-      sortBy: paginationQuery.sortBy,
-      order: paginationQuery.order,
-    });
+    const result = await createPaginatedResult(this.usersRepository, paginationQuery as PaginationOptions<keyof User>);
 
     this.logger.log('Users fetched successfully', UsersService.name);
     return result;
@@ -90,8 +85,7 @@ export class UsersService {
 
   async remove(id: string): Promise<void> {
     const user = await this.findUserByIdOrThrow(id);
-    await this.usersRepository.delete(user.id);
-
+    await this.usersRepository.remove(user);
     this.logger.log({ userId: id, email: user.email }, 'User removed successfully', UsersService.name);
   }
 

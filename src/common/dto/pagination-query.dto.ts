@@ -6,18 +6,18 @@ import { QUERY_DEFAULTS } from '../constants/query-defaults.constant';
 export class PaginationQueryDto {
   @IsOptional()
   @Type(() => Number)
-  @IsInt({ message: 'Page must be an integer' })
-  @Min(1, { message: 'Page must be at least 1' })
+  @IsInt()
+  @Min(1)
   page: number = QUERY_DEFAULTS.PAGE;
 
   @IsOptional()
   @Type(() => Number)
-  @IsInt({ message: 'Limit must be an integer' })
-  @Min(1, { message: 'Limit must be at least 1' })
-  @Max(QUERY_DEFAULTS.MAX_LIMIT, { message: `Limit must not exceed ${QUERY_DEFAULTS.MAX_LIMIT}` })
+  @IsInt()
+  @Min(1)
+  @Max(QUERY_DEFAULTS.MAX_LIMIT)
   limit: number = QUERY_DEFAULTS.LIMIT;
 
   @IsOptional()
-  @IsEnum(SortOrder, { message: 'Order must be ASC or DESC' })
+  @IsEnum(SortOrder)
   order: SortOrder = QUERY_DEFAULTS.ORDER;
 }

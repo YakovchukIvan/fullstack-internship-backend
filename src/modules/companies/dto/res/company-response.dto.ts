@@ -1,36 +1,29 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { CompanyRole } from '@/common/enums/company-role.enum';
+
+class MemberUserDto {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string | null;
+}
 
 export class CompanyResponseDto {
-  @ApiProperty()
-  @Expose()
   id: string;
-
-  @ApiProperty()
-  @Expose()
   name: string;
-
-  @ApiProperty({ nullable: true })
-  @Expose()
+  slug: string;
   description: string | null;
-
-  @ApiProperty({ nullable: true })
-  @Expose()
   avatarUrl: string | null;
-
-  @ApiProperty()
-  @Expose()
   isVisible: boolean;
-
-  @ApiProperty()
-  @Expose()
   ownerId: string;
+  membersCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
-  @ApiProperty()
-  @Expose()
-  createdAt: Date;
-
-  @ApiProperty()
-  @Expose()
-  updatedAt: Date;
+export class CompanyMemberResponseDto {
+  id: string;
+  role: CompanyRole;
+  user: MemberUserDto;
+  createdAt: string;
 }

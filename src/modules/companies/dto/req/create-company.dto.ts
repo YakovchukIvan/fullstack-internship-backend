@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, MaxLength, MinLength, IsOptional, IsUrl } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength, MinLength, IsOptional, IsUrl, IsBoolean } from 'class-validator';
 
 export class CreateCompanyDto {
   @IsString({ message: 'Company name must be a string' })
@@ -16,4 +16,8 @@ export class CreateCompanyDto {
   @IsUrl({}, { message: 'Avatar URL must be a valid URL' })
   @MaxLength(500, { message: 'Avatar URL must not exceed 500 characters' })
   avatarUrl?: string;
+
+  @IsOptional()
+  @IsBoolean({ message: 'isVisible must be a boolean' })
+  isVisible?: boolean;
 }

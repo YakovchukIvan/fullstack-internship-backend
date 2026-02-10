@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/req/create-user.req.dto';
 import { UpdateUserDto } from './dto/req/update-user.req.dto';
@@ -8,17 +8,14 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { toUserResponseDto } from './mappers/user.mapper';
 import { UsersRoutes } from './routes/users.routes';
-import { PaginationMetadata } from '@/common/interfaces/pagination-metadata.interface';
 import { UsersPaginationQueryDto } from './dto/req/users-pagination-query.dto';
-import { UniversalAuthGuard } from '../auth/guards/universal-auth.guard';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
-import { RolesGuard } from '../auth/guards/roles.guard';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
+import { UsersPaginatedResponseDto } from './dto/res/users-paginated-response.dto';
 
 @Controller(UsersRoutes.ROOT)
-@UseGuards(UniversalAuthGuard, RolesGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -35,10 +32,8 @@ export class UsersController {
 
   @Get()
   @Roles(UserRole.OWNER)
-  @ApiEndpoint(UserResponseDto, HttpStatus.OK)
-  async findAll(
-    @Query() paginationQuery: UsersPaginationQueryDto,
-  ): Promise<{ users: UserResponseDto[]; pagination: PaginationMetadata }> {
+  @ApiEndpoint(UsersPaginatedResponseDto, HttpStatus.OK)
+  async findAll(@Query() paginationQuery: UsersPaginationQueryDto): Promise<UsersPaginatedResponseDto> {
     const result = await this.usersService.findAll(paginationQuery);
     return {
       users: result.data.map(toUserResponseDto),
@@ -47,7 +42,7 @@ export class UsersController {
   }
 
   @Get(UsersRoutes.ME)
-  @Roles(UserRole.USER)
+  @Roles(UserRole.USER, UserRole.OWNER)
   @ApiEndpoint(UserResponseDto, HttpStatus.OK)
   async findMe(@CurrentUser() currentUser: JwtPayload): Promise<{ user: UserResponseDto }> {
     const user = await this.usersService.findOne(currentUser.sub);
@@ -67,7 +62,7 @@ export class UsersController {
   }
 
   @Patch(UsersRoutes.ME)
-  @Roles(UserRole.USER)
+  @Roles(UserRole.USER, UserRole.OWNER)
   @ApiEndpoint(UpdateUserDto, HttpStatus.OK)
   @ResponseMessage('Profile updated successfully')
   async updateMe(

@@ -1,23 +1,31 @@
-import { Body, Controller, Delete, Get, HttpStatus, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpStatus, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { CompaniesService } from './companies.service';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { CompaniesRoutes } from './routes/companies.routes';
-import { UniversalAuthGuard } from '@/modules/auth/guards/universal-auth.guard';
 import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
 import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
-import { toCompanyResponseDto } from './mappers/company.mapper';
-import { CompanyOwnerGuard } from './guards/company-owner.guard';
-import { CompanyResponseDto } from './dto/res/company-response.dto';
+import { toCompanyResponseDto, toCompanyMemberResponseDto } from './mappers/company.mapper';
+import { CompanyResponseDto, CompanyMemberResponseDto } from './dto/res/company-response.dto';
 import { CreateCompanyDto } from './dto/req/create-company.dto';
 import { UpdateCompanyDto } from './dto/req/update-company.dto';
+import { CompanyRoleGuard } from './guards/company-role.guard';
+import { RequireCompanyRoles } from './decorators/company-roles.decorator';
+import { CompanyRole } from '@/common/enums/company-role.enum';
+import { CompanyMembersPaginationDto } from './dto/req/company-members-pagination.dto';
+import { CompaniesPaginationDto } from './dto/req/companies-pagination.dto';
+import { PaginationMetadata } from '@/common/interfaces/pagination-metadata.interface';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '@/common/enums/user-role.enum';
+import type { CompanyRequest } from './interfaces/company-request.interface';
 
+@Roles(UserRole.USER, UserRole.OWNER)
+@UseGuards(CompanyRoleGuard)
 @Controller(CompaniesRoutes.ROOT)
 export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}
 
   @Post()
-  @UseGuards(UniversalAuthGuard)
   @ApiEndpoint(CompanyResponseDto, HttpStatus.CREATED)
   @ResponseMessage('Company created successfully')
   async create(
@@ -25,38 +33,57 @@ export class CompaniesController {
     @CurrentUser() user: JwtPayload,
   ): Promise<{ company: CompanyResponseDto }> {
     const company = await this.companiesService.create(dto, user.sub);
+    const membersCount = 1;
     return {
-      company: toCompanyResponseDto(company),
+      company: toCompanyResponseDto(company, membersCount),
     };
   }
 
   @Get()
-  @UseGuards(UniversalAuthGuard)
   @ApiEndpoint(CompanyResponseDto, HttpStatus.OK)
   @ResponseMessage('Companies fetched successfully')
-  async findAll(@CurrentUser() user: JwtPayload): Promise<{ companies: CompanyResponseDto[] }> {
-    const companies = await this.companiesService.findAll(user.role);
+  async findAll(
+    @CurrentUser() user: JwtPayload,
+    @Query() paginationDto: CompaniesPaginationDto,
+  ): Promise<{ companies: CompanyResponseDto[]; pagination: PaginationMetadata }> {
+    const result = await this.companiesService.findAll(user.role, paginationDto);
     return {
-      companies: companies.map(toCompanyResponseDto),
+      companies: result.data.map((c) => toCompanyResponseDto(c, 0)),
+      pagination: result.pagination,
     };
   }
 
   @Get(CompaniesRoutes.BY_SLUG)
-  @UseGuards(UniversalAuthGuard)
   @ApiEndpoint(CompanyResponseDto, HttpStatus.OK)
   @ResponseMessage('Company fetched successfully')
   async findOne(
     @Param('slug') slug: string,
     @CurrentUser() user: JwtPayload,
   ): Promise<{ company: CompanyResponseDto }> {
-    const company = await this.companiesService.findBySlug(slug, user.role);
+    const { company, membersCount } = await this.companiesService.findBySlug(slug, user.role);
     return {
-      company: toCompanyResponseDto(company),
+      company: toCompanyResponseDto(company, membersCount),
+    };
+  }
+
+  @Get(CompaniesRoutes.MEMBERS)
+  @ApiEndpoint(CompanyMemberResponseDto, HttpStatus.OK)
+  @ResponseMessage('Company members fetched successfully')
+  async findMembers(
+    @Req() request: CompanyRequest,
+    @Query() paginationDto: CompanyMembersPaginationDto,
+  ): Promise<{ members: CompanyMemberResponseDto[]; pagination: PaginationMetadata }> {
+    const companyId = request.companyId!;
+    const result = await this.companiesService.findCompanyMembers(companyId, paginationDto);
+
+    return {
+      members: result.data.map(toCompanyMemberResponseDto),
+      pagination: result.pagination,
     };
   }
 
   @Patch(CompaniesRoutes.BY_SLUG)
-  @UseGuards(UniversalAuthGuard, CompanyOwnerGuard)
+  @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
   @ApiEndpoint(CompanyResponseDto, HttpStatus.OK)
   @ResponseMessage('Company updated successfully')
   async update(
@@ -65,13 +92,15 @@ export class CompaniesController {
     @CurrentUser() user: JwtPayload,
   ): Promise<{ company: CompanyResponseDto }> {
     const company = await this.companiesService.update(slug, dto, user.role);
+    const membersCount = await this.companiesService.getMembersCount(company.id);
+
     return {
-      company: toCompanyResponseDto(company),
+      company: toCompanyResponseDto(company, membersCount),
     };
   }
 
   @Delete(CompaniesRoutes.BY_SLUG)
-  @UseGuards(UniversalAuthGuard, CompanyOwnerGuard)
+  @RequireCompanyRoles(CompanyRole.OWNER)
   @ApiEndpoint(Object, HttpStatus.OK)
   @ResponseMessage('Company deleted successfully')
   async remove(@Param('slug') slug: string, @CurrentUser() user: JwtPayload): Promise<{ message: string }> {

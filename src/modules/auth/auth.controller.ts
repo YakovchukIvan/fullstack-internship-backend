@@ -1,8 +1,7 @@
 import type { Response } from 'express';
-import { Body, Controller, Get, HttpStatus, Post, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Post, Res } from '@nestjs/common';
 import { LoginDto } from './dto/req/login.dto';
 import { AuthResponseDto } from './dto/res/auth-response.dto';
-import { UniversalAuthGuard } from './guards/universal-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { UserResponseDto } from '../users/dto/res/user.res.dto';
 import { AuthRoutes } from './routes/auth.routes';
@@ -15,7 +14,11 @@ import { ResponseMessage } from '@/common/decorators/response-message.decorator'
 import { AuthFacadeService } from './services/auth-facade.service';
 import { CurrentUserResponseDto } from './dto/res/current-user.res.dto';
 import type { JwtPayload } from './interfaces/jwt-payload.interface';
+import { Public } from './decorators/public.decorator';
+import { UserRole } from '@/common/enums/user-role.enum';
+import { Roles } from './decorators/roles.decorator';
 
+@Public()
 @Controller(AuthRoutes.ROOT)
 export class AuthController {
   constructor(private readonly authFacadeService: AuthFacadeService) {}
@@ -62,7 +65,7 @@ export class AuthController {
   }
 
   @Post(AuthRoutes.LOGOUT)
-  @UseGuards(UniversalAuthGuard)
+  @Roles(UserRole.USER)
   @ResponseMessage('Logout successful')
   async logout(
     @CurrentUser() user: JwtPayload,
@@ -76,7 +79,7 @@ export class AuthController {
 
   @Get(AuthRoutes.ME)
   @ApiEndpoint(UserResponseDto)
-  @UseGuards(UniversalAuthGuard)
+  @Roles(UserRole.USER)
   @ResponseMessage('Current user fetched')
   getCurrentUser(@CurrentUser() user: JwtPayload): { user: CurrentUserResponseDto } {
     return {

@@ -8,6 +8,10 @@ import { CompanyRole } from '@/common/enums/company-role.enum';
 import { generateSlug } from '@/common/helpers/generate-slug.helper';
 import { CreateCompanyDto } from './dto/req/create-company.dto';
 import { UpdateCompanyDto } from './dto/req/update-company.dto';
+import { PaginatedResult } from '@/common/interfaces/paginated-result.interface';
+import { createPaginatedResult } from '@/common/helpers/create-paginated-result.helper';
+import { CompaniesPaginationDto } from './dto/req/companies-pagination.dto';
+import { CompanyMembersPaginationDto } from './dto/req/company-members-pagination.dto';
 
 @Injectable()
 export class CompaniesService {
@@ -56,25 +60,19 @@ export class CompaniesService {
     return savedCompany;
   }
 
-  async findAll(userRole?: UserRole): Promise<Company[]> {
-    if (userRole === UserRole.OWNER) {
-      return this.companyRepository.find({
-        order: { createdAt: 'DESC' },
-        relations: ['owner'],
-      });
-    }
+  async findAll(userRole?: UserRole, paginationOptions?: CompaniesPaginationDto): Promise<PaginatedResult<Company>> {
+    const whereCondition = userRole === UserRole.OWNER ? {} : { isVisible: true };
 
-    return this.companyRepository.find({
-      where: { isVisible: true },
-      order: { createdAt: 'DESC' },
+    return createPaginatedResult(this.companyRepository, paginationOptions || {}, {
+      where: whereCondition,
       relations: ['owner'],
     });
   }
 
-  async findBySlug(slug: string, userRole?: UserRole): Promise<Company> {
+  private async findCompanyBySlug(slug: string, userRole?: UserRole): Promise<Company> {
     const company = await this.companyRepository.findOne({
       where: { slug },
-      relations: ['owner', 'members', 'members.user'],
+      relations: ['owner'],
     });
 
     if (!company) {
@@ -88,8 +86,34 @@ export class CompaniesService {
     return company;
   }
 
+  async findBySlug(slug: string, userRole?: UserRole): Promise<{ company: Company; membersCount: number }> {
+    const company = await this.findCompanyBySlug(slug, userRole);
+
+    const membersCount = await this.companyMemberRepository.count({
+      where: { companyId: company.id },
+    });
+
+    return { company, membersCount };
+  }
+
+  async getMembersCount(companyId: string): Promise<number> {
+    return this.companyMemberRepository.count({
+      where: { companyId },
+    });
+  }
+
+  async findCompanyMembers(
+    companyId: string,
+    paginationOptions?: CompanyMembersPaginationDto,
+  ): Promise<PaginatedResult<CompanyMember>> {
+    return createPaginatedResult(this.companyMemberRepository, paginationOptions || {}, {
+      where: { companyId },
+      relations: ['user'],
+    });
+  }
+
   async update(slug: string, updateCompanyDto: UpdateCompanyDto, userRole?: UserRole): Promise<Company> {
-    const company = await this.findBySlug(slug, userRole);
+    const company = await this.findCompanyBySlug(slug, userRole);
 
     if (updateCompanyDto.name && updateCompanyDto.name !== company.name) {
       const newSlug = generateSlug(updateCompanyDto.name);
@@ -122,11 +146,15 @@ export class CompaniesService {
       company.avatarUrl = updateCompanyDto.avatarUrl;
     }
 
+    if (updateCompanyDto.isVisible !== undefined) {
+      company.isVisible = updateCompanyDto.isVisible;
+    }
+
     return this.companyRepository.save(company);
   }
 
   async remove(slug: string, userRole?: UserRole): Promise<void> {
-    const company = await this.findBySlug(slug, userRole);
+    const company = await this.findCompanyBySlug(slug, userRole);
     await this.companyRepository.remove(company);
   }
 
@@ -153,5 +181,22 @@ export class CompaniesService {
   async canManageCompany(userId: string, companyId: string): Promise<boolean> {
     const role = await this.getUserRoleInCompany(userId, companyId);
     return role === CompanyRole.OWNER || role === CompanyRole.ADMIN;
+  }
+
+  async getUserRoleInCompanyBySlug(
+    userId: string,
+    slug: string,
+  ): Promise<{ role: CompanyRole | null; companyId: string | null }> {
+    const company = await this.companyRepository.findOne({
+      where: { slug },
+      select: ['id'],
+    });
+
+    if (!company) {
+      return { role: null, companyId: null };
+    }
+
+    const role = await this.getUserRoleInCompany(userId, company.id);
+    return { role, companyId: company.id };
   }
 }
