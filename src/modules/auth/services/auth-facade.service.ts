@@ -21,7 +21,7 @@ interface ForgotPasswordResult {
 }
 
 @Injectable()
-export class AuthFlowService {
+export class AuthFacadeService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -33,7 +33,7 @@ export class AuthFlowService {
     private readonly dataSource: DataSource,
     private readonly mailService: MailService,
   ) {
-    this.logger.setLoggerContext(AuthFlowService.name);
+    this.logger.setLoggerContext(AuthFacadeService.name);
   }
 
   async handleRegister(registerDto: RegisterDto, response: Response): Promise<AuthResponseDto> {
@@ -196,14 +196,14 @@ export class AuthFlowService {
     });
 
     if (!user || !user.auth) {
-      this.logger.log(`❌ Forgot password: User not found - ${normalizedEmail}`, AuthFlowService.name);
+      this.logger.log(`❌ Forgot password: User not found - ${normalizedEmail}`, AuthFacadeService.name);
       return { isOAuthUser: false };
     }
 
     if (user.auth.googleId && !user.auth.passwordHash) {
       this.logger.log(
         `🔐 Forgot password: OAuth user detected - ${normalizedEmail} (${user.auth.googleId})`,
-        AuthFlowService.name,
+        AuthFacadeService.name,
       );
       return {
         isOAuthUser: true,
@@ -212,7 +212,7 @@ export class AuthFlowService {
     }
 
     if (!user.auth.passwordHash) {
-      this.logger.log(`⚠️ Forgot password: No password hash found - ${normalizedEmail}`, AuthFlowService.name);
+      this.logger.log(`⚠️ Forgot password: No password hash found - ${normalizedEmail}`, AuthFacadeService.name);
       return { isOAuthUser: false };
     }
 
@@ -220,7 +220,7 @@ export class AuthFlowService {
     user.auth.resetPasswordExpiresAt = expiresAt;
     await this.authRepository.save(user.auth);
 
-    this.logger.log(`✅ Forgot password: Reset token generated for - ${normalizedEmail}`, AuthFlowService.name);
+    this.logger.log(`✅ Forgot password: Reset token generated for - ${normalizedEmail}`, AuthFacadeService.name);
 
     return {
       resetToken,

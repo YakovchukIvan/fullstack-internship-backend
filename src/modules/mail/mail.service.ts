@@ -12,7 +12,7 @@ export class MailService {
   private readonly emailConfig: EmailConfig;
 
   constructor(
-    private readonly configService: ConfigService,
+    configService: ConfigService,
     private readonly logger: AppLogger,
   ) {
     this.logger.setLoggerContext(MailService.name);

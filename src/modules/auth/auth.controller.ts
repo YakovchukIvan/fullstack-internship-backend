@@ -12,13 +12,13 @@ import { ApiSecurity } from '@nestjs/swagger';
 import { ForgotPasswordDto } from './dto/req/forgot-password.dto';
 import { ResetPasswordDto } from './dto/req/reset-password.dto';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
-import { AuthFlowService } from './services/auth-flow.service';
+import { AuthFacadeService } from './services/auth-facade.service';
 import { CurrentUserResponseDto } from './dto/res/current-user.res.dto';
 import type { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Controller(AuthRoutes.ROOT)
 export class AuthController {
-  constructor(private readonly authFlowService: AuthFlowService) {}
+  constructor(private readonly authFacadeService: AuthFacadeService) {}
 
   @Post(AuthRoutes.REGISTER)
   @ApiSecurity({})
@@ -28,7 +28,7 @@ export class AuthController {
     @Body() registerDto: RegisterDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<AuthResponseDto> {
-    return this.authFlowService.handleRegister(registerDto, response);
+    return this.authFacadeService.handleRegister(registerDto, response);
   }
 
   @Post(AuthRoutes.LOGIN)
@@ -36,7 +36,7 @@ export class AuthController {
   @ApiEndpoint(AuthResponseDto, HttpStatus.OK)
   @ResponseMessage('Login successful')
   async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) response: Response): Promise<AuthResponseDto> {
-    return this.authFlowService.handleLogin(loginDto, response);
+    return this.authFacadeService.handleLogin(loginDto, response);
   }
 
   @Post(AuthRoutes.FORGOT_PASSWORD)
@@ -44,7 +44,7 @@ export class AuthController {
   @ApiEndpoint(Object, HttpStatus.OK)
   @ResponseMessage('Password reset request processed')
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto): Promise<{ message: string }> {
-    const result = await this.authFlowService.handleForgotPassword(forgotPasswordDto.email);
+    const result = await this.authFacadeService.handleForgotPassword(forgotPasswordDto.email);
     return {
       message: result.message,
     };
@@ -55,7 +55,7 @@ export class AuthController {
   @ApiEndpoint(Object, HttpStatus.OK)
   @ResponseMessage('Password has been reset successfully')
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
-    await this.authFlowService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);
+    await this.authFacadeService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);
     return {
       message: 'You can now login with your new password',
     };
@@ -68,7 +68,7 @@ export class AuthController {
     @CurrentUser() user: JwtPayload,
     @Res({ passthrough: true }) response: Response,
   ): Promise<{ message: string }> {
-    await this.authFlowService.handleLogout(user.sub, response);
+    await this.authFacadeService.handleLogout(user.sub, response);
     return {
       message: 'You have been logged out successfully',
     };

@@ -9,7 +9,6 @@ import { PasswordService } from './password.service';
 export class AuthCredentialsService {
   constructor(
     @InjectRepository(Auth)
-    private readonly authRepository: Repository<Auth>,
     private readonly passwordService: PasswordService,
   ) {}
 
