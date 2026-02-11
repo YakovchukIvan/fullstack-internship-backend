@@ -8,10 +8,10 @@ import { CompanyRole } from '@/common/enums/company-role.enum';
 import { generateSlug } from '@/common/helpers/generate-slug.helper';
 import { CreateCompanyDto } from './dto/req/create-company.dto';
 import { UpdateCompanyDto } from './dto/req/update-company.dto';
-import { PaginatedResult } from '@/common/interfaces/paginated-result.interface';
 import { createPaginatedResult } from '@/common/helpers/create-paginated-result.helper';
 import { CompaniesPaginationDto } from './dto/req/companies-pagination.dto';
 import { CompanyMembersPaginationDto } from './dto/req/company-members-pagination.dto';
+import { PaginatedResultDto } from '@/common/dto/res/paginated-result.dto';
 
 @Injectable()
 export class CompaniesService {
@@ -60,7 +60,7 @@ export class CompaniesService {
     return savedCompany;
   }
 
-  async findAll(userRole?: UserRole, paginationOptions?: CompaniesPaginationDto): Promise<PaginatedResult<Company>> {
+  async findAll(userRole?: UserRole, paginationOptions?: CompaniesPaginationDto): Promise<PaginatedResultDto<Company>> {
     const whereCondition = userRole === UserRole.OWNER ? {} : { isVisible: true };
 
     return createPaginatedResult(this.companyRepository, paginationOptions || {}, {
@@ -105,7 +105,7 @@ export class CompaniesService {
   async findCompanyMembers(
     companyId: string,
     paginationOptions?: CompanyMembersPaginationDto,
-  ): Promise<PaginatedResult<CompanyMember>> {
+  ): Promise<PaginatedResultDto<CompanyMember>> {
     return createPaginatedResult(this.companyMemberRepository, paginationOptions || {}, {
       where: { companyId },
       relations: ['user'],

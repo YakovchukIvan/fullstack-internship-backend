@@ -14,10 +14,10 @@ import { RequireCompanyRoles } from './decorators/company-roles.decorator';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { CompanyMembersPaginationDto } from './dto/req/company-members-pagination.dto';
 import { CompaniesPaginationDto } from './dto/req/companies-pagination.dto';
-import { PaginationMetadata } from '@/common/interfaces/pagination-metadata.interface';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '@/common/enums/user-role.enum';
 import type { CompanyRequest } from './interfaces/company-request.interface';
+import { PaginationMetadataDto } from '@/common/dto/res/pagination-metadata.dto';
 
 @Roles(UserRole.USER, UserRole.OWNER)
 @UseGuards(CompanyRoleGuard)
@@ -45,10 +45,10 @@ export class CompaniesController {
   async findAll(
     @CurrentUser() user: JwtPayload,
     @Query() paginationDto: CompaniesPaginationDto,
-  ): Promise<{ companies: CompanyResponseDto[]; pagination: PaginationMetadata }> {
+  ): Promise<{ companies: CompanyResponseDto[]; pagination: PaginationMetadataDto }> {
     const result = await this.companiesService.findAll(user.role, paginationDto);
     return {
-      companies: result.data.map((c) => toCompanyResponseDto(c, 0)),
+      companies: result.detail.map((c) => toCompanyResponseDto(c, 0)),
       pagination: result.pagination,
     };
   }
@@ -72,12 +72,12 @@ export class CompaniesController {
   async findMembers(
     @Req() request: CompanyRequest,
     @Query() paginationDto: CompanyMembersPaginationDto,
-  ): Promise<{ members: CompanyMemberResponseDto[]; pagination: PaginationMetadata }> {
+  ): Promise<{ members: CompanyMemberResponseDto[]; pagination: PaginationMetadataDto }> {
     const companyId = request.companyId!;
     const result = await this.companiesService.findCompanyMembers(companyId, paginationDto);
 
     return {
-      members: result.data.map(toCompanyMemberResponseDto),
+      members: result.detail.map(toCompanyMemberResponseDto),
       pagination: result.pagination,
     };
   }

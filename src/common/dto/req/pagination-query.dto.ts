@@ -1,7 +1,7 @@
-import { Type } from 'class-transformer';
 import { IsInt, Min, Max, IsEnum, IsOptional } from 'class-validator';
-import { SortOrder } from '../enums/sort-order.enum';
-import { QUERY_DEFAULTS } from '../constants/query-defaults.constant';
+import { Type } from 'class-transformer';
+import { QUERY_DEFAULTS } from '@/common/constants/query-defaults.constant';
+import { SortOrder } from '@/common/enums/sort-order.enum';
 
 export class PaginationQueryDto {
   @IsOptional()

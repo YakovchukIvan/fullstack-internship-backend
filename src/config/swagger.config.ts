@@ -30,9 +30,18 @@ export function setupSwagger(app: INestApplication, globalPrefix: string, config
   const document = SwaggerModule.createDocument(app, config);
   const swaggerPath = `${globalPrefix}/docs`;
 
+  type SwaggerOperation = { get(key: 'method'): string };
+
   SwaggerModule.setup(swaggerPath, app, document, {
     swaggerOptions: {
-      operationsSorter: 'alpha',
+      operationsSorter: (a: SwaggerOperation, b: SwaggerOperation) => {
+        const order = ['post', 'get', 'put', 'patch', 'delete'];
+
+        const ai = order.indexOf(a.get('method'));
+        const bi = order.indexOf(b.get('method'));
+
+        return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+      },
       persistAuthorization: true,
     },
   });

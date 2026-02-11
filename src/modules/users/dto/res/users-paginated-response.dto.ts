@@ -1,7 +1,7 @@
 import { UserResponseDto } from './user.res.dto';
-import { PaginationMetadata } from '@/common/interfaces/pagination-metadata.interface';
+import { PaginationMetadataDto } from '@/common/dto/res/pagination-metadata.dto';
 
 export class UsersPaginatedResponseDto {
   users: UserResponseDto[];
-  pagination: PaginationMetadata;
+  pagination: PaginationMetadataDto;
 }

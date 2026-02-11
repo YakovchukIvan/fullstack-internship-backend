@@ -20,7 +20,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  @ApiEndpoint(CreateUserDto, HttpStatus.CREATED)
+  @ApiEndpoint(UserResponseDto, HttpStatus.CREATED)
   @Roles(UserRole.OWNER)
   @ResponseMessage('User created successfully')
   async create(@Body() dto: CreateUserDto): Promise<{ user: UserResponseDto }> {
@@ -36,7 +36,7 @@ export class UsersController {
   async findAll(@Query() paginationQuery: UsersPaginationQueryDto): Promise<UsersPaginatedResponseDto> {
     const result = await this.usersService.findAll(paginationQuery);
     return {
-      users: result.data.map(toUserResponseDto),
+      users: result.detail.map(toUserResponseDto),
       pagination: result.pagination,
     };
   }

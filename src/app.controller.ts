@@ -2,7 +2,7 @@ import { Controller, Get, HttpStatus } from '@nestjs/common';
 import { AppService } from './app.service';
 import { ApiEndpoint } from './common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from './common/decorators/response-message.decorator';
-import { HealthCheckResponseDto } from './common/dto/health.res.dto';
+import { HealthCheckResponseDto } from './common/dto/res/health.res.dto';
 
 @Controller()
 export class AppController {

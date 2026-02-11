@@ -10,9 +10,9 @@ import { LoginDto } from '../dto/req/login.dto';
 import { AuthResponseDto } from '../dto/res/auth-response.dto';
 import { toUserResponseDto } from '@/modules/users/mappers/user.mapper';
 import { UserRole } from '@/common/enums/user-role.enum';
-import { RegisterDto } from '../dto/req/register.dto';
 import { AppLogger } from '@/common/logger/app-logger';
 import { MailService } from '@/modules/mail/mail.service';
+import { RegisterDto } from '../dto/req/register.dto';
 
 interface ForgotPasswordResult {
   resetToken?: string;
@@ -128,22 +128,24 @@ export class AuthFacadeService {
     }
 
     const user = await this.dataSource.transaction(async (manager) => {
-      const newUser = manager.getRepository(User).create({
+      const userRepo = manager.getRepository(User);
+      const authRepo = manager.getRepository(Auth);
+
+      const newUser = userRepo.create({
         email,
         firstName: registerDto.firstName,
         lastName: registerDto.lastName,
         role: UserRole.USER,
       });
 
-      const savedUser = await manager.getRepository(User).save(newUser);
-
+      const savedUser = await userRepo.save(newUser);
       const passwordHash = await this.passwordService.hash(registerDto.password);
-      const auth = manager.getRepository(Auth).create({
+      const auth = authRepo.create({
         user: savedUser,
         passwordHash,
       });
 
-      await manager.getRepository(Auth).save(auth);
+      await authRepo.save(auth);
 
       return savedUser;
     });
