@@ -1,11 +1,6 @@
 import { PaginationQueryDto } from '@/common/dto/req/pagination-query.dto';
 import { IsEnum, IsOptional } from 'class-validator';
-
-export enum CompanySortField {
-  CREATED_AT = 'createdAt',
-  NAME = 'name',
-  SLUG = 'slug',
-}
+import { CompanySortField } from '../../enums/company-sort-field.enum';
 
 export class CompaniesPaginationDto extends PaginationQueryDto {
   @IsOptional()

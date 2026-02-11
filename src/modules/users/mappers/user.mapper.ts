@@ -1,5 +1,6 @@
 import { User } from '../entities/user.entity';
 import { UserResponseDto } from '../dto/res/user.res.dto';
+import { toIso } from '@/common/helpers/date.transformer';
 
 export function toUserResponseDto(user: User): UserResponseDto {
   return {
@@ -8,7 +9,7 @@ export function toUserResponseDto(user: User): UserResponseDto {
     firstName: user.firstName,
     lastName: user.lastName,
     role: user.role,
-    createdAt: user.createdAt.toISOString(),
-    updatedAt: user.updatedAt.toISOString(),
+    createdAt: toIso(user.createdAt),
+    updatedAt: toIso(user.updatedAt),
   };
 }

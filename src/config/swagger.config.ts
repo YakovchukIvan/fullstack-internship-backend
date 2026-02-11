@@ -3,7 +3,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 
 export function setupSwagger(app: INestApplication, globalPrefix: string, configService: ConfigService): void {
-  const nodeEnv = configService.get<string>('NODE_ENV');
+  const nodeEnv = configService.get<string>('NODE_ENV', 'development');
 
   if (nodeEnv === 'production') {
     return;
@@ -30,18 +30,9 @@ export function setupSwagger(app: INestApplication, globalPrefix: string, config
   const document = SwaggerModule.createDocument(app, config);
   const swaggerPath = `${globalPrefix}/docs`;
 
-  type SwaggerOperation = { get(key: 'method'): string };
-
   SwaggerModule.setup(swaggerPath, app, document, {
     swaggerOptions: {
-      operationsSorter: (a: SwaggerOperation, b: SwaggerOperation) => {
-        const order = ['post', 'get', 'put', 'patch', 'delete'];
-
-        const ai = order.indexOf(a.get('method'));
-        const bi = order.indexOf(b.get('method'));
-
-        return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-      },
+      operationsSorter: 'alpha',
       persistAuthorization: true,
     },
   });

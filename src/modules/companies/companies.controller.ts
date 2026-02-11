@@ -1,26 +1,36 @@
-import { Body, Controller, Delete, Get, HttpStatus, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CompaniesService } from './companies.service';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { CompaniesRoutes } from './routes/companies.routes';
 import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
 import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
-import { toCompanyResponseDto, toCompanyMemberResponseDto } from './mappers/company.mapper';
-import { CompanyResponseDto, CompanyMemberResponseDto } from './dto/res/company-response.dto';
+import { toCompanyResponseDto } from './mappers/company.mapper';
+import { CompanyResponseDto } from './dto/res/company-response.dto';
+import { CompanyDetailResponseDto } from './dto/res/company-detail-response.dto';
 import { CreateCompanyDto } from './dto/req/create-company.dto';
 import { UpdateCompanyDto } from './dto/req/update-company.dto';
+import { CompanyMembersPaginationDto } from './dto/req/company-members-pagination.dto';
+import { CompaniesPaginationDto } from './dto/req/companies-pagination.dto';
+import { PaginationMetadataDto } from '@/common/dto/res/pagination-metadata.dto';
+import { CompaniesPaginatedResponseDto } from './dto/res/company-paginated-response.dto';
+import { toCompanyDetailResponseDto } from './mappers/company-detail.mapper';
 import { CompanyRoleGuard } from './guards/company-role.guard';
 import { RequireCompanyRoles } from './decorators/company-roles.decorator';
 import { CompanyRole } from '@/common/enums/company-role.enum';
-import { CompanyMembersPaginationDto } from './dto/req/company-members-pagination.dto';
-import { CompaniesPaginationDto } from './dto/req/companies-pagination.dto';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole } from '@/common/enums/user-role.enum';
-import type { CompanyRequest } from './interfaces/company-request.interface';
-import { PaginationMetadataDto } from '@/common/dto/res/pagination-metadata.dto';
 
-@Roles(UserRole.USER, UserRole.OWNER)
-@UseGuards(CompanyRoleGuard)
 @Controller(CompaniesRoutes.ROOT)
 export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}
@@ -33,78 +43,81 @@ export class CompaniesController {
     @CurrentUser() user: JwtPayload,
   ): Promise<{ company: CompanyResponseDto }> {
     const company = await this.companiesService.create(dto, user.sub);
-    const membersCount = 1;
+    const membersCount = await this.companiesService.getCompanyMembersCount(company.id);
+
     return {
       company: toCompanyResponseDto(company, membersCount),
     };
   }
 
   @Get()
-  @ApiEndpoint(CompanyResponseDto, HttpStatus.OK)
+  @ApiEndpoint(CompaniesPaginatedResponseDto, HttpStatus.OK)
   @ResponseMessage('Companies fetched successfully')
   async findAll(
     @CurrentUser() user: JwtPayload,
     @Query() paginationDto: CompaniesPaginationDto,
   ): Promise<{ companies: CompanyResponseDto[]; pagination: PaginationMetadataDto }> {
     const result = await this.companiesService.findAll(user.role, paginationDto);
+
+    const companiesWithCounts = await Promise.all(
+      result.detail.map(async (company) => {
+        const membersCount = await this.companiesService.getCompanyMembersCount(company.id);
+        return toCompanyResponseDto(company, membersCount);
+      }),
+    );
+
     return {
-      companies: result.detail.map((c) => toCompanyResponseDto(c, 0)),
+      companies: companiesWithCounts,
       pagination: result.pagination,
     };
   }
 
   @Get(CompaniesRoutes.BY_SLUG)
-  @ApiEndpoint(CompanyResponseDto, HttpStatus.OK)
+  @ApiEndpoint(CompanyDetailResponseDto, HttpStatus.OK)
   @ResponseMessage('Company fetched successfully')
   async findOne(
     @Param('slug') slug: string,
     @CurrentUser() user: JwtPayload,
-  ): Promise<{ company: CompanyResponseDto }> {
-    const { company, membersCount } = await this.companiesService.findBySlug(slug, user.role);
-    return {
-      company: toCompanyResponseDto(company, membersCount),
-    };
-  }
-
-  @Get(CompaniesRoutes.MEMBERS)
-  @ApiEndpoint(CompanyMemberResponseDto, HttpStatus.OK)
-  @ResponseMessage('Company members fetched successfully')
-  async findMembers(
-    @Req() request: CompanyRequest,
     @Query() paginationDto: CompanyMembersPaginationDto,
-  ): Promise<{ members: CompanyMemberResponseDto[]; pagination: PaginationMetadataDto }> {
-    const companyId = request.companyId!;
-    const result = await this.companiesService.findCompanyMembers(companyId, paginationDto);
+  ): Promise<{ company: CompanyDetailResponseDto }> {
+    const { company, members } = await this.companiesService.findBySlugWithMembers(
+      slug,
+      user.sub,
+      user.role,
+      paginationDto,
+    );
 
     return {
-      members: result.detail.map(toCompanyMemberResponseDto),
-      pagination: result.pagination,
+      company: toCompanyDetailResponseDto(company, members.detail, members.pagination),
     };
   }
 
   @Patch(CompaniesRoutes.BY_SLUG)
+  @UseGuards(CompanyRoleGuard)
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @ApiEndpoint(CompanyResponseDto, HttpStatus.OK)
+  @ApiEndpoint(CompanyDetailResponseDto, HttpStatus.OK)
   @ResponseMessage('Company updated successfully')
   async update(
     @Param('slug') slug: string,
     @Body() dto: UpdateCompanyDto,
     @CurrentUser() user: JwtPayload,
-  ): Promise<{ company: CompanyResponseDto }> {
-    const company = await this.companiesService.update(slug, dto, user.role);
-    const membersCount = await this.companiesService.getMembersCount(company.id);
+    @Query() paginationDto: CompanyMembersPaginationDto,
+  ): Promise<{ company: CompanyDetailResponseDto }> {
+    const company = await this.companiesService.update(slug, dto, user.sub, user.role);
+    const members = await this.companiesService.findCompanyMembers(company.id, paginationDto);
 
     return {
-      company: toCompanyResponseDto(company, membersCount),
+      company: toCompanyDetailResponseDto(company, members.detail, members.pagination),
     };
   }
 
   @Delete(CompaniesRoutes.BY_SLUG)
+  @UseGuards(CompanyRoleGuard)
   @RequireCompanyRoles(CompanyRole.OWNER)
-  @ApiEndpoint(Object, HttpStatus.OK)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ResponseMessage('Company deleted successfully')
   async remove(@Param('slug') slug: string, @CurrentUser() user: JwtPayload): Promise<{ message: string }> {
-    await this.companiesService.remove(slug, user.role);
+    await this.companiesService.remove(slug, user.sub, user.role);
     return {
       message: 'Company has been deleted successfully',
     };

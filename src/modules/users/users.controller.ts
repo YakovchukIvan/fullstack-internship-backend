@@ -63,7 +63,7 @@ export class UsersController {
 
   @Patch(UsersRoutes.ME)
   @Roles(UserRole.USER, UserRole.OWNER)
-  @ApiEndpoint(UpdateUserDto, HttpStatus.OK)
+  @ApiEndpoint(UserResponseDto, HttpStatus.OK)
   @ResponseMessage('Profile updated successfully')
   async updateMe(
     @CurrentUser() currentUser: JwtPayload,

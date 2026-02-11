@@ -25,20 +25,12 @@ export class CompaniesService {
   async create(createCompanyDto: CreateCompanyDto, userId: string): Promise<Company> {
     const slug = generateSlug(createCompanyDto.name);
 
-    const existingByName = await this.companyRepository.findOne({
-      where: { name: createCompanyDto.name },
+    const existing = await this.companyRepository.findOne({
+      where: [{ name: createCompanyDto.name }, { slug }],
     });
 
-    if (existingByName) {
+    if (existing) {
       throw new ConflictException('Company with this name already exists');
-    }
-
-    const existingBySlug = await this.companyRepository.findOne({
-      where: { slug },
-    });
-
-    if (existingBySlug) {
-      throw new ConflictException('Company with this slug already exists');
     }
 
     const company = this.companyRepository.create({
@@ -69,7 +61,13 @@ export class CompaniesService {
     });
   }
 
-  private async findCompanyBySlug(slug: string, userRole?: UserRole): Promise<Company> {
+  async getCompanyMembersCount(companyId: string): Promise<number> {
+    return this.companyMemberRepository.count({
+      where: { companyId },
+    });
+  }
+
+  private async findCompanyBySlug(slug: string, userId: string, userRole?: UserRole): Promise<Company> {
     const company = await this.companyRepository.findOne({
       where: { slug },
       relations: ['owner'],
@@ -79,27 +77,28 @@ export class CompaniesService {
       throw new NotFoundException('Company not found');
     }
 
-    if (!company.isVisible && userRole !== UserRole.OWNER) {
-      throw new NotFoundException('Company not found');
+    if (!company.isVisible) {
+      const isSystemOwner = userRole === UserRole.OWNER;
+      const isCompanyOwner = company.ownerId === userId;
+
+      if (!isSystemOwner && !isCompanyOwner) {
+        throw new NotFoundException('Company not found');
+      }
     }
 
     return company;
   }
 
-  async findBySlug(slug: string, userRole?: UserRole): Promise<{ company: Company; membersCount: number }> {
-    const company = await this.findCompanyBySlug(slug, userRole);
+  async findBySlugWithMembers(
+    slug: string,
+    userId: string,
+    userRole?: UserRole,
+    paginationOptions?: CompanyMembersPaginationDto,
+  ): Promise<{ company: Company; members: PaginatedResultDto<CompanyMember> }> {
+    const company = await this.findCompanyBySlug(slug, userId, userRole);
+    const members = await this.findCompanyMembers(company.id, paginationOptions);
 
-    const membersCount = await this.companyMemberRepository.count({
-      where: { companyId: company.id },
-    });
-
-    return { company, membersCount };
-  }
-
-  async getMembersCount(companyId: string): Promise<number> {
-    return this.companyMemberRepository.count({
-      where: { companyId },
-    });
+    return { company, members };
   }
 
   async findCompanyMembers(
@@ -112,49 +111,30 @@ export class CompaniesService {
     });
   }
 
-  async update(slug: string, updateCompanyDto: UpdateCompanyDto, userRole?: UserRole): Promise<Company> {
-    const company = await this.findCompanyBySlug(slug, userRole);
+  async update(slug: string, updateCompanyDto: UpdateCompanyDto, userId: string, userRole: UserRole): Promise<Company> {
+    const company = await this.findCompanyBySlug(slug, userId, userRole);
 
     if (updateCompanyDto.name && updateCompanyDto.name !== company.name) {
       const newSlug = generateSlug(updateCompanyDto.name);
 
-      const existingByName = await this.companyRepository.findOne({
+      const existing = await this.companyRepository.findOne({
         where: { name: updateCompanyDto.name },
       });
 
-      if (existingByName) {
+      if (existing && existing.id !== company.id) {
         throw new ConflictException('Company with this name already exists');
       }
 
-      const existingBySlug = await this.companyRepository.findOne({
-        where: { slug: newSlug },
-      });
-
-      if (existingBySlug) {
-        throw new ConflictException('Company with this slug already exists');
-      }
-
-      company.name = updateCompanyDto.name;
       company.slug = newSlug;
     }
 
-    if (updateCompanyDto.description !== undefined) {
-      company.description = updateCompanyDto.description;
-    }
-
-    if (updateCompanyDto.avatarUrl !== undefined) {
-      company.avatarUrl = updateCompanyDto.avatarUrl;
-    }
-
-    if (updateCompanyDto.isVisible !== undefined) {
-      company.isVisible = updateCompanyDto.isVisible;
-    }
+    Object.assign(company, updateCompanyDto);
 
     return this.companyRepository.save(company);
   }
 
-  async remove(slug: string, userRole?: UserRole): Promise<void> {
-    const company = await this.findCompanyBySlug(slug, userRole);
+  async remove(slug: string, userId: string, userRole: UserRole): Promise<void> {
+    const company = await this.findCompanyBySlug(slug, userId, userRole);
     await this.companyRepository.remove(company);
   }
 
@@ -171,11 +151,6 @@ export class CompaniesService {
     });
 
     return member?.role || null;
-  }
-
-  async isCompanyOwner(userId: string, companyId: string): Promise<boolean> {
-    const role = await this.getUserRoleInCompany(userId, companyId);
-    return role === CompanyRole.OWNER;
   }
 
   async canManageCompany(userId: string, companyId: string): Promise<boolean> {
