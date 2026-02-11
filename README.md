@@ -7,6 +7,9 @@
   <img src="https://img.shields.io/badge/Swagger-11.2.5-green" />
   <img src="https://img.shields.io/badge/TypeScript-5.7.3-3178C6" />
   <img src="https://img.shields.io/badge/Docker-compose-2496ED" />
+  <img src="https://img.shields.io/badge/Auth-JWT-black" />
+  <img src="https://img.shields.io/badge/Auth-OAuth2-blueviolet" />
+  <img src="https://img.shields.io/badge/Email-Nodemailer-0A66C2" />
 </p>
 
 ## 📖 Description
@@ -127,3 +130,5 @@ npm run test
 - PostgreSQL
 - TypeORM
 - Swagger
+- OAuth2 / JWT
+- Nodemailer

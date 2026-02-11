@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { Auth } from '../entities/auth.entity';
 import { User } from '@/modules/users/entities/user.entity';
@@ -7,11 +6,7 @@ import { PasswordService } from './password.service';
 
 @Injectable()
 export class AuthCredentialsService {
-  constructor(
-    @InjectRepository(Auth)
-    private readonly authRepository: Repository<Auth>,
-    private readonly passwordService: PasswordService,
-  ) {}
+  constructor(private readonly passwordService: PasswordService) {}
 
   async createForUser(manager: EntityManager, user: User, plainPassword: string): Promise<Auth> {
     const authRepo = manager.getRepository(Auth);

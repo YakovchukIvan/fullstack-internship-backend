@@ -3,6 +3,8 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { globalValidationPipe } from './common/pipes/global-validation.pipe';
+import { RolesGuard } from './modules/auth/guards/roles.guard';
+import { UniversalAuthGuard } from './modules/auth/guards/universal-auth.guard';
 
 export const appProviders = [
   {
@@ -16,5 +18,13 @@ export const appProviders = [
   {
     provide: APP_GUARD,
     useClass: ThrottlerGuard,
+  },
+  {
+    provide: APP_GUARD,
+    useClass: UniversalAuthGuard,
+  },
+  {
+    provide: APP_GUARD,
+    useClass: RolesGuard,
   },
 ] as const;

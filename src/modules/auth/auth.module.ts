@@ -14,7 +14,7 @@ import { getJwtConfig } from '@/config/jwt.config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { Auth0Strategy } from './strategies/auth0.strategy';
 import { RolesGuard } from './guards/roles.guard';
-import { AuthFlowService } from './services/auth-flow.service';
+import { AuthFacadeService } from './services/auth-facade.service';
 import { AuthOAuthService } from './services/auth-oauth.service';
 
 @Module({
@@ -36,7 +36,7 @@ import { AuthOAuthService } from './services/auth-oauth.service';
     JwtStrategy,
     Auth0Strategy,
     RolesGuard,
-    AuthFlowService,
+    AuthFacadeService,
     AuthOAuthService,
   ],
   exports: [AuthCredentialsService, PasswordService, TokenService, JwtModule, PassportModule, RolesGuard],

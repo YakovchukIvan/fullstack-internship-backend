@@ -10,9 +10,9 @@ import { LoginDto } from '../dto/req/login.dto';
 import { AuthResponseDto } from '../dto/res/auth-response.dto';
 import { toUserResponseDto } from '@/modules/users/mappers/user.mapper';
 import { UserRole } from '@/common/enums/user-role.enum';
-import { RegisterDto } from '../dto/req/register.dto';
 import { AppLogger } from '@/common/logger/app-logger';
 import { MailService } from '@/modules/mail/mail.service';
+import { RegisterDto } from '../dto/req/register.dto';
 
 interface ForgotPasswordResult {
   resetToken?: string;
@@ -21,7 +21,7 @@ interface ForgotPasswordResult {
 }
 
 @Injectable()
-export class AuthFlowService {
+export class AuthFacadeService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -33,7 +33,7 @@ export class AuthFlowService {
     private readonly dataSource: DataSource,
     private readonly mailService: MailService,
   ) {
-    this.logger.setLoggerContext(AuthFlowService.name);
+    this.logger.setLoggerContext(AuthFacadeService.name);
   }
 
   async handleRegister(registerDto: RegisterDto, response: Response): Promise<AuthResponseDto> {
@@ -115,6 +115,7 @@ export class AuthFlowService {
       return null;
     }
 
+    delete user.auth;
     return user;
   }
 
@@ -127,22 +128,24 @@ export class AuthFlowService {
     }
 
     const user = await this.dataSource.transaction(async (manager) => {
-      const newUser = manager.getRepository(User).create({
+      const userRepo = manager.getRepository(User);
+      const authRepo = manager.getRepository(Auth);
+
+      const newUser = userRepo.create({
         email,
         firstName: registerDto.firstName,
         lastName: registerDto.lastName,
         role: UserRole.USER,
       });
 
-      const savedUser = await manager.getRepository(User).save(newUser);
-
+      const savedUser = await userRepo.save(newUser);
       const passwordHash = await this.passwordService.hash(registerDto.password);
-      const auth = manager.getRepository(Auth).create({
+      const auth = authRepo.create({
         user: savedUser,
         passwordHash,
       });
 
-      await manager.getRepository(Auth).save(auth);
+      await authRepo.save(auth);
 
       return savedUser;
     });
@@ -195,14 +198,14 @@ export class AuthFlowService {
     });
 
     if (!user || !user.auth) {
-      this.logger.log(`❌ Forgot password: User not found - ${normalizedEmail}`, AuthFlowService.name);
+      this.logger.log(`❌ Forgot password: User not found - ${normalizedEmail}`, AuthFacadeService.name);
       return { isOAuthUser: false };
     }
 
     if (user.auth.googleId && !user.auth.passwordHash) {
       this.logger.log(
         `🔐 Forgot password: OAuth user detected - ${normalizedEmail} (${user.auth.googleId})`,
-        AuthFlowService.name,
+        AuthFacadeService.name,
       );
       return {
         isOAuthUser: true,
@@ -211,7 +214,7 @@ export class AuthFlowService {
     }
 
     if (!user.auth.passwordHash) {
-      this.logger.log(`⚠️ Forgot password: No password hash found - ${normalizedEmail}`, AuthFlowService.name);
+      this.logger.log(`⚠️ Forgot password: No password hash found - ${normalizedEmail}`, AuthFacadeService.name);
       return { isOAuthUser: false };
     }
 
@@ -219,7 +222,7 @@ export class AuthFlowService {
     user.auth.resetPasswordExpiresAt = expiresAt;
     await this.authRepository.save(user.auth);
 
-    this.logger.log(`✅ Forgot password: Reset token generated for - ${normalizedEmail}`, AuthFlowService.name);
+    this.logger.log(`✅ Forgot password: Reset token generated for - ${normalizedEmail}`, AuthFacadeService.name);
 
     return {
       resetToken,
@@ -229,7 +232,6 @@ export class AuthFlowService {
 
   async refreshAccessToken(refreshToken: string): Promise<AuthResponseDto> {
     const payload = await this.tokenService.verifyRefreshToken(refreshToken);
-
     const refreshTokenHash = this.passwordService.hashResetToken(refreshToken);
 
     const auth = await this.authRepository.findOne({
@@ -245,7 +247,7 @@ export class AuthFlowService {
     }
 
     const newAccessToken = this.tokenService.generateAccessToken(auth.user);
-
+    delete auth.user.auth;
     return {
       accessToken: newAccessToken,
       user: toUserResponseDto(auth.user),
