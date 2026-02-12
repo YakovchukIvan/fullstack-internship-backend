@@ -32,7 +32,7 @@ export function setupSwagger(app: INestApplication, globalPrefix: string, config
 
   SwaggerModule.setup(swaggerPath, app, document, {
     swaggerOptions: {
-      operationsSorter: 'alpha',
+      operationsSorter: 'method',
       persistAuthorization: true,
     },
   });

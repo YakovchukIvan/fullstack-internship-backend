@@ -7,7 +7,7 @@ import { UpdateUserDto } from './dto/req/update-user.req.dto';
 import { AuthCredentialsService } from '@/modules/auth/services/auth-credentials.service';
 import { AppLogger } from '@/common/logger/app-logger';
 import { UserRole } from '../../common/enums/user-role.enum';
-import { createPaginatedResult, PaginationOptions } from '@/common/helpers/create-paginated-result.helper';
+import { createPaginatedResult } from '@/common/helpers/create-paginated-result.helper';
 import { UsersPaginationQueryDto } from './dto/req/users-pagination-query.dto';
 import { PaginatedResultDto } from '@/common/dto/res/paginated-result.dto';
 
@@ -41,7 +41,7 @@ export class UsersService {
   }
 
   async findAll(paginationQuery: UsersPaginationQueryDto): Promise<PaginatedResultDto<User>> {
-    const result = await createPaginatedResult(this.usersRepository, paginationQuery as PaginationOptions<keyof User>);
+    const result = await createPaginatedResult(this.usersRepository, paginationQuery);
 
     this.logger.log('Users fetched successfully', UsersService.name);
     return result;

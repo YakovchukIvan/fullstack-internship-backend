@@ -7,3 +7,8 @@ export enum CompanyMemberSortField {
   ROLE = 'role',
   CREATED_AT = 'createdAt',
 }
+
+export enum CompanyInvitationSortField {
+  CREATED_AT = 'createdAt',
+  UPDATED_AT = 'updatedAt',
+}
