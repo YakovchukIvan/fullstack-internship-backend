@@ -3,6 +3,7 @@ import { BaseEntity } from '@/common/entities/base.entity';
 import { User } from '@/modules/users/entities/user.entity';
 import { Company } from './company.entity';
 import { Exclude } from 'class-transformer';
+import { InvitationStatus } from '../enums/invitation-status.enum';
 
 @Entity('company_join_requests')
 @Unique(['userId', 'companyId'])
@@ -16,6 +17,12 @@ export class CompanyJoinRequest extends BaseEntity {
   @Column({ name: 'company_id', type: 'uuid', nullable: false })
   @Exclude()
   companyId: string;
+
+  @Column({ type: 'text', nullable: true })
+  message: string | null;
+
+  @Column({ type: 'enum', enum: InvitationStatus, default: InvitationStatus.PENDING })
+  status: InvitationStatus;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })

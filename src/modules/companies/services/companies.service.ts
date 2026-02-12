@@ -2,23 +2,21 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserRole } from '@/common/enums/user-role.enum';
-import { CompanyRole } from '@/common/enums/company-role.enum';
 import { generateSlug } from '@/common/helpers/generate-slug.helper';
 import { createPaginatedResult } from '@/common/helpers/create-paginated-result.helper';
 import { PaginatedResultDto } from '@/common/dto/res/paginated-result.dto';
 import { CompaniesPaginationDto } from './../dto/req/companies-pagination.dto';
 import { UpdateCompanyDto } from './../dto/req/update-company.dto';
 import { CreateCompanyDto } from './../dto/req/create-company.dto';
-import { CompanyMember } from './../entities/company-member.entity';
 import { Company } from '@/modules/companies/entities/company.entity';
+import { CompanyMembersService } from './company-members.service';
 
 @Injectable()
 export class CompaniesService {
   constructor(
     @InjectRepository(Company)
     private readonly companyRepository: Repository<Company>,
-    @InjectRepository(CompanyMember)
-    private readonly companyMemberRepository: Repository<CompanyMember>,
+    private readonly companyMembersService: CompanyMembersService,
   ) {}
 
   async create(createCompanyDto: CreateCompanyDto, userId: string): Promise<Company> {
@@ -39,13 +37,8 @@ export class CompaniesService {
     });
 
     const savedCompany = await this.companyRepository.save(company);
-    const ownerMember = this.companyMemberRepository.create({
-      userId,
-      companyId: savedCompany.id,
-      role: CompanyRole.OWNER,
-    });
 
-    await this.companyMemberRepository.save(ownerMember);
+    await this.companyMembersService.createInitialOwner(userId, savedCompany.id);
 
     return savedCompany;
   }

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CompanyMember } from './../entities/company-member.entity';
 import { CompanyInvitation } from './../entities/company-invitation.entity';
 import { CompanyJoinRequest } from './../entities/company-join-request.entity';
@@ -10,6 +10,7 @@ import { createPaginatedResult } from '@/common/helpers/create-paginated-result.
 import { PaginatedResultDto } from '@/common/dto/res/paginated-result.dto';
 import { CompanyInvitationsPaginationDto } from '../dto/req/company-invitations-pagination.dto';
 import { CompanyMembersService } from './company-members.service';
+import { CompanyEvents, CompanyMembershipEvent } from '../events/company.events';
 
 @Injectable()
 export class CompanyJoinRequestsService {
@@ -19,6 +20,7 @@ export class CompanyJoinRequestsService {
     @InjectRepository(CompanyJoinRequest)
     private readonly joinRequestRepository: Repository<CompanyJoinRequest>,
     private readonly companyMembersService: CompanyMembersService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async sendJoinRequest(companyId: string, userId: string): Promise<CompanyJoinRequest> {
@@ -42,6 +44,8 @@ export class CompanyJoinRequestsService {
     const joinRequest = this.joinRequestRepository.create({ userId, companyId });
     const savedRequest = await this.joinRequestRepository.save(joinRequest);
 
+    this.eventEmitter.emit(CompanyEvents.JOIN_REQUEST_CREATED, new CompanyMembershipEvent(userId, companyId));
+
     return this.joinRequestRepository.findOneOrFail({
       where: { id: savedRequest.id },
       relations: ['company', 'user'],
@@ -64,6 +68,8 @@ export class CompanyJoinRequestsService {
 
     const member = await this.companyMembersService.addMember(requestUserId, companyId, CompanyRole.MEMBER);
     await this.joinRequestRepository.remove(joinRequest);
+
+    this.eventEmitter.emit(CompanyEvents.JOIN_REQUEST_ACCEPTED, new CompanyMembershipEvent(requestUserId, companyId));
 
     return member;
   }

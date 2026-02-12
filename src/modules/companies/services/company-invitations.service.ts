@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CompanyMember } from './../entities/company-member.entity';
 import { CompanyInvitation } from './../entities/company-invitation.entity';
 import { CompanyJoinRequest } from './../entities/company-join-request.entity';
@@ -11,6 +11,7 @@ import { createPaginatedResult } from '@/common/helpers/create-paginated-result.
 import { PaginatedResultDto } from '@/common/dto/res/paginated-result.dto';
 import { CompanyInvitationsPaginationDto } from '../dto/req/company-invitations-pagination.dto';
 import { CompanyMembersService } from './company-members.service';
+import { CompanyEvents, CompanyInvitationEvent, CompanyMembershipEvent } from '../events/company.events';
 
 @Injectable()
 export class CompanyInvitationsService {
@@ -22,6 +23,7 @@ export class CompanyInvitationsService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly companyMembersService: CompanyMembersService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async inviteUser(companyId: string, email: string, invitedById: string): Promise<CompanyInvitation> {
@@ -60,6 +62,11 @@ export class CompanyInvitationsService {
       invitedBy: invitedById,
     });
 
+    this.eventEmitter.emit(
+      CompanyEvents.INVITATION_SENT,
+      new CompanyInvitationEvent(invitation.userId, invitation.companyId, invitedById),
+    );
+
     return this.invitationRepository.save(invitation);
   }
 
@@ -74,6 +81,8 @@ export class CompanyInvitationsService {
 
     const member = await this.companyMembersService.addMember(userId, companyId, CompanyRole.MEMBER);
     await this.invitationRepository.remove(invitation);
+
+    this.eventEmitter.emit(CompanyEvents.INVITATION_ACCEPTED, new CompanyMembershipEvent(userId, companyId));
 
     return member;
   }
