@@ -4,6 +4,7 @@ import { CompanyRole } from '@/common/enums/company-role.enum';
 import { Reflector } from '@nestjs/core';
 import { COMPANY_ROLES_KEY } from '../decorators/company-roles.decorator';
 import { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
+import { UserRole } from '@/common/enums/user-role.enum';
 
 interface CompanyRequest extends Request {
   user: JwtPayload;
@@ -28,14 +29,19 @@ export class CompanyRoleGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<CompanyRequest>();
     const { user, params } = request;
+
     const slug = params.slug;
+
+    if (!user) {
+      return false;
+    }
 
     if (!slug) {
       return true;
     }
 
-    if (!user) {
-      return false;
+    if (user.role === UserRole.OWNER) {
+      return true;
     }
 
     const { role: userRoleInCompany, companyId } = await this.companiesService.getUserRoleInCompanyBySlug(

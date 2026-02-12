@@ -52,11 +52,19 @@ export class CompaniesService {
     return savedCompany;
   }
 
-  async findAll(userRole?: UserRole, paginationOptions?: CompaniesPaginationDto): Promise<PaginatedResultDto<Company>> {
-    const whereCondition = userRole === UserRole.OWNER ? {} : { isVisible: true };
+  async findAll(
+    userId: string,
+    userRole?: UserRole,
+    paginationOptions?: CompaniesPaginationDto,
+  ): Promise<PaginatedResultDto<Company>> {
+    if (userRole === UserRole.OWNER) {
+      return createPaginatedResult(this.companyRepository, paginationOptions || {}, {
+        relations: ['owner'],
+      });
+    }
 
     return createPaginatedResult(this.companyRepository, paginationOptions || {}, {
-      where: whereCondition,
+      where: [{ isVisible: true }, { ownerId: userId }],
       relations: ['owner'],
     });
   }

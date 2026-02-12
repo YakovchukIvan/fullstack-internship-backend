@@ -57,7 +57,7 @@ export class CompaniesController {
     @CurrentUser() user: JwtPayload,
     @Query() paginationDto: CompaniesPaginationDto,
   ): Promise<{ companies: CompanyResponseDto[]; pagination: PaginationMetadataDto }> {
-    const result = await this.companiesService.findAll(user.role, paginationDto);
+    const result = await this.companiesService.findAll(user.sub, user.role, paginationDto);
 
     const companiesWithCounts = await Promise.all(
       result.detail.map(async (company) => {

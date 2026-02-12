@@ -18,11 +18,11 @@ import { Public } from './decorators/public.decorator';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { Roles } from './decorators/roles.decorator';
 
-@Public()
 @Controller(AuthRoutes.ROOT)
 export class AuthController {
   constructor(private readonly authFacadeService: AuthFacadeService) {}
 
+  @Public()
   @Post(AuthRoutes.REGISTER)
   @ApiSecurity({})
   @ApiEndpoint(AuthResponseDto, HttpStatus.CREATED)
@@ -34,6 +34,7 @@ export class AuthController {
     return this.authFacadeService.handleRegister(registerDto, response);
   }
 
+  @Public()
   @Post(AuthRoutes.LOGIN)
   @ApiSecurity({})
   @ApiEndpoint(AuthResponseDto, HttpStatus.OK)
@@ -42,6 +43,7 @@ export class AuthController {
     return this.authFacadeService.handleLogin(loginDto, response);
   }
 
+  @Public()
   @Post(AuthRoutes.FORGOT_PASSWORD)
   @ApiSecurity({})
   @ApiEndpoint(Object, HttpStatus.OK)
@@ -53,6 +55,7 @@ export class AuthController {
     };
   }
 
+  @Public()
   @Post(AuthRoutes.RESET_PASSWORD)
   @ApiSecurity({})
   @ApiEndpoint(Object, HttpStatus.OK)
@@ -65,7 +68,7 @@ export class AuthController {
   }
 
   @Post(AuthRoutes.LOGOUT)
-  @Roles(UserRole.USER)
+  @Roles(UserRole.USER, UserRole.OWNER)
   @ResponseMessage('Logout successful')
   async logout(
     @CurrentUser() user: JwtPayload,
@@ -79,7 +82,7 @@ export class AuthController {
 
   @Get(AuthRoutes.ME)
   @ApiEndpoint(UserResponseDto)
-  @Roles(UserRole.USER)
+  @Roles(UserRole.USER, UserRole.OWNER)
   @ResponseMessage('Current user fetched')
   getCurrentUser(@CurrentUser() user: JwtPayload): { user: CurrentUserResponseDto } {
     return {
