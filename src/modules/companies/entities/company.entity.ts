@@ -22,6 +22,9 @@ export class Company extends BaseEntity {
   @Index()
   isVisible: boolean;
 
+  @Column({ type: 'int', default: 1 })
+  membersCount: number;
+
   @Column({ name: 'owner_id', type: 'uuid', nullable: false })
   @Exclude()
   ownerId: string;

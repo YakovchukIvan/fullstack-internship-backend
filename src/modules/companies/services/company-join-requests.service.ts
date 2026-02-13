@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -52,12 +52,7 @@ export class CompanyJoinRequestsService {
     });
   }
 
-  async acceptJoinRequest(companyId: string, requestUserId: string, adminId: string): Promise<CompanyMember> {
-    const canManage = await this.companyMembersService.canManageCompany(adminId, companyId);
-    if (!canManage) {
-      throw new ForbiddenException('No permissions to accept requests');
-    }
-
+  async acceptJoinRequest(companyId: string, requestUserId: string): Promise<CompanyMember> {
     const joinRequest = await this.joinRequestRepository.findOne({
       where: { userId: requestUserId, companyId },
     });
@@ -74,12 +69,7 @@ export class CompanyJoinRequestsService {
     return member;
   }
 
-  async declineJoinRequest(companyId: string, requestUserId: string, adminId: string): Promise<void> {
-    const canManage = await this.companyMembersService.canManageCompany(adminId, companyId);
-    if (!canManage) {
-      throw new ForbiddenException('No permissions to decline requests');
-    }
-
+  async declineJoinRequest(companyId: string, requestUserId: string): Promise<void> {
     const joinRequest = await this.joinRequestRepository.findOne({
       where: { userId: requestUserId, companyId },
     });
@@ -105,15 +95,8 @@ export class CompanyJoinRequestsService {
 
   async getCompanyJoinRequests(
     companyId: string,
-    adminId: string,
     paginationOptions?: CompanyInvitationsPaginationDto,
   ): Promise<PaginatedResultDto<CompanyJoinRequest>> {
-    const canManage = await this.companyMembersService.canManageCompany(adminId, companyId);
-
-    if (!canManage) {
-      throw new ForbiddenException('No permissions to view requests');
-    }
-
     return createPaginatedResult(this.joinRequestRepository, paginationOptions, {
       where: { companyId },
       relations: ['company', 'user'],

@@ -3,7 +3,7 @@ import { CompanyMember } from '../entities/company-member.entity';
 import { CompanyDetailResponseDto } from '../dto/res/company-detail-response.dto';
 import { PaginationMetadataDto } from '@/common/dto/res/pagination-metadata.dto';
 
-import { toCompanyBaseDto } from './company.base.mapper';
+import { toCompanyResponseDto } from './company.mapper';
 import { toCompanyMemberResponseDto } from './company-member.mapper';
 
 export function toCompanyDetailResponseDto(
@@ -12,7 +12,7 @@ export function toCompanyDetailResponseDto(
   membersPagination: PaginationMetadataDto,
 ): CompanyDetailResponseDto {
   return {
-    ...toCompanyBaseDto(company),
+    ...toCompanyResponseDto(company),
     members: members.map(toCompanyMemberResponseDto),
     membersPagination,
   };

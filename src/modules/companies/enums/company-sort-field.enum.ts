@@ -10,5 +10,4 @@ export enum CompanyMemberSortField {
 
 export enum CompanyInvitationSortField {
   CREATED_AT = 'createdAt',
-  UPDATED_AT = 'updatedAt',
 }

@@ -28,10 +28,10 @@ import { CompanyDetailResponseDto } from './../dto/res/company-detail-response.d
 import { CompanyResponseDto } from './../dto/res/company-response.dto';
 import { CompaniesService } from '@/modules/companies/services/companies.service';
 import { CompaniesRoutes } from './../routes/companies.routes';
-import { toCompanyResponseDto } from '../mappers/company.mapper';
 import { toCompanyDetailResponseDto } from '../mappers/company-detail.mapper';
 import { CompanyMembersService } from '../services/company-members.service';
 import { CurrentCompanyId } from '../decorators/current-company-id.decorator';
+import { toCompanyResponseDto } from '../mappers/company.mapper';
 
 @Controller(CompaniesRoutes.ROOT)
 export class CompaniesController {
@@ -48,10 +48,9 @@ export class CompaniesController {
     @CurrentUser() user: JwtPayload,
   ): Promise<{ company: CompanyResponseDto }> {
     const company = await this.companiesService.create(dto, user.sub);
-    const membersCount = await this.membersService.getCompanyMembersCount(company.id);
 
     return {
-      company: toCompanyResponseDto(company, membersCount),
+      company: toCompanyResponseDto(company),
     };
   }
 
@@ -63,16 +62,10 @@ export class CompaniesController {
     @Query() paginationDto: CompaniesPaginationDto,
   ): Promise<{ companies: CompanyResponseDto[]; pagination: PaginationMetadataDto }> {
     const result = await this.companiesService.findAll(user.sub, user.role, paginationDto);
-
-    const companiesWithCounts = await Promise.all(
-      result.detail.map(async (company) => {
-        const membersCount = await this.membersService.getCompanyMembersCount(company.id);
-        return toCompanyResponseDto(company, membersCount);
-      }),
-    );
+    const companies = result.detail.map((company) => toCompanyResponseDto(company));
 
     return {
-      companies: companiesWithCounts,
+      companies,
       pagination: result.pagination,
     };
   }
@@ -99,6 +92,7 @@ export class CompaniesController {
   @ApiEndpoint(CompanyDetailResponseDto, HttpStatus.OK)
   @ResponseMessage('Company updated successfully')
   async update(
+    @Param('slug') _slug: string,
     @CurrentCompanyId() companyId: string,
     @Body() dto: UpdateCompanyDto,
     @Query() paginationDto: CompanyMembersPaginationDto,
@@ -116,7 +110,7 @@ export class CompaniesController {
   @RequireCompanyRoles(CompanyRole.OWNER)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ResponseMessage('Company deleted successfully')
-  async remove(@CurrentCompanyId() companyId: string): Promise<{ message: string }> {
+  async remove(@Param('slug') _slug: string, @CurrentCompanyId() companyId: string): Promise<{ message: string }> {
     await this.companiesService.removeById(companyId);
 
     return {

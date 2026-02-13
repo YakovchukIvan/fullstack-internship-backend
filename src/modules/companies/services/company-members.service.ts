@@ -117,19 +117,15 @@ export class CompanyMembersService {
     });
   }
 
-  async getCompanyMembersCount(companyId: string): Promise<number> {
-    return this.companyMemberRepository.count({ where: { companyId } });
-  }
-
-  async getMemberRoleBySlug(userId: string, slug: string) {
-    const member = await this.companyMemberRepository.findOne({
+  async findMembershipBySlug(userId: string, slug: string): Promise<CompanyMember | null> {
+    return this.companyMemberRepository.findOne({
       where: { userId, company: { slug } },
       relations: ['company'],
+      select: {
+        id: true,
+        role: true,
+        company: { id: true },
+      },
     });
-
-    return {
-      role: member?.role || null,
-      companyId: member?.company?.id || null,
-    };
   }
 }

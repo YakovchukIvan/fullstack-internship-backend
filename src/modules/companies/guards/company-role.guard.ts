@@ -1,52 +1,53 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { CompanyRole } from '@/common/enums/company-role.enum';
 import { Reflector } from '@nestjs/core';
+import type { Request } from 'express';
+
 import { COMPANY_ROLES_KEY } from '../decorators/company-roles.decorator';
-import { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
+import { CompanyRole } from '@/common/enums/company-role.enum';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { CompanyMembersService } from '../services/company-members.service';
 import { CompaniesService } from '../services/companies.service';
+import { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
 
 interface CompanyRequest extends Request {
   user: JwtPayload;
-  params: {
-    slug?: string;
-  };
+  params: { slug?: string };
   companyId?: string;
 }
 
 @Injectable()
 export class CompanyRoleGuard implements CanActivate {
   constructor(
-    private reflector: Reflector,
+    private readonly reflector: Reflector,
     private readonly companyMembersService: CompanyMembersService,
     private readonly companiesService: CompaniesService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRoles = this.reflector.getAllAndOverride<CompanyRole[]>(COMPANY_ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiredRoles =
+      this.reflector.getAllAndOverride<CompanyRole[]>(COMPANY_ROLES_KEY, [context.getHandler(), context.getClass()]) ??
+      null;
 
     const request = context.switchToHttp().getRequest<CompanyRequest>();
-    const { user, params } = request;
-    const slug = params.slug;
+    const user = request.user;
+    const slug = request.params?.slug;
 
     if (!user) {
       return false;
     }
 
     if (!slug) {
+      if (requiredRoles?.length) {
+        throw new ForbiddenException('Company identifier (slug) is required');
+      }
       return true;
     }
 
-    // Отримуємо роль користувача в компанії (якщо він member)
-    const { role: userRoleInCompany, companyId } = await this.companyMembersService.getMemberRoleBySlug(user.sub, slug);
+    const membership = await this.companyMembersService.findMembershipBySlug(user.sub, slug);
+    const companyId = membership?.company?.id ?? null;
+    const roleInCompany = membership?.role ?? null;
 
-    // Глобальний OWNER (супер-адмін) має повний доступ до всіх компаній
     if (user.role === UserRole.OWNER) {
-      // Якщо OWNER не є членом компанії, знайти companyId через slug
       if (!companyId) {
         const company = await this.companiesService.findBySlug(slug, user.sub, user.role);
         request.companyId = company.id;
@@ -56,22 +57,17 @@ export class CompanyRoleGuard implements CanActivate {
       return true;
     }
 
-    // Для звичайних користувачів: перевіряємо, чи є вони членами компанії
-    if (!userRoleInCompany || !companyId) {
+    if (!companyId || !roleInCompany) {
       throw new ForbiddenException('You are not a member of this company');
     }
 
     request.companyId = companyId;
 
-    // Якщо немає вимог до ролі - дозволяємо доступ
-    if (!requiredRoles) {
+    if (!requiredRoles?.length) {
       return true;
     }
 
-    // Перевіряємо, чи має користувач необхідну роль
-    const hasPermission = requiredRoles.includes(userRoleInCompany);
-
-    if (!hasPermission) {
+    if (!requiredRoles.includes(roleInCompany)) {
       throw new ForbiddenException('You do not have the required company permissions');
     }
 

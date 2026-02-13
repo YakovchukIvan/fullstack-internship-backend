@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -12,6 +12,7 @@ import { PaginatedResultDto } from '@/common/dto/res/paginated-result.dto';
 import { CompanyInvitationsPaginationDto } from '../dto/req/company-invitations-pagination.dto';
 import { CompanyMembersService } from './company-members.service';
 import { CompanyEvents, CompanyInvitationEvent, CompanyMembershipEvent } from '../events/company.events';
+import { Company } from '../entities/company.entity';
 
 @Injectable()
 export class CompanyInvitationsService {
@@ -22,16 +23,18 @@ export class CompanyInvitationsService {
     private readonly joinRequestRepository: Repository<CompanyJoinRequest>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Company)
+    private readonly companiesRepository: Repository<Company>,
     private readonly companyMembersService: CompanyMembersService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async inviteUser(companyId: string, email: string, invitedById: string): Promise<CompanyInvitation> {
-    const canManage = await this.companyMembersService.canManageCompany(invitedById, companyId);
-    if (!canManage) {
-      throw new ForbiddenException('Only company owner or admin can invite users');
-    }
-
+  async inviteUser(
+    companyId: string,
+    email: string,
+    invitedById: string,
+    message?: string,
+  ): Promise<CompanyInvitation> {
     const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
       throw new NotFoundException('User with this email not found');
@@ -60,6 +63,7 @@ export class CompanyInvitationsService {
       userId: user.id,
       companyId,
       invitedBy: invitedById,
+      message: message || null,
     });
 
     const savedInvitation = await this.invitationRepository.save(invitation);
@@ -75,26 +79,31 @@ export class CompanyInvitationsService {
     });
   }
 
-  async acceptInvitation(companyId: string, userId: string): Promise<CompanyMember> {
+  async acceptInvitation(slug: string, userId: string): Promise<CompanyMember> {
     const invitation = await this.invitationRepository.findOne({
-      where: { userId, companyId },
+      where: { userId, company: { slug } },
+      relations: ['company'],
     });
 
     if (!invitation) {
       throw new NotFoundException('Invitation not found');
     }
 
-    const member = await this.companyMembersService.addMember(userId, companyId, CompanyRole.MEMBER);
+    const member = await this.companyMembersService.addMember(userId, invitation.company.id, CompanyRole.MEMBER);
     await this.invitationRepository.remove(invitation);
 
-    this.eventEmitter.emit(CompanyEvents.INVITATION_ACCEPTED, new CompanyMembershipEvent(userId, companyId));
+    this.eventEmitter.emit(
+      CompanyEvents.INVITATION_ACCEPTED,
+      new CompanyMembershipEvent(userId, invitation.company.id),
+    );
 
     return member;
   }
 
-  async declineInvitation(companyId: string, userId: string): Promise<void> {
+  async declineInvitation(slug: string, userId: string): Promise<void> {
     const invitation = await this.invitationRepository.findOne({
-      where: { userId, companyId },
+      where: { userId, company: { slug } },
+      relations: ['company'],
     });
 
     if (!invitation) {
@@ -104,12 +113,7 @@ export class CompanyInvitationsService {
     await this.invitationRepository.remove(invitation);
   }
 
-  async cancelInvitation(companyId: string, userId: string, cancelledById: string): Promise<void> {
-    const canManage = await this.companyMembersService.canManageCompany(cancelledById, companyId);
-    if (!canManage) {
-      throw new ForbiddenException('Only company owner or admin can cancel invitations');
-    }
-
+  async cancelInvitation(companyId: string, userId: string): Promise<void> {
     const invitation = await this.invitationRepository.findOne({
       where: { userId, companyId },
     });
@@ -123,18 +127,19 @@ export class CompanyInvitationsService {
 
   async getCompanyInvitations(
     companyId: string,
-    requesterId: string,
     paginationOptions?: CompanyInvitationsPaginationDto,
-  ): Promise<PaginatedResultDto<CompanyInvitation>> {
-    const canManage = await this.companyMembersService.canManageCompany(requesterId, companyId);
-    if (!canManage) {
-      throw new ForbiddenException('Only company owner or admin can view invitations');
+  ): Promise<{ invitations: PaginatedResultDto<CompanyInvitation>; company: Company }> {
+    const company = await this.companiesRepository.findOne({ where: { id: companyId } });
+    if (!company) {
+      throw new NotFoundException('Company not found');
     }
 
-    return createPaginatedResult(this.invitationRepository, paginationOptions, {
+    const invitations = await createPaginatedResult(this.invitationRepository, paginationOptions, {
       where: { companyId },
-      relations: ['company', 'user', 'inviter'],
+      relations: ['user', 'inviter'],
     });
+
+    return { invitations, company };
   }
 
   async getUserInvitations(

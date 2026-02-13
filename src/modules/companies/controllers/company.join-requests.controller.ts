@@ -44,10 +44,9 @@ export class CompanyJoinRequestsController {
   async getCompanyJoinRequests(
     @Param('slug') _slug: string,
     @CurrentCompanyId() companyId: string,
-    @CurrentUser() user: JwtPayload,
     @Query() paginationDto: CompanyInvitationsPaginationDto,
   ): Promise<{ joinRequests: CompanyJoinRequestResponseDto[]; pagination: PaginationMetadataDto }> {
-    const result = await this.joinRequestsService.getCompanyJoinRequests(companyId, user.sub, paginationDto);
+    const result = await this.joinRequestsService.getCompanyJoinRequests(companyId, paginationDto);
 
     return {
       joinRequests: result.detail.map(toCompanyJoinRequestResponseDto),
@@ -64,9 +63,8 @@ export class CompanyJoinRequestsController {
     @Param('slug') _slug: string,
     @CurrentCompanyId() companyId: string,
     @Param('userId') userId: string,
-    @CurrentUser() admin: JwtPayload,
   ): Promise<{ member: CompanyMemberResponseDto }> {
-    const member = await this.joinRequestsService.acceptJoinRequest(companyId, userId, admin.sub);
+    const member = await this.joinRequestsService.acceptJoinRequest(companyId, userId);
 
     return {
       member: toCompanyMemberResponseDto(member),
@@ -82,9 +80,8 @@ export class CompanyJoinRequestsController {
     @Param('slug') _slug: string,
     @CurrentCompanyId() companyId: string,
     @Param('userId') userId: string,
-    @CurrentUser() admin: JwtPayload,
   ): Promise<{ message: string }> {
-    await this.joinRequestsService.declineJoinRequest(companyId, userId, admin.sub);
+    await this.joinRequestsService.declineJoinRequest(companyId, userId);
     return { message: 'Join request has been declined' };
   }
 

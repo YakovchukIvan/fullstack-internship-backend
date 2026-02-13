@@ -1,7 +1,10 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { CompanyMemberResponseDto } from './../dto/res/company-member.res.dto';
-import { toCompanyInvitationResponseDto } from '@/modules/companies/mappers/company-invitation.mapper';
-import { CompanyInvitationResponseDto } from './../dto/res/company-invitation-response.dto';
+import {
+  toCompanyInvitationItemDto,
+  toCompanyInvitationResponseDto,
+} from '@/modules/companies/mappers/company-invitation.mapper';
+import { CompanyInvitationItemDto, CompanyInvitationResponseDto } from './../dto/res/company-invitation-response.dto';
 import { RequireCompanyRoles } from './../decorators/company-roles.decorator';
 import { CompanyRoleGuard } from './../guards/company-role.guard';
 import { InviteUserDto } from './../dto/req/invite-user.dto';
@@ -21,50 +24,48 @@ import { CurrentCompanyId } from '../decorators/current-company-id.decorator';
 export class CompanyInvitationsController {
   constructor(private readonly invitationsService: CompanyInvitationsService) {}
 
-  @Post(CompaniesRoutes.INVITATIONS)
-  @UseGuards(CompanyRoleGuard)
-  @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @ApiEndpoint(CompanyInvitationResponseDto, HttpStatus.CREATED)
-  @ResponseMessage('User invited successfully')
-  async inviteUser(
-    @CurrentCompanyId() companyId: string,
-    @Body() dto: InviteUserDto,
-    @CurrentUser() user: JwtPayload,
-  ): Promise<{ invitation: CompanyInvitationResponseDto }> {
-    const invitation = await this.invitationsService.inviteUser(companyId, dto.email, user.sub);
-
-    return {
-      invitation: toCompanyInvitationResponseDto(invitation),
-    };
-  }
-
   @Get(CompaniesRoutes.INVITATIONS)
   @UseGuards(CompanyRoleGuard)
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
   @ApiEndpoint(CompanyInvitationResponseDto, HttpStatus.OK)
   @ResponseMessage('Invitations fetched successfully')
   async getCompanyInvitations(
+    @Param('slug') _slug: string,
     @CurrentCompanyId() companyId: string,
-    @CurrentUser() user: JwtPayload,
     @Query() paginationDto: CompanyInvitationsPaginationDto,
-  ): Promise<{ invitations: CompanyInvitationResponseDto[]; pagination: PaginationMetadataDto }> {
-    const result = await this.invitationsService.getCompanyInvitations(companyId, user.sub, paginationDto);
+  ): Promise<{ detail: CompanyInvitationResponseDto; pagination: PaginationMetadataDto }> {
+    const { invitations, company } = await this.invitationsService.getCompanyInvitations(companyId, paginationDto);
 
     return {
-      invitations: result.detail.map(toCompanyInvitationResponseDto),
-      pagination: result.pagination,
+      detail: toCompanyInvitationResponseDto(invitations.detail, company),
+      pagination: invitations.pagination,
     };
   }
 
-  @Post(CompaniesRoutes.ACCEPT_INVITATION)
+  @Post(CompaniesRoutes.INVITATIONS)
   @UseGuards(CompanyRoleGuard)
+  @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
+  @ApiEndpoint(CompanyInvitationResponseDto, HttpStatus.CREATED)
+  @ResponseMessage('User invited successfully')
+  async inviteUser(
+    @Param('slug') _slug: string,
+    @CurrentCompanyId() companyId: string,
+    @Body() dto: InviteUserDto,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<CompanyInvitationItemDto> {
+    const invitation = await this.invitationsService.inviteUser(companyId, dto.email, user.sub, dto.message);
+
+    return toCompanyInvitationItemDto(invitation);
+  }
+
+  @Post(CompaniesRoutes.ACCEPT_INVITATION)
   @ApiEndpoint(CompanyMemberResponseDto, HttpStatus.OK)
   @ResponseMessage('Invitation accepted successfully')
   async acceptInvitation(
-    @CurrentCompanyId() companyId: string,
+    @Param('slug') slug: string,
     @CurrentUser() user: JwtPayload,
   ): Promise<{ member: CompanyMemberResponseDto }> {
-    const member = await this.invitationsService.acceptInvitation(companyId, user.sub);
+    const member = await this.invitationsService.acceptInvitation(slug, user.sub);
 
     return {
       member: toCompanyMemberResponseDto(member),
@@ -72,14 +73,10 @@ export class CompanyInvitationsController {
   }
 
   @Post(CompaniesRoutes.DECLINE_INVITATION)
-  @UseGuards(CompanyRoleGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ResponseMessage('Invitation declined successfully')
-  async declineInvitation(
-    @CurrentCompanyId() companyId: string,
-    @CurrentUser() user: JwtPayload,
-  ): Promise<{ message: string }> {
-    await this.invitationsService.declineInvitation(companyId, user.sub);
+  async declineInvitation(@Param('slug') slug: string, @CurrentUser() user: JwtPayload): Promise<{ message: string }> {
+    await this.invitationsService.declineInvitation(slug, user.sub);
     return { message: 'Invitation has been declined' };
   }
 
@@ -89,11 +86,11 @@ export class CompanyInvitationsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ResponseMessage('Invitation cancelled successfully')
   async cancelInvitation(
+    @Param('slug') _slug: string,
     @CurrentCompanyId() companyId: string,
     @Param('userId') userId: string,
-    @CurrentUser() user: JwtPayload,
   ): Promise<{ message: string }> {
-    await this.invitationsService.cancelInvitation(companyId, userId, user.sub);
+    await this.invitationsService.cancelInvitation(companyId, userId);
     return { message: 'Invitation has been cancelled' };
   }
 }
