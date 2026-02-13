@@ -18,9 +18,6 @@ export class CompanyJoinRequest extends BaseEntity {
   @Exclude()
   companyId: string;
 
-  @Column({ type: 'text', nullable: true })
-  message: string | null;
-
   @Column({ type: 'enum', enum: InvitationStatus, default: InvitationStatus.PENDING })
   status: InvitationStatus;
 

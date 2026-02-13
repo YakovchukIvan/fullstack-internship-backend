@@ -1,7 +1,13 @@
 import { Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { CompanyMemberResponseDto } from './../dto/res/company-member.res.dto';
-import { toCompanyJoinRequestResponseDto } from '@/modules/companies/mappers/company-join-request.mapper';
-import { CompanyJoinRequestResponseDto } from './../dto/res/company-join-request-response.dto';
+import {
+  toCompanyJoinRequestItemDto,
+  toCompanyJoinRequestResponseDto,
+} from '@/modules/companies/mappers/company-join-request.mapper';
+import {
+  CompanyJoinRequestItemDto,
+  CompanyJoinRequestResponseDto,
+} from './../dto/res/company-join-request-response.dto';
 import { RequireCompanyRoles } from './../decorators/company-roles.decorator';
 import { CompanyRoleGuard } from './../guards/company-role.guard';
 import { CompaniesRoutes } from './../routes/companies.routes';
@@ -21,19 +27,15 @@ export class CompanyJoinRequestsController {
   constructor(private readonly joinRequestsService: CompanyJoinRequestsService) {}
 
   @Post(CompaniesRoutes.JOIN_REQUESTS)
-  @UseGuards(CompanyRoleGuard)
-  @ApiEndpoint(CompanyJoinRequestResponseDto, HttpStatus.CREATED)
+  @ApiEndpoint(CompanyJoinRequestItemDto, HttpStatus.CREATED)
   @ResponseMessage('Join request sent successfully')
   async sendJoinRequest(
-    @Param('slug') _slug: string,
-    @CurrentCompanyId() companyId: string,
+    @Param('slug') slug: string,
     @CurrentUser() user: JwtPayload,
-  ): Promise<{ joinRequest: CompanyJoinRequestResponseDto }> {
-    const joinRequest = await this.joinRequestsService.sendJoinRequest(companyId, user.sub);
+  ): Promise<CompanyJoinRequestItemDto> {
+    const joinRequest = await this.joinRequestsService.sendJoinRequest(slug, user.sub);
 
-    return {
-      joinRequest: toCompanyJoinRequestResponseDto(joinRequest),
-    };
+    return toCompanyJoinRequestItemDto(joinRequest);
   }
 
   @Get(CompaniesRoutes.JOIN_REQUESTS)
@@ -45,12 +47,12 @@ export class CompanyJoinRequestsController {
     @Param('slug') _slug: string,
     @CurrentCompanyId() companyId: string,
     @Query() paginationDto: CompanyInvitationsPaginationDto,
-  ): Promise<{ joinRequests: CompanyJoinRequestResponseDto[]; pagination: PaginationMetadataDto }> {
-    const result = await this.joinRequestsService.getCompanyJoinRequests(companyId, paginationDto);
+  ): Promise<{ data: CompanyJoinRequestResponseDto; pagination: PaginationMetadataDto }> {
+    const { joinRequests, company } = await this.joinRequestsService.getCompanyJoinRequests(companyId, paginationDto);
 
     return {
-      joinRequests: result.detail.map(toCompanyJoinRequestResponseDto),
-      pagination: result.pagination,
+      data: toCompanyJoinRequestResponseDto(joinRequests.detail, company),
+      pagination: joinRequests.pagination,
     };
   }
 
@@ -86,15 +88,10 @@ export class CompanyJoinRequestsController {
   }
 
   @Delete(CompaniesRoutes.JOIN_REQUESTS)
-  @UseGuards(CompanyRoleGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ResponseMessage('Join request cancelled successfully')
-  async cancelJoinRequest(
-    @Param('slug') _slug: string,
-    @CurrentCompanyId() companyId: string,
-    @CurrentUser() user: JwtPayload,
-  ): Promise<{ message: string }> {
-    await this.joinRequestsService.cancelJoinRequest(companyId, user.sub);
+  async cancelJoinRequest(@Param('slug') slug: string, @CurrentUser() user: JwtPayload): Promise<{ message: string }> {
+    await this.joinRequestsService.cancelJoinRequest(slug, user.sub);
     return { message: 'Join request has been cancelled' };
   }
 }

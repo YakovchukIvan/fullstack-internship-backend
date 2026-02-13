@@ -11,6 +11,7 @@ import { PaginatedResultDto } from '@/common/dto/res/paginated-result.dto';
 import { CompanyInvitationsPaginationDto } from '../dto/req/company-invitations-pagination.dto';
 import { CompanyMembersService } from './company-members.service';
 import { CompanyEvents, CompanyMembershipEvent } from '../events/company.events';
+import { Company } from '../entities/company.entity';
 
 @Injectable()
 export class CompanyJoinRequestsService {
@@ -19,11 +20,20 @@ export class CompanyJoinRequestsService {
     private readonly invitationRepository: Repository<CompanyInvitation>,
     @InjectRepository(CompanyJoinRequest)
     private readonly joinRequestRepository: Repository<CompanyJoinRequest>,
+    @InjectRepository(Company)
+    private readonly companiesRepository: Repository<Company>,
     private readonly companyMembersService: CompanyMembersService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async sendJoinRequest(companyId: string, userId: string): Promise<CompanyJoinRequest> {
+  async sendJoinRequest(slug: string, userId: string): Promise<CompanyJoinRequest> {
+    const company = await this.companiesRepository.findOne({ where: { slug } });
+    if (!company) {
+      throw new NotFoundException('Company not found');
+    }
+
+    const companyId = company.id;
+
     const isMember = await this.companyMembersService.isMember(userId, companyId);
     if (isMember) {
       throw new ConflictException('You are already a member of this company');
@@ -48,7 +58,7 @@ export class CompanyJoinRequestsService {
 
     return this.joinRequestRepository.findOneOrFail({
       where: { id: savedRequest.id },
-      relations: ['company', 'user'],
+      relations: ['user'],
     });
   }
 
@@ -81,9 +91,10 @@ export class CompanyJoinRequestsService {
     await this.joinRequestRepository.remove(joinRequest);
   }
 
-  async cancelJoinRequest(companyId: string, userId: string): Promise<void> {
+  async cancelJoinRequest(slug: string, userId: string): Promise<void> {
     const joinRequest = await this.joinRequestRepository.findOne({
-      where: { userId, companyId },
+      where: { userId, company: { slug } },
+      relations: ['company'],
     });
 
     if (!joinRequest) {
@@ -96,11 +107,21 @@ export class CompanyJoinRequestsService {
   async getCompanyJoinRequests(
     companyId: string,
     paginationOptions?: CompanyInvitationsPaginationDto,
-  ): Promise<PaginatedResultDto<CompanyJoinRequest>> {
-    return createPaginatedResult(this.joinRequestRepository, paginationOptions, {
-      where: { companyId },
-      relations: ['company', 'user'],
+  ): Promise<{ joinRequests: PaginatedResultDto<CompanyJoinRequest>; company: Company }> {
+    const company = await this.companiesRepository.findOne({
+      where: { id: companyId },
     });
+
+    if (!company) {
+      throw new NotFoundException('Company not found');
+    }
+
+    const joinRequests = await createPaginatedResult(this.joinRequestRepository, paginationOptions, {
+      where: { companyId },
+      relations: ['user'],
+    });
+
+    return { joinRequests, company };
   }
 
   async getUserJoinRequests(
