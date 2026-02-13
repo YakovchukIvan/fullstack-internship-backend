@@ -4,7 +4,7 @@ interface RequestWithCompany extends Request {
   companyId?: string;
 }
 
-export const CurrentCompanyId = createParamDecorator((ctx: ExecutionContext): string | undefined => {
+export const CurrentCompanyId = createParamDecorator((data: unknown, ctx: ExecutionContext): string | undefined => {
   const request = ctx.switchToHttp().getRequest<RequestWithCompany>();
   return request.companyId;
 });

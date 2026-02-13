@@ -25,6 +25,7 @@ export class CompanyJoinRequestsController {
   @ApiEndpoint(CompanyJoinRequestResponseDto, HttpStatus.CREATED)
   @ResponseMessage('Join request sent successfully')
   async sendJoinRequest(
+    @Param('slug') _slug: string,
     @CurrentCompanyId() companyId: string,
     @CurrentUser() user: JwtPayload,
   ): Promise<{ joinRequest: CompanyJoinRequestResponseDto }> {
@@ -41,6 +42,7 @@ export class CompanyJoinRequestsController {
   @ApiEndpoint(CompanyJoinRequestResponseDto, HttpStatus.OK)
   @ResponseMessage('Join requests fetched successfully')
   async getCompanyJoinRequests(
+    @Param('slug') _slug: string,
     @CurrentCompanyId() companyId: string,
     @CurrentUser() user: JwtPayload,
     @Query() paginationDto: CompanyInvitationsPaginationDto,
@@ -59,8 +61,9 @@ export class CompanyJoinRequestsController {
   @ApiEndpoint(CompanyMemberResponseDto, HttpStatus.OK)
   @ResponseMessage('Join request accepted successfully')
   async acceptJoinRequest(
+    @Param('slug') _slug: string,
     @CurrentCompanyId() companyId: string,
-    @Param('userId') userId: string, // ID юзера, чий запит приймаємо
+    @Param('userId') userId: string,
     @CurrentUser() admin: JwtPayload,
   ): Promise<{ member: CompanyMemberResponseDto }> {
     const member = await this.joinRequestsService.acceptJoinRequest(companyId, userId, admin.sub);
@@ -76,6 +79,7 @@ export class CompanyJoinRequestsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ResponseMessage('Join request declined successfully')
   async declineJoinRequest(
+    @Param('slug') _slug: string,
     @CurrentCompanyId() companyId: string,
     @Param('userId') userId: string,
     @CurrentUser() admin: JwtPayload,
@@ -89,6 +93,7 @@ export class CompanyJoinRequestsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ResponseMessage('Join request cancelled successfully')
   async cancelJoinRequest(
+    @Param('slug') _slug: string,
     @CurrentCompanyId() companyId: string,
     @CurrentUser() user: JwtPayload,
   ): Promise<{ message: string }> {

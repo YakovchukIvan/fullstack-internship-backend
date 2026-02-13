@@ -62,12 +62,17 @@ export class CompanyInvitationsService {
       invitedBy: invitedById,
     });
 
+    const savedInvitation = await this.invitationRepository.save(invitation);
+
     this.eventEmitter.emit(
       CompanyEvents.INVITATION_SENT,
-      new CompanyInvitationEvent(invitation.userId, invitation.companyId, invitedById),
+      new CompanyInvitationEvent(savedInvitation.userId, savedInvitation.companyId, invitedById),
     );
 
-    return this.invitationRepository.save(invitation);
+    return this.invitationRepository.findOneOrFail({
+      where: { id: savedInvitation.id },
+      relations: ['user', 'company', 'inviter'],
+    });
   }
 
   async acceptInvitation(companyId: string, userId: string): Promise<CompanyMember> {
