@@ -1,10 +1,7 @@
+import { UserBasicDto } from '@/common/dto/res/user-basic.dto';
 import { UserRole } from '@/common/enums/user-role.enum';
 
-export class UserResponseDto {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
+export class UserResponseDto extends UserBasicDto {
   role: UserRole;
   createdAt: string;
   updatedAt: string;
