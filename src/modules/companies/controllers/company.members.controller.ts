@@ -13,12 +13,21 @@ import { CompanyRole } from '@/common/enums/company-role.enum';
 import { toCompanyMemberResponseDto } from '../mappers/company-member.mapper';
 import { CompanyMemberResponseDto } from '../dto/res/company-member.res.dto';
 import { CompanyMembersService } from '../services/company-members.service';
+import { CompanyInvitationsService } from '../services/company-invitations.service';
+import { CompanyJoinRequestsService } from '../services/company-join-requests.service';
+import { CompanyInvitationsPaginationDto } from '../dto/req/company-invitations-pagination.dto';
+import { CompanyInvitationItemDto } from '../dto/res/company-invitation-response.dto';
+import { CompanyJoinRequestItemDto } from '../dto/res/company-join-request-response.dto';
+import { toCompanyInvitationItemDto } from '../mappers/company-invitation.mapper';
+import { toCompanyJoinRequestItemDto } from '../mappers/company-join-request.mapper';
 
 @Controller(CompaniesRoutes.ROOT)
 export class CompanyMembersController {
   constructor(
     private readonly companiesService: CompaniesService,
     private readonly membersService: CompanyMembersService,
+    private readonly invitationsService: CompanyInvitationsService,
+    private readonly joinRequestsService: CompanyJoinRequestsService,
   ) {}
 
   @Get(CompaniesRoutes.MEMBERS)
@@ -61,6 +70,36 @@ export class CompanyMembersController {
     await this.membersService.removeMember(slug, userId, user.sub);
     return {
       message: 'Member has been removed from the company',
+    };
+  }
+
+  @Get(CompaniesRoutes.MY_INVITATIONS)
+  @ApiEndpoint(CompanyMemberResponseDto, HttpStatus.OK)
+  @ResponseMessage('User invitations fetched successfully')
+  async getMyInvitations(
+    @CurrentUser() user: JwtPayload,
+    @Query() paginationDto: CompanyInvitationsPaginationDto,
+  ): Promise<{ invitations: CompanyInvitationItemDto[]; pagination: PaginationMetadataDto }> {
+    const result = await this.invitationsService.getUserInvitations(user.sub, paginationDto);
+
+    return {
+      invitations: result.detail.map(toCompanyInvitationItemDto),
+      pagination: result.pagination,
+    };
+  }
+
+  @Get(CompaniesRoutes.MY_JOIN_REQUESTS)
+  @ApiEndpoint(CompanyMemberResponseDto, HttpStatus.OK)
+  @ResponseMessage('User join requests fetched successfully')
+  async getMyJoinRequests(
+    @CurrentUser() user: JwtPayload,
+    @Query() paginationDto: CompanyInvitationsPaginationDto,
+  ): Promise<{ joinRequests: CompanyJoinRequestItemDto[]; pagination: PaginationMetadataDto }> {
+    const result = await this.joinRequestsService.getUserJoinRequests(user.sub, paginationDto);
+
+    return {
+      joinRequests: result.detail.map(toCompanyJoinRequestItemDto),
+      pagination: result.pagination,
     };
   }
 }

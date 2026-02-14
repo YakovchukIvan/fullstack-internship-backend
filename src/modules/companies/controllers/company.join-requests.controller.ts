@@ -64,9 +64,9 @@ export class CompanyJoinRequestsController {
   async acceptJoinRequest(
     @Param('slug') _slug: string,
     @CurrentCompanyId() companyId: string,
-    @Param('userId') userId: string,
+    @Param('requestId') requestId: string,
   ): Promise<{ member: CompanyMemberResponseDto }> {
-    const member = await this.joinRequestsService.acceptJoinRequest(companyId, userId);
+    const member = await this.joinRequestsService.acceptJoinRequest(companyId, requestId);
 
     return {
       member: toCompanyMemberResponseDto(member),
@@ -81,9 +81,9 @@ export class CompanyJoinRequestsController {
   async declineJoinRequest(
     @Param('slug') _slug: string,
     @CurrentCompanyId() companyId: string,
-    @Param('userId') userId: string,
+    @Param('requestId') requestId: string,
   ): Promise<{ message: string }> {
-    await this.joinRequestsService.declineJoinRequest(companyId, userId);
+    await this.joinRequestsService.declineJoinRequest(companyId, requestId);
     return { message: 'Join request has been declined' };
   }
 

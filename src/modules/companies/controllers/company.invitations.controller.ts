@@ -80,7 +80,7 @@ export class CompanyInvitationsController {
     return { message: 'Invitation has been declined' };
   }
 
-  @Delete(CompaniesRoutes.INVITATION_BY_USER)
+  @Delete(CompaniesRoutes.INVITATION_BY_ID)
   @UseGuards(CompanyRoleGuard)
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -88,9 +88,9 @@ export class CompanyInvitationsController {
   async cancelInvitation(
     @Param('slug') _slug: string,
     @CurrentCompanyId() companyId: string,
-    @Param('userId') userId: string,
+    @Param('invitationId') invitationId: string,
   ): Promise<{ message: string }> {
-    await this.invitationsService.cancelInvitation(companyId, userId);
+    await this.invitationsService.cancelInvitation(companyId, invitationId);
     return { message: 'Invitation has been cancelled' };
   }
 }

@@ -113,9 +113,9 @@ export class CompanyInvitationsService {
     await this.invitationRepository.remove(invitation);
   }
 
-  async cancelInvitation(companyId: string, userId: string): Promise<void> {
+  async cancelInvitation(companyId: string, invitationId: string): Promise<void> {
     const invitation = await this.invitationRepository.findOne({
-      where: { userId, companyId },
+      where: { id: invitationId, companyId },
     });
 
     if (!invitation) {

@@ -47,36 +47,6 @@ export class UsersController {
     return { user: toUserResponseDto(user) };
   }
 
-  // @Get('me/company-invitations')
-  // @ApiEndpoint(CompanyInvitationResponseDto, HttpStatus.OK)
-  // @ResponseMessage('User invitations fetched successfully')
-  // async getMyInvitations(
-  //   @CurrentUser() user: JwtPayload,
-  //   @Query() paginationDto: CompanyInvitationsPaginationDto,
-  // ): Promise<{ invitations: CompanyInvitationResponseDto[]; pagination: PaginationMetadataDto }> {
-  //   const result = await this.companyInvitationsService.getUserInvitations(user.sub, paginationDto);
-
-  //   return {
-  //     invitations: result.detail.map(toCompanyInvitationResponseDto),
-  //     pagination: result.pagination,
-  //   };
-  // }
-
-  // @Get('me/company-join-requests')
-  // @ApiEndpoint(CompanyJoinRequestResponseDto, HttpStatus.OK)
-  // @ResponseMessage('User join requests fetched successfully')
-  // async getMyJoinRequests(
-  //   @CurrentUser() user: JwtPayload,
-  //   @Query() paginationDto: CompanyInvitationsPaginationDto,
-  // ): Promise<{ joinRequests: CompanyJoinRequestResponseDto[]; pagination: PaginationMetadataDto }> {
-  //   const result = await this.companyJoinRequestsService.getUserJoinRequests(user.sub, paginationDto);
-
-  //   return {
-  //     joinRequests: result.detail.map(toCompanyJoinRequestResponseDto),
-  //     pagination: result.pagination,
-  //   };
-  // }
-
   @Get(UsersRoutes.ID)
   @Roles(UserRole.OWNER)
   @ApiEndpoint(UserResponseDto, HttpStatus.OK)

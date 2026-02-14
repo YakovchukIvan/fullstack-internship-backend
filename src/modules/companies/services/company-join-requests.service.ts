@@ -62,26 +62,29 @@ export class CompanyJoinRequestsService {
     });
   }
 
-  async acceptJoinRequest(companyId: string, requestUserId: string): Promise<CompanyMember> {
+  async acceptJoinRequest(companyId: string, requestId: string): Promise<CompanyMember> {
     const joinRequest = await this.joinRequestRepository.findOne({
-      where: { userId: requestUserId, companyId },
+      where: { id: requestId, companyId },
     });
 
     if (!joinRequest) {
       throw new NotFoundException('Join request not found');
     }
 
-    const member = await this.companyMembersService.addMember(requestUserId, companyId, CompanyRole.MEMBER);
+    const member = await this.companyMembersService.addMember(joinRequest.userId, companyId, CompanyRole.MEMBER);
     await this.joinRequestRepository.remove(joinRequest);
 
-    this.eventEmitter.emit(CompanyEvents.JOIN_REQUEST_ACCEPTED, new CompanyMembershipEvent(requestUserId, companyId));
+    this.eventEmitter.emit(
+      CompanyEvents.JOIN_REQUEST_ACCEPTED,
+      new CompanyMembershipEvent(joinRequest.userId, companyId),
+    );
 
     return member;
   }
 
-  async declineJoinRequest(companyId: string, requestUserId: string): Promise<void> {
+  async declineJoinRequest(companyId: string, requestId: string): Promise<void> {
     const joinRequest = await this.joinRequestRepository.findOne({
-      where: { userId: requestUserId, companyId },
+      where: { id: requestId, companyId },
     });
 
     if (!joinRequest) {
