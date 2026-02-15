@@ -2,18 +2,18 @@ import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, Query
 import { UsersService } from '../users.service';
 import { CreateUserDto } from '../dto/req/create-user.req.dto';
 import { UpdateUserDto } from '../dto/req/update-user.req.dto';
-import { UserResponseDto } from '../dto/res/user.res.dto';
+import { UserResponseDto } from '../dto/res/users/user.res.dto';
 import { UUIDParam } from '@/common/decorators/uuid-param.decorator';
-import { toUserResponseDto } from '../mappers/user.mapper';
 import { UsersRoutes } from '../routes/users.routes';
-import { UsersPaginationQueryDto } from '../dto/req/users-pagination-query.dto';
+import { UsersPaginationQueryDto } from '../dto/req/users-pagination-query.req.dto';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
-import { UsersPaginatedResponseDto } from '../dto/res/users-paginated-response.dto';
+import { UsersPaginatedBaseResponseDto } from '../dto/res/users/users-paginated.res.dto';
 import { Roles } from '@/modules/auth/decorators/roles.decorator';
 import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
 import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
+import { toUserResponseDto } from '../mappers/user.mapper';
 
 @Controller(UsersRoutes.ROOT)
 export class UsersController {
@@ -29,8 +29,8 @@ export class UsersController {
   }
 
   @Get()
-  @ApiEndpoint(UsersPaginatedResponseDto, HttpStatus.OK)
-  async findAll(@Query() paginationQuery: UsersPaginationQueryDto): Promise<UsersPaginatedResponseDto> {
+  @ApiEndpoint(UsersPaginatedBaseResponseDto, HttpStatus.OK)
+  async findAll(@Query() paginationQuery: UsersPaginationQueryDto): Promise<UsersPaginatedBaseResponseDto> {
     const result = await this.usersService.findAll(paginationQuery);
     return {
       users: result.detail.map(toUserResponseDto),

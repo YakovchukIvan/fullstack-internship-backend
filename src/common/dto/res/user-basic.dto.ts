@@ -1,4 +1,4 @@
-export class UserBasicDto {
+export class UserBasicResponseDto {
   id: string;
   email: string;
   firstName: string;

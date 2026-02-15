@@ -1,23 +1,22 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, HttpStatus } from '@nestjs/common';
 import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
 import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
-import { PaginationMetadataDto } from '@/common/dto/res/pagination-metadata.dto';
 import { CompanyInvitationsService } from '@/modules/companies/services/company-invitations.service';
 import { CompanyJoinRequestsService } from '@/modules/companies/services/company-join-requests.service';
 import { CompanyMembersService } from '@/modules/companies/services/company-members.service';
-import { CompanyInvitationsPaginationDto } from '@/modules/companies/dto/req/company-invitations-pagination.dto';
-import { CompanyMembersPaginationDto } from '@/modules/companies/dto/req/company-members-pagination.dto';
-import { CompanyInvitationItemDto } from '@/modules/companies/dto/res/company-invitation-response.dto';
-import { CompanyJoinRequestItemDto } from '@/modules/companies/dto/res/company-join-request-response.dto';
-import { CompanyMemberResponseDto } from '@/modules/companies/dto/res/company-member.res.dto';
-import { toCompanyInvitationItemDto } from '@/modules/companies/mappers/company-invitation.mapper';
-import { toCompanyJoinRequestItemDto } from '@/modules/companies/mappers/company-join-request.mapper';
-import { toCompanyMemberResponseDto } from '@/modules/companies/mappers/company-member.mapper';
-import { HttpStatus } from '@nestjs/common';
+import { CompanyPaginationDto } from '@/modules/companies/dto/req/requests/company-invitations-pagination.req.dto';
+import { CompanyMembersPaginationDto } from '@/modules/companies/dto/req/members/company-members-pagination.req.dto';
+import { toCompanyInvitationItemResponseDto } from '@/modules/companies/mappers/company-invitation.mapper';
+import { toCompanyJoinRequestItemResponseDto } from '@/modules/companies/mappers/company-join-request.mapper';
+import { UserMembershipListResponseDto } from '../dto/res/membership/user-membership-list.res.dto';
+import { UserInvitationsListResponseDto } from '../dto/res/membership/user-invitations-list.res.dto';
+import { UserJoinRequestsListResponseDto } from '../dto/res/membership/user-join-requests-list.res.dto';
+import { toUserMembershipResponseDto } from '../mappers/user-membership.mapper';
+import { UsersRoutes } from '../routes/users.routes';
 
-@Controller('users/me/company')
+@Controller(UsersRoutes.COMPANY.ROOT)
 export class UserCompanyMembershipController {
   constructor(
     private readonly invitationsService: CompanyInvitationsService,
@@ -25,47 +24,47 @@ export class UserCompanyMembershipController {
     private readonly membersService: CompanyMembersService,
   ) {}
 
-  @Get('invitations')
-  @ApiEndpoint(CompanyInvitationItemDto, HttpStatus.OK)
+  @Get(UsersRoutes.COMPANY.INVITATIONS)
+  @ApiEndpoint(UserInvitationsListResponseDto, HttpStatus.OK)
   @ResponseMessage('User invitations fetched successfully')
   async getInvitations(
     @CurrentUser() user: JwtPayload,
-    @Query() paginationDto: CompanyInvitationsPaginationDto,
-  ): Promise<{ invitations: CompanyInvitationItemDto[]; pagination: PaginationMetadataDto }> {
+    @Query() paginationDto: CompanyPaginationDto,
+  ): Promise<UserInvitationsListResponseDto> {
     const result = await this.invitationsService.getUserInvitations(user.sub, paginationDto);
 
     return {
-      invitations: result.detail.map(toCompanyInvitationItemDto),
+      invitations: result.detail.map(toCompanyInvitationItemResponseDto),
       pagination: result.pagination,
     };
   }
 
-  @Get('join-requests')
-  @ApiEndpoint(CompanyJoinRequestItemDto, HttpStatus.OK)
+  @Get(UsersRoutes.COMPANY.JOIN_REQUESTS)
+  @ApiEndpoint(UserJoinRequestsListResponseDto, HttpStatus.OK)
   @ResponseMessage('User join requests fetched successfully')
   async getJoinRequests(
     @CurrentUser() user: JwtPayload,
-    @Query() paginationDto: CompanyInvitationsPaginationDto,
-  ): Promise<{ joinRequests: CompanyJoinRequestItemDto[]; pagination: PaginationMetadataDto }> {
+    @Query() paginationDto: CompanyPaginationDto,
+  ): Promise<UserJoinRequestsListResponseDto> {
     const result = await this.joinRequestsService.getUserJoinRequests(user.sub, paginationDto);
 
     return {
-      joinRequests: result.detail.map(toCompanyJoinRequestItemDto),
+      joinRequests: result.detail.map(toCompanyJoinRequestItemResponseDto),
       pagination: result.pagination,
     };
   }
 
-  @Get('membership')
-  @ApiEndpoint(CompanyMemberResponseDto, HttpStatus.OK)
+  @Get(UsersRoutes.COMPANY.MEMBERSHIP)
+  @ApiEndpoint(UserMembershipListResponseDto, HttpStatus.OK)
   @ResponseMessage('User membership fetched successfully')
   async getMembership(
     @CurrentUser() user: JwtPayload,
     @Query() paginationDto: CompanyMembersPaginationDto,
-  ): Promise<{ membership: CompanyMemberResponseDto[]; pagination: PaginationMetadataDto }> {
+  ): Promise<UserMembershipListResponseDto> {
     const result = await this.membersService.getUserMembership(user.sub, paginationDto);
 
     return {
-      membership: result.detail.map(toCompanyMemberResponseDto),
+      membership: result.detail.map(toUserMembershipResponseDto),
       pagination: result.pagination,
     };
   }

@@ -8,8 +8,8 @@ import { AuthCredentialsService } from '@/modules/auth/services/auth-credentials
 import { AppLogger } from '@/common/logger/app-logger';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { createPaginatedResult } from '@/common/helpers/create-paginated-result.helper';
-import { UsersPaginationQueryDto } from './dto/req/users-pagination-query.dto';
-import { PaginatedResultDto } from '@/common/dto/res/paginated-result.dto';
+import { UsersPaginationQueryDto } from './dto/req/users-pagination-query.req.dto';
+import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
 
 @Injectable()
 export class UsersService {
@@ -40,7 +40,7 @@ export class UsersService {
     });
   }
 
-  async findAll(paginationQuery: UsersPaginationQueryDto): Promise<PaginatedResultDto<User>> {
+  async findAll(paginationQuery: UsersPaginationQueryDto): Promise<PaginatedResultResponseDto<User>> {
     const result = await createPaginatedResult(this.usersRepository, paginationQuery);
 
     this.logger.log('Users fetched successfully', UsersService.name);

@@ -1,15 +1,25 @@
 export const CompaniesRoutes = {
   ROOT: 'companies',
   BY_SLUG: ':slug',
-  INVITATIONS: ':slug/invitations',
-  INVITATION_BY_ID: ':slug/invitations/:invitationId',
-  ACCEPT_INVITATION: ':slug/invitations/accept',
-  DECLINE_INVITATION: ':slug/invitations/decline',
-  JOIN_REQUESTS: ':slug/join-requests',
-  ACCEPT_JOIN_REQUEST: ':slug/join-requests/:requestId/accept',
-  DECLINE_JOIN_REQUEST: ':slug/join-requests/:requestId/decline',
-  MEMBERS: ':slug/members',
-  MEMBER_BY_ID: ':slug/members/:memberId',
-  UPDATE_MEMBER_ROLE: ':slug/members/:memberId/role',
-  LEAVE_COMPANY: ':slug/leave',
+
+  INVITATIONS: {
+    BASE: ':slug/invitations',
+    BY_ID: ':slug/invitations/:invitationId',
+    ACCEPT: ':slug/invitations/accept',
+    DECLINE: ':slug/invitations/decline',
+  },
+
+  JOIN_REQUESTS: {
+    BASE: ':slug/join-requests',
+    ACCEPT: ':slug/join-requests/:requestId/accept',
+    DECLINE: ':slug/join-requests/:requestId/decline',
+  },
+
+  MEMBERS: {
+    BASE: ':slug/members',
+    BY_ID: ':slug/members/:memberId',
+    UPDATE_ROLE: ':slug/members/:memberId/role',
+  },
+
+  LEAVE: ':slug/leave',
 } as const;

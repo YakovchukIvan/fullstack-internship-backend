@@ -4,12 +4,12 @@ import { Repository } from 'typeorm';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { generateSlug } from '@/common/helpers/generate-slug.helper';
 import { createPaginatedResult } from '@/common/helpers/create-paginated-result.helper';
-import { PaginatedResultDto } from '@/common/dto/res/paginated-result.dto';
-import { CompaniesPaginationDto } from './../dto/req/companies-pagination.dto';
-import { UpdateCompanyDto } from './../dto/req/update-company.dto';
-import { CreateCompanyDto } from './../dto/req/create-company.dto';
+import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
+import { CompaniesPaginationDto } from '../dto/req/company/companies-pagination.req.dto';
 import { Company } from '@/modules/companies/entities/company.entity';
 import { CompanyMembersService } from './company-members.service';
+import { CreateCompanyDto } from '../dto/req/company/create-company.req.dto';
+import { UpdateCompanyDto } from '../dto/req/company/update-company.req.dto';
 
 @Injectable()
 export class CompaniesService {
@@ -47,7 +47,7 @@ export class CompaniesService {
     userId: string,
     userRole?: UserRole,
     paginationOptions?: CompaniesPaginationDto,
-  ): Promise<PaginatedResultDto<Company>> {
+  ): Promise<PaginatedResultResponseDto<Company>> {
     if (userRole === UserRole.OWNER) {
       return createPaginatedResult(this.companyRepository, paginationOptions, {
         relations: ['owner'],
@@ -82,31 +82,35 @@ export class CompaniesService {
     return company;
   }
 
-  async updateById(id: string, dto: UpdateCompanyDto): Promise<Company> {
-    const company = await this.companyRepository.findOne({ where: { id } });
+  async updateBySlug(slug: string, dto: UpdateCompanyDto): Promise<Company> {
+    const company = await this.companyRepository.findOne({ where: { slug } });
     if (!company) {
       throw new NotFoundException('Company not found');
     }
 
     if (dto.name && dto.name !== company.name) {
-      const slug = generateSlug(dto.name);
-      const existing = await this.companyRepository.findOne({ where: { name: dto.name } });
-      if (existing && existing.id !== id) {
-        throw new ConflictException('Name already taken');
-      }
-      company.slug = slug;
-    }
-    Object.assign(company, dto);
+      const newSlug = generateSlug(dto.name);
 
+      const existing = await this.companyRepository.findOne({
+        where: { slug: newSlug },
+      });
+
+      if (existing && existing.id !== company.id) {
+        throw new ConflictException('Company with this name already exists');
+      }
+
+      company.slug = newSlug;
+    }
+
+    Object.assign(company, dto);
     return this.companyRepository.save(company);
   }
 
-  async removeById(id: string): Promise<void> {
-    const company = await this.companyRepository.findOne({ where: { id } });
+  async removeBySlug(slug: string): Promise<void> {
+    const company = await this.companyRepository.findOne({ where: { slug } });
     if (!company) {
       throw new NotFoundException('Company not found');
     }
-
     await this.companyRepository.remove(company);
   }
 }

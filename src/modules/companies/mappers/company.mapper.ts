@@ -1,5 +1,5 @@
 import { Company } from '../entities/company.entity';
-import { CompanyResponseDto } from '../dto/res/company-response.dto';
+import { CompanyResponseDto } from '../dto/res/company/company-response.res.dto';
 import { toIso } from '@/common/helpers/date.transformer';
 
 export function toCompanyResponseDto(company: Company): CompanyResponseDto {

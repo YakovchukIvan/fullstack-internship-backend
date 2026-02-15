@@ -1,9 +1,9 @@
 import { User } from '@/modules/users/entities/user.entity';
 import { Company } from '../entities/company.entity';
-import { UserBasicDto } from '@/common/dto/res/user-basic.dto';
-import { CompanyBasicDto } from '../dto/res/company-basic.dto';
+import { UserBasicResponseDto } from '@/common/dto/res/user-basic.dto';
+import { CompanyBasicResponseDto } from '../dto/res/company/company-basic.dto.res';
 
-export function toUserBasicDto(user: User): UserBasicDto {
+export function toUserBasicResponseDto(user: User): UserBasicResponseDto {
   return {
     id: user.id,
     email: user.email,
@@ -13,7 +13,7 @@ export function toUserBasicDto(user: User): UserBasicDto {
   };
 }
 
-export function toCompanyBasicDto(company: Company): CompanyBasicDto {
+export function toCompanyBasicResponseDto(company: Company): CompanyBasicResponseDto {
   return {
     id: company.id,
     name: company.name,

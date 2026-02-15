@@ -3,7 +3,7 @@ import { Body, Controller, Get, HttpStatus, Post, Res } from '@nestjs/common';
 import { LoginDto } from './dto/req/login.dto';
 import { AuthResponseDto } from './dto/res/auth-response.dto';
 import { CurrentUser } from './decorators/current-user.decorator';
-import { UserResponseDto } from '../users/dto/res/user.res.dto';
+import { UserResponseDto } from '../users/dto/res/users/user.res.dto';
 import { AuthRoutes } from './routes/auth.routes';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { RegisterDto } from './dto/req/register.dto';

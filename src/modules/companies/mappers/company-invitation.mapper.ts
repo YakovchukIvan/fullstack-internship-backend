@@ -1,15 +1,18 @@
 import { CompanyInvitation } from '../entities/company-invitation.entity';
 import { toIso } from '@/common/helpers/date.transformer';
-import { toUserBasicDto } from './shared.mapper';
-import { CompanyInvitationItemDto, CompanyInvitationResponseDto } from '../dto/res/company-invitation-response.dto';
+import { toUserBasicResponseDto } from './company-basic.mapper';
 import { Company } from '../entities/company.entity';
 import { toCompanyResponseDto } from './company.mapper';
+import {
+  CompanyInvitationItemResponseDto,
+  CompanyInvitationResponseDto,
+} from '../dto/res/requests/company-invitation.res.dto';
 
-export function toCompanyInvitationItemDto(invitation: CompanyInvitation): CompanyInvitationItemDto {
+export function toCompanyInvitationItemResponseDto(invitation: CompanyInvitation): CompanyInvitationItemResponseDto {
   return {
     id: invitation.id,
-    user: toUserBasicDto(invitation.user),
-    invitedBy: toUserBasicDto(invitation.inviter),
+    user: toUserBasicResponseDto(invitation.user),
+    invitedBy: toUserBasicResponseDto(invitation.inviter),
     message: invitation.message,
     status: invitation.status,
     createdAt: toIso(invitation.createdAt),
@@ -22,7 +25,7 @@ export function toCompanyInvitationResponseDto(
   company: Company,
 ): CompanyInvitationResponseDto {
   return {
-    invitations: invitations.map(toCompanyInvitationItemDto),
+    invitations: invitations.map(toCompanyInvitationItemResponseDto),
     company: toCompanyResponseDto(company),
   };
 }

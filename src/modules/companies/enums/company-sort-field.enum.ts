@@ -8,6 +8,6 @@ export enum CompanyMemberSortField {
   CREATED_AT = 'createdAt',
 }
 
-export enum CompanyInvitationSortField {
+export enum CompanyRequestSortField {
   CREATED_AT = 'createdAt',
 }

@@ -1,5 +1,5 @@
 import { User } from '../entities/user.entity';
-import { UserResponseDto } from '../dto/res/user.res.dto';
+import { UserResponseDto } from '../dto/res/users/user.res.dto';
 import { toIso } from '@/common/helpers/date.transformer';
 
 export function toUserResponseDto(user: User): UserResponseDto {

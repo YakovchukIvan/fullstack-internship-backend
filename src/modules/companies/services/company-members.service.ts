@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { createPaginatedResult } from '@/common/helpers/create-paginated-result.helper';
-import { PaginatedResultDto } from '@/common/dto/res/paginated-result.dto';
-import { CompanyMembersPaginationDto } from '../dto/req/company-members-pagination.dto';
+import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
+import { CompanyMembersPaginationDto } from '../dto/req/members/company-members-pagination.req.dto';
 import { CompanyMember } from '../entities/company-member.entity';
 
 @Injectable()
@@ -51,9 +51,10 @@ export class CompanyMembersService {
     await this.companyMemberRepository.remove(member);
   }
 
-  async leaveCompany(companyId: string, userId: string): Promise<void> {
+  async leaveCompany(slug: string, userId: string): Promise<void> {
     const member = await this.companyMemberRepository.findOne({
-      where: { userId, companyId },
+      where: { userId, company: { slug } },
+      relations: ['company'],
     });
 
     if (!member) {
@@ -74,7 +75,7 @@ export class CompanyMembersService {
   ): Promise<CompanyMember> {
     const member = await this.companyMemberRepository.findOne({
       where: { id: memberId, company: { slug } },
-      relations: ['company'],
+      relations: ['company', 'user'],
     });
 
     if (!member) {
@@ -115,7 +116,7 @@ export class CompanyMembersService {
   async findCompanyMembers(
     companyId: string,
     paginationOptions?: CompanyMembersPaginationDto,
-  ): Promise<PaginatedResultDto<CompanyMember>> {
+  ): Promise<PaginatedResultResponseDto<CompanyMember>> {
     return createPaginatedResult(this.companyMemberRepository, paginationOptions, {
       where: { companyId },
       relations: ['user'],
@@ -137,7 +138,7 @@ export class CompanyMembersService {
   async getUserMembership(
     userId: string,
     paginationOptions?: CompanyMembersPaginationDto,
-  ): Promise<PaginatedResultDto<CompanyMember>> {
+  ): Promise<PaginatedResultResponseDto<CompanyMember>> {
     return createPaginatedResult(this.companyMemberRepository, paginationOptions, {
       where: paginationOptions?.role ? { userId, role: paginationOptions.role } : { userId },
       relations: ['company', 'user'],

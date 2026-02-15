@@ -7,3 +7,7 @@ export class PaginationMetadataDto {
   hasNext: boolean;
   hasPrev: boolean;
 }
+
+export class PaginatedBaseResponseDto {
+  pagination: PaginationMetadataDto;
+}

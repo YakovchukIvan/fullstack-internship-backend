@@ -19,21 +19,17 @@ import { PaginationMetadataDto } from '@/common/dto/res/pagination-metadata.dto'
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { RequireCompanyRoles } from './../decorators/company-roles.decorator';
 import { CompanyRoleGuard } from './../guards/company-role.guard';
-import { CompaniesPaginatedResponseDto } from './../dto/res/company-paginated-response.dto';
-import { CompaniesPaginationDto } from './../dto/req/companies-pagination.dto';
-import { UpdateCompanyDto } from './../dto/req/update-company.dto';
-import { CreateCompanyDto } from './../dto/req/create-company.dto';
-import { CompanyDetailResponseDto } from './../dto/res/company-detail-response.dto';
-import { CompanyResponseDto } from './../dto/res/company-response.dto';
+import { CompaniesPaginationDto } from '../dto/req/company/companies-pagination.req.dto';
+import { CompaniesPaginatedBaseResponseDto, CompanyResponseDto } from '../dto/res/company/company-response.res.dto';
 import { CompaniesService } from '@/modules/companies/services/companies.service';
 import { CompaniesRoutes } from './../routes/companies.routes';
-import { toCompanyDetailResponseDto } from '../mappers/company-detail.mapper';
-import { CurrentCompanyId } from '../decorators/current-company-id.decorator';
 import { toCompanyResponseDto } from '../mappers/company.mapper';
-import { CompanyMemberResponseDto } from '../dto/res/company-member.res.dto';
-import { CompanyMembersPaginationDto } from '../dto/req/company-members-pagination.dto';
+import { CompanyMembersPaginationDto } from '../dto/req/members/company-members-pagination.req.dto';
 import { CompanyMembersService } from '../services/company-members.service';
 import { toCompanyMemberResponseDto } from '../mappers/company-member.mapper';
+import { CompanyMembersListResponseDto } from '../dto/res/members/company-member.res.dto';
+import { CreateCompanyDto } from '../dto/req/company/create-company.req.dto';
+import { UpdateCompanyDto } from '../dto/req/company/update-company.req.dto';
 
 @Controller(CompaniesRoutes.ROOT)
 export class CompaniesController {
@@ -57,7 +53,7 @@ export class CompaniesController {
   }
 
   @Get()
-  @ApiEndpoint(CompaniesPaginatedResponseDto, HttpStatus.OK)
+  @ApiEndpoint(CompaniesPaginatedBaseResponseDto, HttpStatus.OK)
   @ResponseMessage('Companies fetched successfully')
   async findAll(
     @CurrentUser() user: JwtPayload,
@@ -72,14 +68,14 @@ export class CompaniesController {
     };
   }
 
-  @Get(CompaniesRoutes.MEMBERS)
-  @ApiEndpoint(CompanyMemberResponseDto, HttpStatus.OK)
+  @Get(CompaniesRoutes.MEMBERS.BASE)
+  @ApiEndpoint(CompanyMembersListResponseDto, HttpStatus.OK)
   @ResponseMessage('Members fetched successfully')
   async getCompanyMembers(
     @Param('slug') slug: string,
     @CurrentUser() user: JwtPayload,
     @Query() paginationDto: CompanyMembersPaginationDto,
-  ): Promise<{ members: CompanyMemberResponseDto[]; pagination: PaginationMetadataDto }> {
+  ): Promise<CompanyMembersListResponseDto> {
     const company = await this.companiesService.findBySlug(slug, user.sub, user.role);
     const result = await this.membersService.findCompanyMembers(company.id, paginationDto);
 
@@ -90,33 +86,29 @@ export class CompaniesController {
   }
 
   @Get(CompaniesRoutes.BY_SLUG)
-  @ApiEndpoint(CompanyDetailResponseDto, HttpStatus.OK)
+  @ApiEndpoint(CompanyResponseDto, HttpStatus.OK)
   @ResponseMessage('Company fetched successfully')
   async findOne(
     @Param('slug') slug: string,
     @CurrentUser() user: JwtPayload,
-  ): Promise<{ company: CompanyDetailResponseDto }> {
+  ): Promise<{ company: CompanyResponseDto }> {
     const company = await this.companiesService.findBySlug(slug, user.sub, user.role);
 
     return {
-      company: toCompanyDetailResponseDto(company),
+      company: toCompanyResponseDto(company),
     };
   }
 
   @Patch(CompaniesRoutes.BY_SLUG)
   @UseGuards(CompanyRoleGuard)
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @ApiEndpoint(CompanyDetailResponseDto, HttpStatus.OK)
+  @ApiEndpoint(CompanyResponseDto, HttpStatus.OK)
   @ResponseMessage('Company updated successfully')
-  async update(
-    @Param('slug') _slug: string,
-    @CurrentCompanyId() companyId: string,
-    @Body() dto: UpdateCompanyDto,
-  ): Promise<{ company: CompanyDetailResponseDto }> {
-    const company = await this.companiesService.updateById(companyId, dto);
+  async update(@Param('slug') slug: string, @Body() dto: UpdateCompanyDto): Promise<{ company: CompanyResponseDto }> {
+    const company = await this.companiesService.updateBySlug(slug, dto);
 
     return {
-      company: toCompanyDetailResponseDto(company),
+      company: toCompanyResponseDto(company),
     };
   }
 
@@ -125,11 +117,7 @@ export class CompaniesController {
   @RequireCompanyRoles(CompanyRole.OWNER)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ResponseMessage('Company deleted successfully')
-  async remove(@Param('slug') _slug: string, @CurrentCompanyId() companyId: string): Promise<{ message: string }> {
-    await this.companiesService.removeById(companyId);
-
-    return {
-      message: 'Company has been deleted successfully',
-    };
+  async remove(@Param('slug') slug: string): Promise<void> {
+    await this.companiesService.removeBySlug(slug);
   }
 }

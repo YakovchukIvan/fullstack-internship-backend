@@ -1,4 +1,4 @@
-export class CompanyBasicDto {
+export class CompanyBasicResponseDto {
   id: string;
   name: string;
   slug: string;
