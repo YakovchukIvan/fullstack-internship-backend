@@ -20,7 +20,6 @@ import { CompanyRole } from '@/common/enums/company-role.enum';
 import { RequireCompanyRoles } from './../decorators/company-roles.decorator';
 import { CompanyRoleGuard } from './../guards/company-role.guard';
 import { CompaniesPaginatedResponseDto } from './../dto/res/company-paginated-response.dto';
-import { CompanyMembersPaginationDto } from './../dto/req/company-members-pagination.dto';
 import { CompaniesPaginationDto } from './../dto/req/companies-pagination.dto';
 import { UpdateCompanyDto } from './../dto/req/update-company.dto';
 import { CreateCompanyDto } from './../dto/req/create-company.dto';
@@ -29,9 +28,12 @@ import { CompanyResponseDto } from './../dto/res/company-response.dto';
 import { CompaniesService } from '@/modules/companies/services/companies.service';
 import { CompaniesRoutes } from './../routes/companies.routes';
 import { toCompanyDetailResponseDto } from '../mappers/company-detail.mapper';
-import { CompanyMembersService } from '../services/company-members.service';
 import { CurrentCompanyId } from '../decorators/current-company-id.decorator';
 import { toCompanyResponseDto } from '../mappers/company.mapper';
+import { CompanyMemberResponseDto } from '../dto/res/company-member.res.dto';
+import { CompanyMembersPaginationDto } from '../dto/req/company-members-pagination.dto';
+import { CompanyMembersService } from '../services/company-members.service';
+import { toCompanyMemberResponseDto } from '../mappers/company-member.mapper';
 
 @Controller(CompaniesRoutes.ROOT)
 export class CompaniesController {
@@ -70,19 +72,34 @@ export class CompaniesController {
     };
   }
 
+  @Get(CompaniesRoutes.MEMBERS)
+  @ApiEndpoint(CompanyMemberResponseDto, HttpStatus.OK)
+  @ResponseMessage('Members fetched successfully')
+  async getCompanyMembers(
+    @Param('slug') slug: string,
+    @CurrentUser() user: JwtPayload,
+    @Query() paginationDto: CompanyMembersPaginationDto,
+  ): Promise<{ members: CompanyMemberResponseDto[]; pagination: PaginationMetadataDto }> {
+    const company = await this.companiesService.findBySlug(slug, user.sub, user.role);
+    const result = await this.membersService.findCompanyMembers(company.id, paginationDto);
+
+    return {
+      members: result.detail.map(toCompanyMemberResponseDto),
+      pagination: result.pagination,
+    };
+  }
+
   @Get(CompaniesRoutes.BY_SLUG)
   @ApiEndpoint(CompanyDetailResponseDto, HttpStatus.OK)
   @ResponseMessage('Company fetched successfully')
   async findOne(
     @Param('slug') slug: string,
     @CurrentUser() user: JwtPayload,
-    @Query() paginationDto: CompanyMembersPaginationDto,
   ): Promise<{ company: CompanyDetailResponseDto }> {
     const company = await this.companiesService.findBySlug(slug, user.sub, user.role);
-    const members = await this.membersService.findCompanyMembers(company.id, paginationDto);
 
     return {
-      company: toCompanyDetailResponseDto(company, members.detail, members.pagination),
+      company: toCompanyDetailResponseDto(company),
     };
   }
 
@@ -95,13 +112,11 @@ export class CompaniesController {
     @Param('slug') _slug: string,
     @CurrentCompanyId() companyId: string,
     @Body() dto: UpdateCompanyDto,
-    @Query() paginationDto: CompanyMembersPaginationDto,
   ): Promise<{ company: CompanyDetailResponseDto }> {
     const company = await this.companiesService.updateById(companyId, dto);
-    const members = await this.membersService.findCompanyMembers(companyId, paginationDto);
 
     return {
-      company: toCompanyDetailResponseDto(company, members.detail, members.pagination),
+      company: toCompanyDetailResponseDto(company),
     };
   }
 

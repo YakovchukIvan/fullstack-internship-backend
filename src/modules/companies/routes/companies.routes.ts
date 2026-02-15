@@ -9,8 +9,7 @@ export const CompaniesRoutes = {
   ACCEPT_JOIN_REQUEST: ':slug/join-requests/:requestId/accept',
   DECLINE_JOIN_REQUEST: ':slug/join-requests/:requestId/decline',
   MEMBERS: ':slug/members',
-  MEMBER_BY_ID: ':slug/members/:userId',
+  MEMBER_BY_ID: ':slug/members/:memberId',
+  UPDATE_MEMBER_ROLE: ':slug/members/:memberId/role',
   LEAVE_COMPANY: ':slug/leave',
-  MY_INVITATIONS: 'me/invitations',
-  MY_JOIN_REQUESTS: 'me/join-requests',
 } as const;
