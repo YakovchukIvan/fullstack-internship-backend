@@ -28,18 +28,21 @@ export class CompanyMembersService {
     });
   }
 
-  async removeMember(companyId: string, memberUserId: string, removedById: string): Promise<void> {
-    const [removerRole, member] = await Promise.all([
-      this.getUserRoleInCompany(removedById, companyId),
-      this.companyMemberRepository.findOne({ where: { userId: memberUserId, companyId } }),
-    ]);
+  async removeMember(slug: string, memberId: string, removedById: string): Promise<void> {
+    const member = await this.companyMemberRepository.findOne({
+      where: { id: memberId, company: { slug } },
+      relations: ['company'],
+    });
 
     if (!member) {
       throw new NotFoundException('Member not found');
     }
+
     if (member.role === CompanyRole.OWNER) {
       throw new ForbiddenException('Cannot remove owner');
     }
+
+    const removerRole = await this.getUserRoleInCompany(removedById, member.company.id);
 
     if (removerRole === CompanyRole.ADMIN && member.role === CompanyRole.ADMIN) {
       throw new ForbiddenException('Admins cannot remove other admins');
@@ -64,24 +67,26 @@ export class CompanyMembersService {
   }
 
   async updateMemberRole(
-    companyId: string,
-    memberUserId: string,
+    slug: string,
+    memberId: string,
     newRole: CompanyRole,
     updatedById: string,
   ): Promise<CompanyMember> {
-    const updaterRole = await this.getUserRoleInCompany(updatedById, companyId);
-
-    if (updaterRole !== CompanyRole.OWNER) {
-      throw new ForbiddenException('Only owner can change roles');
-    }
-
     const member = await this.companyMemberRepository.findOne({
-      where: { userId: memberUserId, companyId },
+      where: { id: memberId, company: { slug } },
+      relations: ['company'],
     });
 
     if (!member) {
       throw new NotFoundException('Member not found');
     }
+
+    const updaterRole = await this.getUserRoleInCompany(updatedById, member.company.id);
+
+    if (updaterRole !== CompanyRole.OWNER) {
+      throw new ForbiddenException('Only owner can change roles');
+    }
+
     if (member.role === CompanyRole.OWNER) {
       throw new ForbiddenException('Cannot change owner role');
     }
@@ -126,6 +131,16 @@ export class CompanyMembersService {
         role: true,
         company: { id: true },
       },
+    });
+  }
+
+  async getUserMembership(
+    userId: string,
+    paginationOptions?: CompanyMembersPaginationDto,
+  ): Promise<PaginatedResultDto<CompanyMember>> {
+    return createPaginatedResult(this.companyMemberRepository, paginationOptions, {
+      where: paginationOptions?.role ? { userId, role: paginationOptions.role } : { userId },
+      relations: ['company', 'user'],
     });
   }
 }
