@@ -1,23 +1,22 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { CompaniesService } from '../companies.service';
-import { CompanyRole } from '@/common/enums/company-role.enum';
 import { Reflector } from '@nestjs/core';
+import type { Request } from 'express';
 import { COMPANY_ROLES_KEY } from '../decorators/company-roles.decorator';
+import { CompanyRole } from '@/common/enums/company-role.enum';
+import { UserRole } from '@/common/enums/user-role.enum';
+import { CompanyMembersService } from '../services/company-members.service';
 import { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
 
 interface CompanyRequest extends Request {
   user: JwtPayload;
-  params: {
-    slug?: string;
-  };
-  companyId?: string;
+  params: { slug: string };
 }
 
 @Injectable()
 export class CompanyRoleGuard implements CanActivate {
   constructor(
-    private reflector: Reflector,
-    private readonly companiesService: CompaniesService,
+    private readonly reflector: Reflector,
+    private readonly companyMembersService: CompanyMembersService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -27,35 +26,20 @@ export class CompanyRoleGuard implements CanActivate {
     ]);
 
     const request = context.switchToHttp().getRequest<CompanyRequest>();
-    const { user, params } = request;
-    const slug = params.slug;
+    const { user } = request;
+    const { slug } = request.params;
 
-    if (!slug) {
+    if (user.role === UserRole.OWNER) {
       return true;
     }
 
-    if (!user) {
-      return false;
-    }
+    const membership = await this.companyMembersService.findMembershipBySlug(user.sub, slug);
 
-    const { role: userRoleInCompany, companyId } = await this.companiesService.getUserRoleInCompanyBySlug(
-      user.sub,
-      slug,
-    );
-
-    if (!userRoleInCompany || !companyId) {
+    if (!membership) {
       throw new ForbiddenException('You are not a member of this company');
     }
 
-    request.companyId = companyId;
-
-    if (!requiredRoles) {
-      return true;
-    }
-
-    const hasPermission = requiredRoles.includes(userRoleInCompany);
-
-    if (!hasPermission) {
+    if (!requiredRoles.includes(membership.role)) {
       throw new ForbiddenException('You do not have the required company permissions');
     }
 

@@ -1,7 +1,7 @@
 import { Repository, FindManyOptions, ObjectLiteral, FindOptionsOrder } from 'typeorm';
 import { SortOrder } from '../enums/sort-order.enum';
 import { PaginationMetadataDto } from '../dto/res/pagination-metadata.dto';
-import { PaginatedResultDto } from '../dto/res/paginated-result.dto';
+import { PaginatedResultResponseDto } from '../dto/res/paginated-result.dto';
 
 export interface PaginationOptions<T = string> {
   page?: number;
@@ -14,7 +14,7 @@ export async function createPaginatedResult<T extends ObjectLiteral, K extends k
   repository: Repository<T>,
   options: PaginationOptions<K> = {},
   findOptions: Omit<FindManyOptions<T>, 'skip' | 'take' | 'order'> = {},
-): Promise<PaginatedResultDto<T>> {
+): Promise<PaginatedResultResponseDto<T>> {
   const page = options.page || 1;
   const limit = options.limit || 10;
   const offset = (page - 1) * limit;

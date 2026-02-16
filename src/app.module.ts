@@ -12,6 +12,7 @@ import { throttlerConfig } from './config/throttler.config';
 import { databaseConfig } from './config/database.config';
 import { appProviders } from './app.providers';
 import { CompaniesModule } from './modules/companies/companies.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { CompaniesModule } from './modules/companies/companies.module';
     }),
     TypeOrmModule.forRootAsync(databaseConfig),
     ThrottlerModule.forRootAsync(throttlerConfig),
+    EventEmitterModule.forRoot(),
     LoggerModule,
     AuthModule,
     UsersModule,

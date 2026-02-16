@@ -1,3 +1,5 @@
+import { PaginatedBaseResponseDto } from '@/common/dto/res/pagination-metadata.dto';
+
 export class CompanyResponseDto {
   id: string;
   name: string;
@@ -9,4 +11,8 @@ export class CompanyResponseDto {
   membersCount: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export class CompaniesPaginatedBaseResponseDto extends PaginatedBaseResponseDto {
+  companies: CompanyResponseDto[];
 }

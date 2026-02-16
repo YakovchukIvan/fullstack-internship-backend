@@ -2,6 +2,8 @@ import { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 
+type SwaggerOp = { get(key: 'method' | 'path'): string };
+
 export function setupSwagger(app: INestApplication, globalPrefix: string, configService: ConfigService): void {
   const nodeEnv = configService.get<string>('NODE_ENV', 'development');
 
@@ -32,7 +34,23 @@ export function setupSwagger(app: INestApplication, globalPrefix: string, config
 
   SwaggerModule.setup(swaggerPath, app, document, {
     swaggerOptions: {
-      operationsSorter: 'alpha',
+      operationsSorter: (a: SwaggerOp, b: SwaggerOp): number => {
+        const order: Record<string, number> = {
+          get: 0,
+          post: 1,
+          put: 2,
+          patch: 3,
+          delete: 4,
+        };
+
+        const methodDiff = (order[a.get('method')] ?? 99) - (order[b.get('method')] ?? 99);
+
+        if (methodDiff) {
+          return methodDiff;
+        }
+
+        return (a.get('path') ?? '').length - (b.get('path') ?? '').length;
+      },
       persistAuthorization: true,
     },
   });

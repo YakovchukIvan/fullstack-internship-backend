@@ -48,25 +48,17 @@ export class AuthFacadeService {
     return authResponse;
   }
 
-  async handleForgotPassword(email: string): Promise<{ message: string; isOAuthUser: boolean; provider?: string }> {
+  async handleForgotPassword(email: string): Promise<{ message: string }> {
     const result = await this.forgotPassword(email);
 
     if (result.isOAuthUser && result.provider) {
       await this.mailService.sendOAuthLoginReminderEmail(email, result.provider);
-      return {
-        message: `This account uses ${result.provider} Sign In. Please check your email for login instructions.`,
-        isOAuthUser: true,
-        provider: result.provider,
-      };
-    }
-
-    if (result.resetToken) {
+    } else if (result.resetToken) {
       await this.mailService.sendPasswordResetEmail(email, result.resetToken);
     }
 
     return {
       message: 'If an account exists with this email, you will receive instructions shortly',
-      isOAuthUser: false,
     };
   }
 
