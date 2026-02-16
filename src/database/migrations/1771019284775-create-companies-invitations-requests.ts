@@ -16,7 +16,7 @@ export class CreateCompaniesInvitationsRequests1771019284775 implements Migratio
     );
     await queryRunner.query(`CREATE INDEX "IDX_87e1c1cf7f91d39ded9abedc46" ON "company_invitations" ("user_id") `);
     await queryRunner.query(`CREATE INDEX "IDX_299a0145ecb210cee972d1cc3c" ON "company_invitations" ("company_id") `);
-    await queryRunner.query(`ALTER TABLE "companies" ADD "membersCount" integer NOT NULL DEFAULT '1'`);
+    await queryRunner.query(`ALTER TABLE "companies" ADD "members_count" integer NOT NULL DEFAULT '1'`);
     await queryRunner.query(`CREATE INDEX "IDX_cbbdf4794f8aac4144be2d6e64" ON "companies" ("is_visible") `);
     await queryRunner.query(
       `ALTER TABLE "company_join_requests" ADD CONSTRAINT "FK_9276566d4cdef92007de5a8ef6d" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
@@ -42,7 +42,7 @@ export class CreateCompaniesInvitationsRequests1771019284775 implements Migratio
     await queryRunner.query(`ALTER TABLE "company_join_requests" DROP CONSTRAINT "FK_5a9df0162d77b218c437c5bb2f0"`);
     await queryRunner.query(`ALTER TABLE "company_join_requests" DROP CONSTRAINT "FK_9276566d4cdef92007de5a8ef6d"`);
     await queryRunner.query(`DROP INDEX "public"."IDX_cbbdf4794f8aac4144be2d6e64"`);
-    await queryRunner.query(`ALTER TABLE "companies" DROP COLUMN "membersCount"`);
+    await queryRunner.query(`ALTER TABLE "companies" DROP COLUMN "members_count"`);
     await queryRunner.query(`DROP INDEX "public"."IDX_299a0145ecb210cee972d1cc3c"`);
     await queryRunner.query(`DROP INDEX "public"."IDX_87e1c1cf7f91d39ded9abedc46"`);
     await queryRunner.query(`DROP TABLE "company_invitations"`);
