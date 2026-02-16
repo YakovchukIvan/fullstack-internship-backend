@@ -8,13 +8,13 @@ import { CompanyJoinRequestsService } from '@/modules/companies/services/company
 import { CompanyMembersService } from '@/modules/companies/services/company-members.service';
 import { CompanyPaginationDto } from '@/modules/companies/dto/req/requests/company-invitations-pagination.req.dto';
 import { CompanyMembersPaginationDto } from '@/modules/companies/dto/req/members/company-members-pagination.req.dto';
-import { toCompanyInvitationItemResponseDto } from '@/modules/companies/mappers/company-invitation.mapper';
-import { toCompanyJoinRequestItemResponseDto } from '@/modules/companies/mappers/company-join-request.mapper';
+import { toUserJoinRequestItemResponseDto } from '@/modules/companies/mappers/company-join-request.mapper';
 import { UserMembershipListResponseDto } from '../dto/res/membership/user-membership-list.res.dto';
 import { UserInvitationsListResponseDto } from '../dto/res/membership/user-invitations-list.res.dto';
 import { UserJoinRequestsListResponseDto } from '../dto/res/membership/user-join-requests-list.res.dto';
 import { toUserMembershipResponseDto } from '../mappers/user-membership.mapper';
 import { UsersRoutes } from '../routes/users.routes';
+import { toUserInvitationItemResponseDto } from '@/modules/companies/mappers/company-invitation.mapper';
 
 @Controller(UsersRoutes.COMPANY.ROOT)
 export class UserCompanyMembershipController {
@@ -34,7 +34,7 @@ export class UserCompanyMembershipController {
     const result = await this.invitationsService.getUserInvitations(user.sub, paginationDto);
 
     return {
-      invitations: result.detail.map(toCompanyInvitationItemResponseDto),
+      invitations: result.detail.map(toUserInvitationItemResponseDto),
       pagination: result.pagination,
     };
   }
@@ -49,7 +49,7 @@ export class UserCompanyMembershipController {
     const result = await this.joinRequestsService.getUserJoinRequests(user.sub, paginationDto);
 
     return {
-      joinRequests: result.detail.map(toCompanyJoinRequestItemResponseDto),
+      joinRequests: result.detail.map(toUserJoinRequestItemResponseDto),
       pagination: result.pagination,
     };
   }

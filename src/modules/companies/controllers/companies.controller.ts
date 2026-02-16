@@ -115,7 +115,7 @@ export class CompaniesController {
   @Delete(CompaniesRoutes.BY_SLUG)
   @UseGuards(CompanyRoleGuard)
   @RequireCompanyRoles(CompanyRole.OWNER)
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @ResponseMessage('Company deleted successfully')
   async remove(@Param('slug') slug: string): Promise<void> {
     await this.companiesService.removeBySlug(slug);

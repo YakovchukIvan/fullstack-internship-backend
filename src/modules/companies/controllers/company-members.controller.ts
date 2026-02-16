@@ -20,16 +20,6 @@ export class CompanyMembersController {
     private readonly joinRequestsService: CompanyJoinRequestsService,
   ) {}
 
-  @Delete(CompaniesRoutes.LEAVE)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ResponseMessage('Successfully left the company')
-  async leaveCompany(@Param('slug') slug: string, @CurrentUser() user: JwtPayload): Promise<{ message: string }> {
-    await this.membersService.leaveCompany(slug, user.sub);
-    return {
-      message: 'You have left the company',
-    };
-  }
-
   @Post(CompaniesRoutes.INVITATIONS.ACCEPT)
   @ApiEndpoint(CompanyMemberResponseDto, HttpStatus.OK)
   @ResponseMessage('Invitation accepted successfully')
@@ -45,7 +35,7 @@ export class CompanyMembersController {
   }
 
   @Post(CompaniesRoutes.INVITATIONS.DECLINE)
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @ResponseMessage('Invitation declined successfully')
   async declineInvitation(@Param('slug') slug: string, @CurrentUser() user: JwtPayload): Promise<{ message: string }> {
     await this.invitationsService.declineInvitation(slug, user.sub);
@@ -65,9 +55,19 @@ export class CompanyMembersController {
   }
 
   @Delete(CompaniesRoutes.JOIN_REQUESTS.BASE)
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @ResponseMessage('Join request cancelled successfully')
   async cancelJoinRequest(@Param('slug') slug: string, @CurrentUser() user: JwtPayload): Promise<void> {
     await this.joinRequestsService.cancelJoinRequest(slug, user.sub);
+  }
+
+  @Delete(CompaniesRoutes.LEAVE)
+  @HttpCode(HttpStatus.OK)
+  @ResponseMessage('Successfully left the company')
+  async leaveCompany(@Param('slug') slug: string, @CurrentUser() user: JwtPayload): Promise<{ message: string }> {
+    await this.membersService.leaveCompany(slug, user.sub);
+    return {
+      message: 'You have left the company',
+    };
   }
 }

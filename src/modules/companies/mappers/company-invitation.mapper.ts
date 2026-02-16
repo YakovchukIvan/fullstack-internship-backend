@@ -1,11 +1,10 @@
 import { CompanyInvitation } from '../entities/company-invitation.entity';
 import { toIso } from '@/common/helpers/date.transformer';
 import { toUserBasicResponseDto } from './company-basic.mapper';
-import { Company } from '../entities/company.entity';
 import { toCompanyResponseDto } from './company.mapper';
 import {
   CompanyInvitationItemResponseDto,
-  CompanyInvitationResponseDto,
+  UserInvitationItemResponseDto,
 } from '../dto/res/requests/company-invitation.res.dto';
 
 export function toCompanyInvitationItemResponseDto(invitation: CompanyInvitation): CompanyInvitationItemResponseDto {
@@ -20,12 +19,9 @@ export function toCompanyInvitationItemResponseDto(invitation: CompanyInvitation
   };
 }
 
-export function toCompanyInvitationResponseDto(
-  invitations: CompanyInvitation[],
-  company: Company,
-): CompanyInvitationResponseDto {
+export function toUserInvitationItemResponseDto(invitations: CompanyInvitation): UserInvitationItemResponseDto {
   return {
-    invitations: invitations.map(toCompanyInvitationItemResponseDto),
-    company: toCompanyResponseDto(company),
+    invitations: toCompanyInvitationItemResponseDto(invitations),
+    company: toCompanyResponseDto(invitations.company),
   };
 }

@@ -1,11 +1,10 @@
 import { CompanyJoinRequest } from '../entities/company-join-request.entity';
 import { toIso } from '@/common/helpers/date.transformer';
 import { toUserBasicResponseDto } from './company-basic.mapper';
-import { Company } from '../entities/company.entity';
 import { toCompanyResponseDto } from './company.mapper';
 import {
   CompanyJoinRequestItemResponseDto,
-  CompanyJoinRequestResponseDto,
+  UserJoinRequestItemResponseDto,
 } from '../dto/res/requests/company-join-request.res.dto';
 
 export function toCompanyJoinRequestItemResponseDto(request: CompanyJoinRequest): CompanyJoinRequestItemResponseDto {
@@ -18,12 +17,9 @@ export function toCompanyJoinRequestItemResponseDto(request: CompanyJoinRequest)
   };
 }
 
-export function toCompanyJoinRequestResponseDto(
-  joinRequest: CompanyJoinRequest[],
-  company: Company,
-): CompanyJoinRequestResponseDto {
+export function toUserJoinRequestItemResponseDto(joinRequest: CompanyJoinRequest): UserJoinRequestItemResponseDto {
   return {
-    joinRequest: joinRequest.map(toCompanyJoinRequestItemResponseDto),
-    company: toCompanyResponseDto(company),
+    joinRequest: toCompanyJoinRequestItemResponseDto(joinRequest),
+    company: toCompanyResponseDto(joinRequest.company),
   };
 }

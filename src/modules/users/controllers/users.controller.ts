@@ -65,7 +65,7 @@ export class UsersController {
   }
 
   @Delete(UsersRoutes.ME)
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @ResponseMessage('Profile deleted successfully')
   async removeMe(@CurrentUser() currentUser: JwtPayload): Promise<void> {
     await this.usersService.remove(currentUser.sub);

@@ -11,8 +11,8 @@ export class CompanyJoinRequestItemResponseDto {
   updatedAt: string;
 }
 
-export class CompanyJoinRequestResponseDto {
-  joinRequest: CompanyJoinRequestItemResponseDto[];
+export class UserJoinRequestItemResponseDto {
+  joinRequest: CompanyJoinRequestItemResponseDto;
   company: CompanyBasicResponseDto;
 }
 

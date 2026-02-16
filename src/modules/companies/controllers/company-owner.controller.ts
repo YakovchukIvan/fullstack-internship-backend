@@ -32,7 +32,6 @@ import { CompanyPaginationDto } from '../dto/req/requests/company-invitations-pa
 import { toCompanyBasicResponseDto } from '../mappers/company-basic.mapper';
 import {
   CompanyInvitationItemResponseDto,
-  CompanyInvitationResponseDto,
   CompanyInvitationsPaginationResponseDto,
 } from '../dto/res/requests/company-invitation.res.dto';
 import { CompanyJoinRequestPaginationResponseDto } from '../dto/res/requests/company-join-request.res.dto';
@@ -82,7 +81,7 @@ export class CompanyOwnerController {
 
   @Post(CompaniesRoutes.INVITATIONS.BASE)
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @ApiEndpoint(CompanyInvitationResponseDto, HttpStatus.CREATED)
+  @ApiEndpoint(CompanyInvitationItemResponseDto, HttpStatus.CREATED)
   @ResponseMessage('User invited successfully')
   async inviteUser(
     @Param('slug') slug: string,
@@ -111,7 +110,7 @@ export class CompanyOwnerController {
 
   @Post(CompaniesRoutes.JOIN_REQUESTS.DECLINE)
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @ResponseMessage('Join request declined successfully')
   async declineJoinRequest(@Param('slug') slug: string, @Param('requestId') requestId: string): Promise<void> {
     await this.joinRequestsService.declineJoinRequest(slug, requestId);
@@ -136,7 +135,7 @@ export class CompanyOwnerController {
 
   @Delete(CompaniesRoutes.INVITATIONS.BY_ID)
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @ResponseMessage('Invitation cancelled successfully')
   async cancelInvitation(@Param('slug') slug: string, @Param('invitationId') invitationId: string): Promise<void> {
     await this.invitationsService.cancelInvitation(slug, invitationId);
@@ -144,7 +143,7 @@ export class CompanyOwnerController {
 
   @Delete(CompaniesRoutes.MEMBERS.BY_ID)
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @ResponseMessage('Member removed successfully')
   async removeMember(
     @Param('slug') slug: string,

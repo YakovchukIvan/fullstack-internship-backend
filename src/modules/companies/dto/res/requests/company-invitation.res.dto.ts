@@ -13,8 +13,8 @@ export class CompanyInvitationItemResponseDto {
   updatedAt: string;
 }
 
-export class CompanyInvitationResponseDto {
-  invitations: CompanyInvitationItemResponseDto[];
+export class UserInvitationItemResponseDto {
+  invitations: CompanyInvitationItemResponseDto;
   company: CompanyBasicResponseDto;
 }
 
