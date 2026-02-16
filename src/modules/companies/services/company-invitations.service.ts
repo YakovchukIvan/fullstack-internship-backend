@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -13,6 +13,7 @@ import { CompanyPaginationDto } from '../dto/req/requests/company-invitations-pa
 import { CompanyMembersService } from './company-members.service';
 import { CompanyEvents, CompanyInvitationEvent, CompanyMembershipEvent } from '../events/company.events';
 import { Company } from '../entities/company.entity';
+import { GuardAssertions } from '../guards/assert.helper';
 
 @Injectable()
 export class CompanyInvitationsService {
@@ -32,33 +33,23 @@ export class CompanyInvitationsService {
 
   async inviteUser(slug: string, email: string, invitedById: string, message?: string): Promise<CompanyInvitation> {
     const company = await this.companiesRepository.findOne({ where: { slug } });
-    if (!company) {
-      throw new NotFoundException('Company not found');
-    }
+    GuardAssertions.exists(company, 'Company not found');
 
     const user = await this.userRepository.findOne({ where: { email } });
-    if (!user) {
-      throw new NotFoundException('User with this email not found');
-    }
+    GuardAssertions.exists(user, 'User with this email not found');
 
     const isMember = await this.companyMembersService.isMember(user.id, company.id);
-    if (isMember) {
-      throw new ConflictException('User is already a member of this company');
-    }
+    GuardAssertions.notExists(isMember, 'User is already a member of this company');
 
     const existingInvitation = await this.invitationRepository.findOne({
       where: { userId: user.id, companyId: company.id },
     });
-    if (existingInvitation) {
-      throw new ConflictException('Invitation already exists for this user');
-    }
+    GuardAssertions.notExists(existingInvitation, 'Invitation already exists for this user');
 
     const existingRequest = await this.joinRequestRepository.findOne({
       where: { userId: user.id, companyId: company.id },
     });
-    if (existingRequest) {
-      throw new ConflictException('User has already sent a join request to this company');
-    }
+    GuardAssertions.notExists(existingRequest, 'User has already sent a join request to this company');
 
     const invitation = this.invitationRepository.create({
       userId: user.id,
@@ -86,10 +77,7 @@ export class CompanyInvitationsService {
         where: { userId, company: { slug } },
         relations: ['company'],
       });
-
-      if (!invitation) {
-        throw new NotFoundException('Invitation not found');
-      }
+      GuardAssertions.exists(invitation, 'Invitation not found');
 
       const member = await this.companyMembersService.addMember(
         userId,
@@ -113,27 +101,18 @@ export class CompanyInvitationsService {
       where: { userId, company: { slug } },
       relations: ['company'],
     });
-
-    if (!invitation) {
-      throw new NotFoundException('Invitation not found');
-    }
-
+    GuardAssertions.exists(invitation, 'Invitation not found');
     await this.invitationRepository.remove(invitation);
   }
 
   async cancelInvitation(slug: string, invitationId: string): Promise<void> {
     const company = await this.companiesRepository.findOne({ where: { slug } });
-    if (!company) {
-      throw new NotFoundException('Company not found');
-    }
+    GuardAssertions.exists(company, 'Company not found');
 
     const invitation = await this.invitationRepository.findOne({
       where: { id: invitationId, companyId: company.id },
     });
-
-    if (!invitation) {
-      throw new NotFoundException('Invitation not found');
-    }
+    GuardAssertions.exists(invitation, 'Invitation not found');
 
     await this.invitationRepository.remove(invitation);
   }
@@ -143,9 +122,7 @@ export class CompanyInvitationsService {
     paginationOptions?: CompanyPaginationDto,
   ): Promise<{ invitations: PaginatedResultResponseDto<CompanyInvitation>; company: Company }> {
     const company = await this.companiesRepository.findOne({ where: { slug } });
-    if (!company) {
-      throw new NotFoundException('Company not found');
-    }
+    GuardAssertions.exists(company, 'Company not found');
 
     const invitations = await createPaginatedResult(this.invitationRepository, paginationOptions, {
       where: { companyId: company.id },

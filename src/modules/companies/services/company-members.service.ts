@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 import { CompanyRole } from '@/common/enums/company-role.enum';
@@ -6,6 +6,7 @@ import { createPaginatedResult } from '@/common/helpers/create-paginated-result.
 import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
 import { CompanyMembersPaginationDto } from '../dto/req/members/company-members-pagination.req.dto';
 import { CompanyMember } from '../entities/company-member.entity';
+import { GuardAssertions } from '../guards/assert.helper';
 
 @Injectable()
 export class CompanyMembersService {
@@ -41,9 +42,7 @@ export class CompanyMembersService {
       relations: ['company'],
     });
 
-    if (!member) {
-      throw new NotFoundException('Member not found');
-    }
+    GuardAssertions.exists(member, 'Member not found');
 
     if (member.role === CompanyRole.OWNER) {
       throw new ForbiddenException('Cannot remove owner');
@@ -63,10 +62,8 @@ export class CompanyMembersService {
       where: { userId, company: { slug } },
       relations: ['company'],
     });
+    GuardAssertions.exists(member, 'Member not found');
 
-    if (!member) {
-      throw new NotFoundException('Member not found');
-    }
     if (member.role === CompanyRole.OWNER) {
       throw new ForbiddenException('Owner cannot leave. Delete company instead.');
     }
@@ -74,29 +71,23 @@ export class CompanyMembersService {
     await this.companyMemberRepository.remove(member);
   }
 
-  async updateMemberRole(
-    slug: string,
-    memberId: string,
-    newRole: CompanyRole,
-    updatedById: string,
-  ): Promise<CompanyMember> {
+  async updateMemberRole(slug: string, memberId: string, newRole: CompanyRole): Promise<CompanyMember> {
     const member = await this.companyMemberRepository.findOne({
       where: { id: memberId, company: { slug } },
       relations: ['company', 'user'],
     });
-
-    if (!member) {
-      throw new NotFoundException('Member not found');
-    }
-
-    const updaterRole = await this.getUserRoleInCompany(updatedById, member.company.id);
-
-    if (updaterRole !== CompanyRole.OWNER) {
-      throw new ForbiddenException('Only owner can change roles');
-    }
+    GuardAssertions.exists(member, 'Member not found');
 
     if (member.role === CompanyRole.OWNER) {
       throw new ForbiddenException('Cannot change owner role');
+    }
+
+    if (newRole === CompanyRole.OWNER) {
+      throw new ForbiddenException('Cannot change role to owner. Use ownership transfer instead.');
+    }
+
+    if (member.role === newRole) {
+      throw new ConflictException('User already has this role');
     }
 
     member.role = newRole;
@@ -108,16 +99,11 @@ export class CompanyMembersService {
     return count > 0;
   }
 
-  async getUserRoleInCompany(userId: string, companyId: string): Promise<CompanyRole | null> {
+  private async getUserRoleInCompany(userId: string, companyId: string): Promise<CompanyRole | null> {
     const member = await this.companyMemberRepository.findOne({
       where: { userId, companyId },
     });
     return member?.role || null;
-  }
-
-  async canManageCompany(userId: string, companyId: string): Promise<boolean> {
-    const role = await this.getUserRoleInCompany(userId, companyId);
-    return role === CompanyRole.OWNER || role === CompanyRole.ADMIN;
   }
 
   async findCompanyMembers(

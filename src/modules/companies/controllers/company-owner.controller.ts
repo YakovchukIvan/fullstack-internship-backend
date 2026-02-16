@@ -124,9 +124,8 @@ export class CompanyOwnerController {
     @Param('slug') slug: string,
     @Param('memberId') memberId: string,
     @Body() dto: UpdateMemberRoleDto,
-    @CurrentUser() user: JwtPayload,
   ): Promise<{ member: CompanyMemberResponseDto }> {
-    const member = await this.membersService.updateMemberRole(slug, memberId, dto.role, user.sub);
+    const member = await this.membersService.updateMemberRole(slug, memberId, dto.role);
 
     return {
       member: toCompanyMemberResponseDto(member),

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { UserRole } from '@/common/enums/user-role.enum';
@@ -10,6 +10,7 @@ import { Company } from '@/modules/companies/entities/company.entity';
 import { CompanyMembersService } from './company-members.service';
 import { CreateCompanyDto } from '../dto/req/company/create-company.req.dto';
 import { UpdateCompanyDto } from '../dto/req/company/update-company.req.dto';
+import { GuardAssertions } from '../guards/assert.helper';
 
 @Injectable()
 export class CompaniesService {
@@ -28,9 +29,7 @@ export class CompaniesService {
         where: [{ name: createCompanyDto.name }, { slug }],
       });
 
-      if (existing) {
-        throw new ConflictException('Company with this name already exists');
-      }
+      GuardAssertions.notExists(existing, 'Company with this name already exists');
 
       const company = manager.create(Company, {
         ...createCompanyDto,
@@ -39,9 +38,7 @@ export class CompaniesService {
       });
 
       const savedCompany = await manager.save(Company, company);
-
       await this.companyMembersService.createInitialOwner(userId, savedCompany.id, manager);
-
       return savedCompany;
     });
   }
@@ -69,17 +66,13 @@ export class CompaniesService {
       relations: ['owner'],
     });
 
-    if (!company) {
-      throw new NotFoundException('Company not found');
-    }
+    GuardAssertions.exists(company, 'Company not found');
 
     if (!company.isVisible) {
       const isSystemOwner = userRole === UserRole.OWNER;
       const isCompanyOwner = company.ownerId === userId;
 
-      if (!isSystemOwner && !isCompanyOwner) {
-        throw new NotFoundException('Company not found');
-      }
+      GuardAssertions.isTrue(isSystemOwner || isCompanyOwner, 'Company not found');
     }
 
     return company;
@@ -87,9 +80,7 @@ export class CompaniesService {
 
   async updateBySlug(slug: string, dto: UpdateCompanyDto): Promise<Company> {
     const company = await this.companyRepository.findOne({ where: { slug } });
-    if (!company) {
-      throw new NotFoundException('Company not found');
-    }
+    GuardAssertions.exists(company, 'Company not found');
 
     if (dto.name && dto.name !== company.name) {
       const newSlug = generateSlug(dto.name);
@@ -111,9 +102,7 @@ export class CompaniesService {
 
   async removeBySlug(slug: string): Promise<void> {
     const company = await this.companyRepository.findOne({ where: { slug } });
-    if (!company) {
-      throw new NotFoundException('Company not found');
-    }
+    GuardAssertions.exists(company, 'Company not found');
     await this.companyRepository.remove(company);
   }
 }

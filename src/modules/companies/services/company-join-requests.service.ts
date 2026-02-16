@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -12,6 +12,7 @@ import { CompanyMembersService } from './company-members.service';
 import { CompanyEvents, CompanyMembershipEvent } from '../events/company.events';
 import { Company } from '../entities/company.entity';
 import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
+import { GuardAssertions } from '../guards/assert.helper';
 
 @Injectable()
 export class CompanyJoinRequestsService {
@@ -29,28 +30,20 @@ export class CompanyJoinRequestsService {
 
   async sendJoinRequest(slug: string, userId: string): Promise<CompanyJoinRequest> {
     const company = await this.companiesRepository.findOne({ where: { slug } });
-    if (!company) {
-      throw new NotFoundException('Company not found');
-    }
+    GuardAssertions.exists(company, 'Company not found');
 
     const companyId = company.id;
 
     const isMember = await this.companyMembersService.isMember(userId, companyId);
-    if (isMember) {
-      throw new ConflictException('You are already a member of this company');
-    }
+    GuardAssertions.notExists(isMember, 'You are already a member of this company');
 
     const [existingRequest, existingInvitation] = await Promise.all([
       this.joinRequestRepository.findOne({ where: { userId, companyId } }),
       this.invitationRepository.findOne({ where: { userId, companyId } }),
     ]);
 
-    if (existingRequest) {
-      throw new ConflictException('Join request already exists');
-    }
-    if (existingInvitation) {
-      throw new ConflictException('You have a pending invitation');
-    }
+    GuardAssertions.notExists(existingRequest, 'Join request already exists');
+    GuardAssertions.notExists(existingInvitation, 'You have a pending invitation');
 
     const joinRequest = this.joinRequestRepository.create({ userId, companyId });
     const savedRequest = await this.joinRequestRepository.save(joinRequest);
@@ -66,17 +59,12 @@ export class CompanyJoinRequestsService {
   async acceptJoinRequest(slug: string, requestId: string): Promise<CompanyMember> {
     return this.dataSource.transaction(async (manager) => {
       const company = await manager.findOne(Company, { where: { slug } });
-      if (!company) {
-        throw new NotFoundException('Company not found');
-      }
+      GuardAssertions.exists(company, 'Company not found');
 
       const joinRequest = await manager.findOne(CompanyJoinRequest, {
         where: { id: requestId, companyId: company.id },
       });
-
-      if (!joinRequest) {
-        throw new NotFoundException('Join request not found');
-      }
+      GuardAssertions.exists(joinRequest, 'Join request not found');
 
       const member = await this.companyMembersService.addMember(
         joinRequest.userId,
@@ -97,17 +85,12 @@ export class CompanyJoinRequestsService {
 
   async declineJoinRequest(slug: string, requestId: string): Promise<void> {
     const company = await this.companiesRepository.findOne({ where: { slug } });
-    if (!company) {
-      throw new NotFoundException('Company not found');
-    }
+    GuardAssertions.exists(company, 'Company not found');
 
     const joinRequest = await this.joinRequestRepository.findOne({
       where: { id: requestId, companyId: company.id },
     });
-
-    if (!joinRequest) {
-      throw new NotFoundException('Join request not found');
-    }
+    GuardAssertions.exists(joinRequest, 'Join request not found');
 
     await this.joinRequestRepository.remove(joinRequest);
   }
@@ -117,10 +100,7 @@ export class CompanyJoinRequestsService {
       where: { userId, company: { slug } },
       relations: ['company'],
     });
-
-    if (!joinRequest) {
-      throw new NotFoundException('Join request not found');
-    }
+    GuardAssertions.exists(joinRequest, 'Join request not found');
 
     await this.joinRequestRepository.remove(joinRequest);
   }
@@ -132,10 +112,7 @@ export class CompanyJoinRequestsService {
     const company = await this.companiesRepository.findOne({
       where: { slug },
     });
-
-    if (!company) {
-      throw new NotFoundException('Company not found');
-    }
+    GuardAssertions.exists(company, 'Company not found');
 
     const joinRequests = await createPaginatedResult(this.joinRequestRepository, paginationOptions, {
       where: { companyId: company.id },
