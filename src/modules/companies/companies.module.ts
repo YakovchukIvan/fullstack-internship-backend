@@ -13,9 +13,13 @@ import { CompanyJoinRequestsService } from './services/company-join-requests.ser
 import { CompanyMembersService } from './services/company-members.service';
 import { CompanyMembersController } from './controllers/company-members.controller';
 import { CompanyOwnerController } from './controllers/company-owner.controller';
+import { QuizzesModule } from './quizzes/quizzes.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Company, CompanyMember, CompanyInvitation, CompanyJoinRequest, User])],
+  imports: [
+    TypeOrmModule.forFeature([Company, CompanyMember, CompanyInvitation, CompanyJoinRequest, User]),
+    QuizzesModule,
+  ],
   controllers: [CompaniesController, CompanyOwnerController, CompanyMembersController],
   providers: [
     CompaniesService,
