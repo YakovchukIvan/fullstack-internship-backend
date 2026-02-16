@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { createPaginatedResult } from '@/common/helpers/create-paginated-result.helper';
 import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
@@ -14,15 +14,22 @@ export class CompanyMembersService {
     private readonly companyMemberRepository: Repository<CompanyMember>,
   ) {}
 
-  async createInitialOwner(userId: string, companyId: string): Promise<CompanyMember> {
-    return this.addMember(userId, companyId, CompanyRole.OWNER);
+  async createInitialOwner(userId: string, companyId: string, manager?: EntityManager): Promise<CompanyMember> {
+    return this.addMember(userId, companyId, CompanyRole.OWNER, manager);
   }
 
-  async addMember(userId: string, companyId: string, role: CompanyRole): Promise<CompanyMember> {
-    const member = this.companyMemberRepository.create({ userId, companyId, role });
-    const savedMember = await this.companyMemberRepository.save(member);
+  async addMember(
+    userId: string,
+    companyId: string,
+    role: CompanyRole,
+    manager?: EntityManager,
+  ): Promise<CompanyMember> {
+    const repo = manager ? manager.getRepository(CompanyMember) : this.companyMemberRepository;
 
-    return this.companyMemberRepository.findOneOrFail({
+    const member = repo.create({ userId, companyId, role });
+    const savedMember = await repo.save(member);
+
+    return repo.findOneOrFail({
       where: { id: savedMember.id },
       relations: ['user'],
     });

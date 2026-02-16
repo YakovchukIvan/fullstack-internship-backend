@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CompanyMember } from './../entities/company-member.entity';
 import { CompanyInvitation } from './../entities/company-invitation.entity';
@@ -27,6 +27,7 @@ export class CompanyInvitationsService {
     private readonly companiesRepository: Repository<Company>,
     private readonly companyMembersService: CompanyMembersService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly dataSource: DataSource,
   ) {}
 
   async inviteUser(slug: string, email: string, invitedById: string, message?: string): Promise<CompanyInvitation> {
@@ -80,24 +81,31 @@ export class CompanyInvitationsService {
   }
 
   async acceptInvitation(slug: string, userId: string): Promise<CompanyMember> {
-    const invitation = await this.invitationRepository.findOne({
-      where: { userId, company: { slug } },
-      relations: ['company'],
+    return this.dataSource.transaction(async (manager) => {
+      const invitation = await manager.findOne(CompanyInvitation, {
+        where: { userId, company: { slug } },
+        relations: ['company'],
+      });
+
+      if (!invitation) {
+        throw new NotFoundException('Invitation not found');
+      }
+
+      const member = await this.companyMembersService.addMember(
+        userId,
+        invitation.company.id,
+        CompanyRole.MEMBER,
+        manager,
+      );
+      await manager.remove(invitation);
+
+      this.eventEmitter.emit(
+        CompanyEvents.INVITATION_ACCEPTED,
+        new CompanyMembershipEvent(userId, invitation.company.id),
+      );
+
+      return member;
     });
-
-    if (!invitation) {
-      throw new NotFoundException('Invitation not found');
-    }
-
-    const member = await this.companyMembersService.addMember(userId, invitation.company.id, CompanyRole.MEMBER);
-    await this.invitationRepository.remove(invitation);
-
-    this.eventEmitter.emit(
-      CompanyEvents.INVITATION_ACCEPTED,
-      new CompanyMembershipEvent(userId, invitation.company.id),
-    );
-
-    return member;
   }
 
   async declineInvitation(slug: string, userId: string): Promise<void> {

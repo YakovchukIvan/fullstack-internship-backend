@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { generateSlug } from '@/common/helpers/generate-slug.helper';
 import { createPaginatedResult } from '@/common/helpers/create-paginated-result.helper';
@@ -17,30 +17,33 @@ export class CompaniesService {
     @InjectRepository(Company)
     private readonly companyRepository: Repository<Company>,
     private readonly companyMembersService: CompanyMembersService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(createCompanyDto: CreateCompanyDto, userId: string): Promise<Company> {
-    const slug = generateSlug(createCompanyDto.name);
+    return this.dataSource.transaction(async (manager) => {
+      const slug = generateSlug(createCompanyDto.name);
 
-    const existing = await this.companyRepository.findOne({
-      where: [{ name: createCompanyDto.name }, { slug }],
+      const existing = await manager.findOne(Company, {
+        where: [{ name: createCompanyDto.name }, { slug }],
+      });
+
+      if (existing) {
+        throw new ConflictException('Company with this name already exists');
+      }
+
+      const company = manager.create(Company, {
+        ...createCompanyDto,
+        slug,
+        ownerId: userId,
+      });
+
+      const savedCompany = await manager.save(Company, company);
+
+      await this.companyMembersService.createInitialOwner(userId, savedCompany.id, manager);
+
+      return savedCompany;
     });
-
-    if (existing) {
-      throw new ConflictException('Company with this name already exists');
-    }
-
-    const company = this.companyRepository.create({
-      ...createCompanyDto,
-      slug,
-      ownerId: userId,
-    });
-
-    const savedCompany = await this.companyRepository.save(company);
-
-    await this.companyMembersService.createInitialOwner(userId, savedCompany.id);
-
-    return savedCompany;
   }
 
   async findAll(

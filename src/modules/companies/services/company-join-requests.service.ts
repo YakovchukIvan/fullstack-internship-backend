@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CompanyMember } from './../entities/company-member.entity';
 import { CompanyInvitation } from './../entities/company-invitation.entity';
@@ -24,6 +24,7 @@ export class CompanyJoinRequestsService {
     private readonly companiesRepository: Repository<Company>,
     private readonly companyMembersService: CompanyMembersService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly dataSource: DataSource,
   ) {}
 
   async sendJoinRequest(slug: string, userId: string): Promise<CompanyJoinRequest> {
@@ -63,28 +64,35 @@ export class CompanyJoinRequestsService {
   }
 
   async acceptJoinRequest(slug: string, requestId: string): Promise<CompanyMember> {
-    const company = await this.companiesRepository.findOne({ where: { slug } });
-    if (!company) {
-      throw new NotFoundException('Company not found');
-    }
+    return this.dataSource.transaction(async (manager) => {
+      const company = await manager.findOne(Company, { where: { slug } });
+      if (!company) {
+        throw new NotFoundException('Company not found');
+      }
 
-    const joinRequest = await this.joinRequestRepository.findOne({
-      where: { id: requestId, companyId: company.id },
+      const joinRequest = await manager.findOne(CompanyJoinRequest, {
+        where: { id: requestId, companyId: company.id },
+      });
+
+      if (!joinRequest) {
+        throw new NotFoundException('Join request not found');
+      }
+
+      const member = await this.companyMembersService.addMember(
+        joinRequest.userId,
+        company.id,
+        CompanyRole.MEMBER,
+        manager,
+      );
+      await manager.remove(joinRequest);
+
+      this.eventEmitter.emit(
+        CompanyEvents.JOIN_REQUEST_ACCEPTED,
+        new CompanyMembershipEvent(joinRequest.userId, company.id),
+      );
+
+      return member;
     });
-
-    if (!joinRequest) {
-      throw new NotFoundException('Join request not found');
-    }
-
-    const member = await this.companyMembersService.addMember(joinRequest.userId, company.id, CompanyRole.MEMBER);
-    await this.joinRequestRepository.remove(joinRequest);
-
-    this.eventEmitter.emit(
-      CompanyEvents.JOIN_REQUEST_ACCEPTED,
-      new CompanyMembershipEvent(joinRequest.userId, company.id),
-    );
-
-    return member;
   }
 
   async declineJoinRequest(slug: string, requestId: string): Promise<void> {
