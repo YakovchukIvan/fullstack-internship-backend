@@ -92,6 +92,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const logMessage = `[${request.method}] ${request.url} - Status: ${status} - ${message}`;
     const context = detail || errorCode ? JSON.stringify({ detail, errorCode }) : '';
 
-    this.logger.logError(`${logMessage}${context ? ` - ${context}` : ''}`, exception);
+    this.logger.logError(`${logMessage}${context ? ` - ${context}` : ''}`, exception, AllExceptionsFilter.name);
   }
 }

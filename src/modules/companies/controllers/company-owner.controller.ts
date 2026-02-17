@@ -38,6 +38,7 @@ import { CompanyJoinRequestPaginationResponseDto } from '../dto/res/requests/com
 
 @Controller(CompaniesRoutes.ROOT)
 @UseGuards(CompanyRoleGuard)
+@RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
 export class CompanyOwnerController {
   constructor(
     private readonly invitationsService: CompanyInvitationsService,
@@ -46,7 +47,6 @@ export class CompanyOwnerController {
   ) {}
 
   @Get(CompaniesRoutes.INVITATIONS.BASE)
-  @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
   @ApiEndpoint(CompanyInvitationsPaginationResponseDto, HttpStatus.OK)
   @ResponseMessage('Invitations fetched successfully')
   async getCompanyInvitations(
@@ -63,7 +63,6 @@ export class CompanyOwnerController {
   }
 
   @Get(CompaniesRoutes.JOIN_REQUESTS.BASE)
-  @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
   @ApiEndpoint(CompanyJoinRequestPaginationResponseDto, HttpStatus.OK)
   @ResponseMessage('Join requests fetched successfully')
   async getCompanyJoinRequests(
@@ -80,7 +79,6 @@ export class CompanyOwnerController {
   }
 
   @Post(CompaniesRoutes.INVITATIONS.BASE)
-  @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
   @ApiEndpoint(CompanyInvitationItemResponseDto, HttpStatus.CREATED)
   @ResponseMessage('User invited successfully')
   async inviteUser(
@@ -94,7 +92,6 @@ export class CompanyOwnerController {
   }
 
   @Post(CompaniesRoutes.JOIN_REQUESTS.ACCEPT)
-  @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
   @ApiEndpoint(CompanyMemberResponseDto, HttpStatus.OK)
   @ResponseMessage('Join request accepted successfully')
   async acceptJoinRequest(
@@ -109,7 +106,6 @@ export class CompanyOwnerController {
   }
 
   @Post(CompaniesRoutes.JOIN_REQUESTS.DECLINE)
-  @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Join request declined successfully')
   async declineJoinRequest(@Param('slug') slug: string, @Param('requestId') requestId: string): Promise<void> {
@@ -133,7 +129,6 @@ export class CompanyOwnerController {
   }
 
   @Delete(CompaniesRoutes.INVITATIONS.BY_ID)
-  @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Invitation cancelled successfully')
   async cancelInvitation(@Param('slug') slug: string, @Param('invitationId') invitationId: string): Promise<void> {
@@ -141,7 +136,6 @@ export class CompanyOwnerController {
   }
 
   @Delete(CompaniesRoutes.MEMBERS.BY_ID)
-  @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Member removed successfully')
   async removeMember(
