@@ -32,22 +32,6 @@ import { toQuizResponseDto } from '../mappers/quiz.mapper';
 export class QuizzesController {
   constructor(private readonly quizzesService: QuizzesService) {}
 
-  @Post()
-  @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @ApiEndpoint(QuizResponseDto, HttpStatus.CREATED)
-  @ResponseMessage('Quiz created successfully')
-  async create(
-    @Param('slug') slug: string,
-    @Body() dto: CreateQuizDto,
-    @CurrentUser() user: JwtPayload,
-  ): Promise<{ quiz: QuizResponseDto }> {
-    const quiz = await this.quizzesService.create(slug, user.sub, dto);
-
-    return {
-      quiz: toQuizResponseDto(quiz),
-    };
-  }
-
   @Get()
   @ApiEndpoint(QuizzesPaginatedResponseDto, HttpStatus.OK)
   @ResponseMessage('Quizzes fetched successfully')
@@ -73,6 +57,22 @@ export class QuizzesController {
     @CurrentUser() user: JwtPayload,
   ): Promise<{ quiz: QuizResponseDto }> {
     const quiz = await this.quizzesService.findOne(quizId, slug, user.sub);
+
+    return {
+      quiz: toQuizResponseDto(quiz),
+    };
+  }
+
+  @Post()
+  @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
+  @ApiEndpoint(QuizResponseDto, HttpStatus.CREATED)
+  @ResponseMessage('Quiz created successfully')
+  async create(
+    @Param('slug') slug: string,
+    @Body() dto: CreateQuizDto,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<{ quiz: QuizResponseDto }> {
+    const quiz = await this.quizzesService.create(slug, user.sub, dto);
 
     return {
       quiz: toQuizResponseDto(quiz),

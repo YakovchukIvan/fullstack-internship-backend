@@ -28,6 +28,12 @@ import { QuizzesModule } from './quizzes/quizzes.module';
     CompanyMembersService,
     CompanyRoleGuard,
   ],
-  exports: [CompaniesService, CompanyInvitationsService, CompanyJoinRequestsService, CompanyMembersService],
+  exports: [
+    CompaniesService,
+    CompanyInvitationsService,
+    CompanyJoinRequestsService,
+    CompanyMembersService,
+    QuizzesModule,
+  ],
 })
 export class CompaniesModule {}

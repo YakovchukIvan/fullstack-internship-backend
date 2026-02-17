@@ -25,6 +25,21 @@ export class QuizzesAiController {
     private readonly companiesService: CompaniesService,
   ) {}
 
+  @Get(QuizzesRoutes.AI_QUOTA)
+  @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
+  @ApiEndpoint(AiQuotaResponseDto, HttpStatus.OK)
+  @ResponseMessage('AI quota fetched successfully')
+  async getQuota(@Param('slug') slug: string, @CurrentUser() user: JwtPayload): Promise<AiQuotaResponseDto> {
+    const company = await this.companiesService.findBySlug(slug, user.sub, user.role);
+    const quota = await this.rateLimitService.getRemainingQuota(company.id);
+
+    return {
+      remaining: quota.remaining,
+      limit: quota.limit,
+      resetsAt: toIso(quota.resetsAt),
+    };
+  }
+
   @Post(QuizzesRoutes.GENERATE_AI)
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
   @ApiEndpoint(QuizResponseDto, HttpStatus.CREATED)
@@ -49,21 +64,6 @@ export class QuizzesAiController {
 
     return {
       quiz: toQuizResponseDto(quiz),
-    };
-  }
-
-  @Get(QuizzesRoutes.AI_QUOTA)
-  @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @ApiEndpoint(AiQuotaResponseDto, HttpStatus.OK)
-  @ResponseMessage('AI quota fetched successfully')
-  async getQuota(@Param('slug') slug: string, @CurrentUser() user: JwtPayload): Promise<AiQuotaResponseDto> {
-    const company = await this.companiesService.findBySlug(slug, user.sub, user.role);
-    const quota = await this.rateLimitService.getRemainingQuota(company.id);
-
-    return {
-      remaining: quota.remaining,
-      limit: quota.limit,
-      resetsAt: toIso(quota.resetsAt),
     };
   }
 }

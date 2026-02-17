@@ -9,7 +9,11 @@ export function toQuizResponseDto(quiz: Quiz): QuizResponseDto {
     description: quiz.description,
     frequencyInDays: quiz.frequencyInDays,
     questions: quiz.questions,
-    companyId: quiz.companyId,
+    createdByUserId: quiz.createdByUserId,
+    createdBy: {
+      displayName: quiz.createdBySnapshot.displayName,
+      role: quiz.createdBySnapshot.role,
+    },
     isAiGenerated: quiz.isAiGenerated,
     aiPrompt: quiz.aiPrompt,
     createdAt: toIso(quiz.createdAt),

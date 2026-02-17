@@ -1,6 +1,6 @@
 import { CompanyMember } from '@/modules/companies/entities/company-member.entity';
-import { UserMembershipResponseDto } from '../dto/res/membership/user-membership.res.dto';
 import { toIso } from '@/common/helpers/date.transformer';
+import { UserMembershipResponseDto } from '../dto/res/membership/user-membership-list.res.dto';
 
 export function toUserMembershipResponseDto(member: CompanyMember): UserMembershipResponseDto {
   return {

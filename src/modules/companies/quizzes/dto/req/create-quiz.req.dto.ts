@@ -15,6 +15,13 @@ import {
   IsOptional,
 } from 'class-validator';
 import { ValidateCorrectAnswers } from '../../validators/correct-answers.validator';
+import {
+  QUIZ_QUESTIONS_MIN,
+  QUIZ_QUESTIONS_MAX,
+  QUIZ_OPTIONS_MIN,
+  QUIZ_OPTIONS_MAX,
+  QUIZ_CORRECT_ANSWERS_MAX,
+} from '../../constants/quiz.constants';
 
 export class QuizQuestionDto {
   @IsString({ message: 'Question must be a string' })
@@ -24,15 +31,15 @@ export class QuizQuestionDto {
   question: string;
 
   @IsArray({ message: 'Options must be an array' })
-  @ArrayMinSize(2, { message: 'Each question must have at least 2 options' })
-  @ArrayMaxSize(4, { message: 'Each question can have maximum 4 options' })
+  @ArrayMinSize(QUIZ_OPTIONS_MIN, { message: `Each question must have at least ${QUIZ_OPTIONS_MIN} options` })
+  @ArrayMaxSize(QUIZ_OPTIONS_MAX, { message: `Each question can have maximum ${QUIZ_OPTIONS_MAX} options` })
   @IsString({ each: true, message: 'Each option must be a string' })
   options: string[];
 
   @IsArray({ message: 'Correct answers must be an array' })
   @IsInt({ each: true, message: 'Each correct answer must be a number' })
   @ArrayMinSize(1, { message: 'At least one correct answer is required' })
-  @ArrayMaxSize(4, { message: 'Maximum 4 correct answers allowed' })
+  @ArrayMaxSize(QUIZ_CORRECT_ANSWERS_MAX, { message: `Maximum ${QUIZ_CORRECT_ANSWERS_MAX} correct answers allowed` })
   @ValidateCorrectAnswers()
   correctAnswers: number[];
 
@@ -59,8 +66,8 @@ export class CreateQuizDto {
   frequencyInDays: number;
 
   @IsArray({ message: 'Questions must be an array' })
-  @ArrayMinSize(2, { message: 'Quiz must have at least 2 questions' })
-  @ArrayMaxSize(20, { message: 'Quiz can have maximum 20 questions' })
+  @ArrayMinSize(QUIZ_QUESTIONS_MIN, { message: `Quiz must have at least ${QUIZ_QUESTIONS_MIN} questions` })
+  @ArrayMaxSize(QUIZ_QUESTIONS_MAX, { message: `Quiz can have maximum ${QUIZ_QUESTIONS_MAX} questions` })
   @ValidateNested({ each: true })
   @Type(() => QuizQuestionDto)
   questions: QuizQuestionDto[];

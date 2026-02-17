@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Quiz, QuizQuestion } from '../entities/quiz.entity';
+import { Quiz, QuizQuestion, QuizCreatedBySnapshot } from '../entities/quiz.entity';
 import { CreateQuizDto, QuizQuestionDto } from '../dto/req/create-quiz.req.dto';
 import { UpdateQuizDto } from '../dto/req/update-quiz.req.dto';
 import { GenerateQuizAiDto } from '../dto/req/generate-quiz-ai.req.dto';
@@ -11,12 +11,15 @@ import { createPaginatedResult } from '@/common/helpers/create-paginated-result.
 import { CompaniesService } from '../../services/companies.service';
 import { AiQuizGeneratorService } from './ai-quiz-generator.service';
 import { AppLogger } from '@/common/logger/app-logger';
+import { CompanyMember } from '../../entities/company-member.entity';
 
 @Injectable()
 export class QuizzesService {
   constructor(
     @InjectRepository(Quiz)
     private readonly quizzesRepository: Repository<Quiz>,
+    @InjectRepository(CompanyMember)
+    private readonly companyMembersRepository: Repository<CompanyMember>,
     private readonly companiesService: CompaniesService,
     private readonly aiGenerator: AiQuizGeneratorService,
     private readonly logger: AppLogger,
@@ -28,12 +31,16 @@ export class QuizzesService {
     const company = await this.companiesService.findBySlug(slug, userId);
     this.validateQuestions(dto.questions);
 
+    const { createdByUserId, snapshot } = await this.buildCreatedBySnapshot(company.id, userId);
+
     const quiz = this.quizzesRepository.create({
       title: dto.title,
       description: dto.description ?? null,
       frequencyInDays: dto.frequencyInDays,
       questions: this.mapToQuizQuestions(dto.questions),
       companyId: company.id,
+      createdByUserId,
+      createdBySnapshot: snapshot,
       isAiGenerated: false,
       aiPrompt: null,
       aiMetadata: null,
@@ -42,7 +49,7 @@ export class QuizzesService {
     const saved = await this.quizzesRepository.save(quiz);
     this.logger.log(`Quiz created: ${saved.id} - "${saved.title}"`, QuizzesService.name);
 
-    return saved;
+    return this.findOne(saved.id, slug, userId);
   }
 
   async generateWithAi(slug: string, userId: string, dto: GenerateQuizAiDto): Promise<Quiz> {
@@ -50,7 +57,10 @@ export class QuizzesService {
 
     this.logger.log(`Generating AI quiz for company ${company.id}: ${dto.topic}`, QuizzesService.name);
 
-    const aiQuiz = await this.aiGenerator.generateQuiz(dto);
+    const [aiQuiz, { createdByUserId, snapshot }] = await Promise.all([
+      this.aiGenerator.generateQuiz(dto),
+      this.buildCreatedBySnapshot(company.id, userId),
+    ]);
 
     const quiz = this.quizzesRepository.create({
       title: aiQuiz.title,
@@ -58,6 +68,8 @@ export class QuizzesService {
       frequencyInDays: dto.frequencyInDays,
       questions: aiQuiz.questions,
       companyId: company.id,
+      createdByUserId,
+      createdBySnapshot: snapshot,
       isAiGenerated: true,
       aiPrompt: `${dto.topic} (${dto.difficulty})`,
       aiMetadata: {
@@ -70,7 +82,7 @@ export class QuizzesService {
     const saved = await this.quizzesRepository.save(quiz);
     this.logger.log(`AI quiz generated and saved: ${saved.id} - "${saved.title}"`, QuizzesService.name);
 
-    return saved;
+    return this.findOne(saved.id, slug, userId);
   }
 
   async findAll(slug: string, userId: string, dto: QuizzesPaginationDto): Promise<PaginatedResultResponseDto<Quiz>> {
@@ -78,6 +90,13 @@ export class QuizzesService {
 
     return createPaginatedResult(this.quizzesRepository, dto, {
       where: { companyId: company.id },
+    });
+  }
+
+  async findAllByUser(userId: string, dto: QuizzesPaginationDto): Promise<PaginatedResultResponseDto<Quiz>> {
+    return createPaginatedResult(this.quizzesRepository, dto, {
+      where: { createdByUserId: userId },
+      relations: ['company'],
     });
   }
 
@@ -106,11 +125,9 @@ export class QuizzesService {
     if (dto.title !== undefined) {
       quiz.title = dto.title;
     }
-
     if (dto.description !== undefined) {
       quiz.description = dto.description ?? null;
     }
-
     if (dto.frequencyInDays !== undefined) {
       quiz.frequencyInDays = dto.frequencyInDays;
     }
@@ -123,9 +140,30 @@ export class QuizzesService {
 
   async remove(id: string, slug: string, userId: string): Promise<void> {
     const quiz = await this.findOne(id, slug, userId);
-
     await this.quizzesRepository.remove(quiz);
     this.logger.log(`Quiz deleted: ${id} by user ${userId}`, QuizzesService.name);
+  }
+
+  private async buildCreatedBySnapshot(
+    companyId: string,
+    userId: string,
+  ): Promise<{ createdByUserId: string; snapshot: QuizCreatedBySnapshot }> {
+    const member = await this.companyMembersRepository.findOne({
+      where: { companyId, userId },
+      relations: ['user'],
+    });
+
+    if (!member) {
+      throw new NotFoundException(`Company member not found for user ${userId}`);
+    }
+
+    return {
+      createdByUserId: member.userId,
+      snapshot: {
+        displayName: `${member.user.firstName} ${member.user.lastName}`.trim(),
+        role: member.role,
+      },
+    };
   }
 
   private mapToQuizQuestions(questions: QuizQuestionDto[]): QuizQuestion[] {
@@ -155,9 +193,9 @@ export class QuizzesService {
         );
       }
 
-      if (isMultiSelect && q.correctAnswers.length < 2) {
+      if (isMultiSelect && (q.correctAnswers.length < 2 || q.correctAnswers.length > 20)) {
         throw new BadRequestException(
-          `Question ${index + 1}: Multi-select question must have at least 2 correct answers`,
+          `Question ${index + 1}: Multi-select question must have between 2 and 20 correct answers`,
         );
       }
     });

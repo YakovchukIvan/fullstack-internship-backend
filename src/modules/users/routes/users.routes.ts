@@ -7,5 +7,6 @@ export const UsersRoutes = {
     INVITATIONS: 'invitations',
     JOIN_REQUESTS: 'join-requests',
     MEMBERSHIP: 'membership',
+    QUIZZES: 'quizzes',
   },
 } as const;

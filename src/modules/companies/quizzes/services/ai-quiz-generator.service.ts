@@ -5,6 +5,7 @@ import { getGeminiConfig } from '@/config/gemini.config';
 import { GenerateQuizAiDto } from '../dto/req/generate-quiz-ai.req.dto';
 import { QuizQuestion } from '../entities/quiz.entity';
 import { AppLogger } from '@/common/logger/app-logger';
+import { QUIZ_QUESTIONS_MIN, QUIZ_OPTIONS_MAX } from '../constants/quiz.constants';
 
 interface AiQuizResponse {
   title: string;
@@ -81,46 +82,54 @@ export class AiQuizGeneratorService {
       hard: 'Use complex scenarios and challenging questions. Test deep understanding.',
     };
 
+    const answerCounts = Array.from(
+      { length: dto.questionsCount },
+      () => Math.floor(Math.random() * QUIZ_OPTIONS_MAX) + 1,
+    );
+
+    const questionsSpec = answerCounts
+      .map((count, i) => {
+        const isMulti = count > 1;
+        return `  Question ${i + 1}: exactly ${count} correct answer${count > 1 ? 's' : ''}, "isMultiSelect": ${isMulti}`;
+      })
+      .join('\n');
+
     return `
-You are an expert quiz creator. Generate a quiz in valid JSON format.
+      You are an expert quiz creator. Generate a quiz in valid JSON format.
 
-Requirements:
-- Topic: "${dto.topic}"
-- Difficulty: ${dto.difficulty}
-- Guidelines: ${guidelines[dto.difficulty]}
-- Number of questions: ${dto.questionsCount}
-- Each question MUST have exactly 4 answer options
-- Include BOTH single-choice and multi-choice questions (mix them)
-- For multi-choice: set "isMultiSelect": true and provide 2-4 correct answers
-- For single-choice: set "isMultiSelect": false and provide exactly 1 correct answer
-- Questions should be clear and unambiguous
-- Options should be plausible and test real knowledge
-- Avoid obvious wrong answers
+      Requirements:
+      - Topic: "${dto.topic}"
+      - Difficulty: ${dto.difficulty}
+      - Guidelines: ${guidelines[dto.difficulty]}
+      - Number of questions: ${dto.questionsCount}
+      - Each question MUST have exactly ${QUIZ_OPTIONS_MAX} answer options
+      - Follow EXACTLY this correct answers count per question:
+      ${questionsSpec}
 
-CRITICAL: Return ONLY valid JSON. No markdown formatting, no explanations, no code blocks.
+      RULES:
+      - If a question has exactly 1 correct answer → "isMultiSelect": false
+      - If a question has 2, 3 or 4 correct answers → "isMultiSelect": true
+      - correctAnswers array must contain EXACTLY the count specified above
+      - correctAnswers are zero-based indices into the options array (0, 1, 2, or 3)
+      - Do NOT deviate from the specified counts
 
-JSON structure (copy this exactly):
-{
-  "title": "Engaging quiz title about ${dto.topic}",
-  "description": "Brief 1-2 sentence description of what this quiz tests",
-  "questions": [
-    {
-      "question": "Single choice question text?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correctAnswers": [1],
-      "isMultiSelect": false
-    },
-    {
-      "question": "Multi choice question text (select all that apply)?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correctAnswers": [0, 2],
-      "isMultiSelect": true
-    }
-  ]
-}
+      CRITICAL: Return ONLY valid JSON. No markdown formatting, no explanations, no code blocks.
 
-Generate ${dto.questionsCount} questions now (include both single and multi choice):
-`.trim();
+      JSON structure:
+      {
+        "title": "Engaging quiz title about ${dto.topic}",
+        "description": "Brief 1-2 sentence description of what this quiz tests",
+        "questions": [
+          {
+            "question": "Question text?",
+            "options": ["Option A", "Option B", "Option C", "Option D"],
+            "correctAnswers": [1],
+            "isMultiSelect": false
+          }
+        ]
+      }
+
+      Generate ${dto.questionsCount} questions now:`.trim();
   }
 
   private parseResponse(text: string): AiQuizResponse {
@@ -169,8 +178,8 @@ Generate ${dto.questionsCount} questions now (include both single and multi choi
       throw new Error('Quiz must have questions array');
     }
 
-    if (quiz.questions.length < 2) {
-      throw new Error('Quiz must have at least 2 questions');
+    if (quiz.questions.length < QUIZ_QUESTIONS_MIN) {
+      throw new Error(`Quiz must have at least ${QUIZ_QUESTIONS_MIN} questions`);
     }
 
     if (quiz.questions.length !== expectedCount) {
@@ -186,8 +195,8 @@ Generate ${dto.questionsCount} questions now (include both single and multi choi
         throw new Error(`Question ${index + 1}: Invalid question text`);
       }
 
-      if (!Array.isArray(q.options) || q.options.length !== 4) {
-        throw new Error(`Question ${index + 1}: Must have exactly 4 options`);
+      if (!Array.isArray(q.options) || q.options.length !== QUIZ_OPTIONS_MAX) {
+        throw new Error(`Question ${index + 1}: Must have exactly ${QUIZ_OPTIONS_MAX} options`);
       }
 
       if (!Array.isArray(q.correctAnswers) || q.correctAnswers.length === 0) {
@@ -195,7 +204,7 @@ Generate ${dto.questionsCount} questions now (include both single and multi choi
       }
 
       q.correctAnswers.forEach((answerIdx) => {
-        if (typeof answerIdx !== 'number' || answerIdx < 0 || answerIdx >= 4) {
+        if (typeof answerIdx !== 'number' || answerIdx < 0 || answerIdx >= QUIZ_OPTIONS_MAX) {
           throw new Error(`Question ${index + 1}: Invalid correctAnswer index ${answerIdx}`);
         }
       });
@@ -208,8 +217,10 @@ Generate ${dto.questionsCount} questions now (include both single and multi choi
         );
       }
 
-      if (q.isMultiSelect && q.correctAnswers.length < 2) {
-        throw new Error(`Question ${index + 1}: Multi-select must have 2+ correct answers`);
+      if (q.isMultiSelect && (q.correctAnswers.length < 2 || q.correctAnswers.length > QUIZ_OPTIONS_MAX)) {
+        throw new Error(
+          `Question ${index + 1}: Multi-select must have between 2 and ${QUIZ_OPTIONS_MAX} correct answers`,
+        );
       }
 
       if (!q.isMultiSelect && q.correctAnswers.length !== 1) {

@@ -1,8 +1,15 @@
+import { CompanyRole } from '@/common/enums/company-role.enum';
+
 export class QuizQuestionResponseDto {
   question: string;
   options: string[];
   correctAnswers: number[];
   isMultiSelect: boolean;
+}
+
+export class QuizCreatedBySnapshotDto {
+  displayName: string;
+  role: CompanyRole;
 }
 
 export class QuizResponseDto {
@@ -11,7 +18,8 @@ export class QuizResponseDto {
   description: string | null;
   frequencyInDays: number;
   questions: QuizQuestionResponseDto[];
-  companyId: string;
+  createdByUserId: string;
+  createdBy: QuizCreatedBySnapshotDto;
   isAiGenerated: boolean;
   aiPrompt: string | null;
   createdAt: string;
