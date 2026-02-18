@@ -3,4 +3,8 @@ export const QuizzesRoutes = {
   BY_ID: ':quizId',
   GENERATE_AI: 'generate',
   AI_QUOTA: 'ai/quota',
+  ATTEMPTS: {
+    BASE: ':quizId/attempts',
+    MY: ':quizId/attempts/my',
+  },
 } as const;

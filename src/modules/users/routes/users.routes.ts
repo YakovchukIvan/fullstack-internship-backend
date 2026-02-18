@@ -9,4 +9,5 @@ export const UsersRoutes = {
     MEMBERSHIP: 'membership',
     QUIZZES: 'quizzes',
   },
+  RATING: 'me/rating',
 } as const;
