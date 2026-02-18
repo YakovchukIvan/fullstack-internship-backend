@@ -4,7 +4,6 @@ export class QuizQuestionResponseDto {
   question: string;
   options: string[];
   correctAnswers: number[];
-  isMultiSelect: boolean;
 }
 
 export class QuizCreatedBySnapshotDto {

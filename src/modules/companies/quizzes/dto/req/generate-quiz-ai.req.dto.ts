@@ -4,8 +4,8 @@ import { QuizDifficulty } from '../../enums/quiz-difficulty.enum';
 export class GenerateQuizAiDto {
   @IsString({ message: 'Topic must be a string' })
   @IsNotEmpty({ message: 'Topic is required' })
-  @MinLength(3, { message: 'Topic must be at least 3 characters' })
-  @MaxLength(100, { message: 'Topic must not exceed 100 characters' })
+  @MinLength(2, { message: 'Topic must be at least 3 characters' })
+  @MaxLength(200, { message: 'Topic must not exceed 100 characters' })
   topic: string;
 
   @IsEnum(QuizDifficulty, { message: 'Difficulty must be easy, medium, or hard' })

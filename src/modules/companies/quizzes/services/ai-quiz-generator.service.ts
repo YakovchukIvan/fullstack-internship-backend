@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { getGeminiConfig } from '@/config/gemini.config';
 import { GenerateQuizAiDto } from '../dto/req/generate-quiz-ai.req.dto';
 import { AppLogger } from '@/common/logger/app-logger';
-import { QUIZ_QUESTIONS_MIN, QUIZ_OPTIONS_MAX } from '../constants/quiz.constants';
+import { QuizConfig } from '../constants/quiz.constants';
 import { QuizQuestion } from '../interfaces/quiz.interfaces';
 import { QUIZ_AI_DIFFICULTY_GUIDELINES } from '../constants/quiz-ai.constants';
 import { QUIZ_AI_PROMPT_TEMPLATE } from '../constants/quiz-prompt.template';
@@ -81,10 +81,22 @@ export class AiQuizGeneratorService {
   }
 
   private buildQuestionsSpec(questionsCount: number): string {
-    return Array.from({ length: questionsCount }, () => Math.floor(Math.random() * QUIZ_OPTIONS_MAX) + 1)
-      .map((count, i) => {
-        const isMulti = count > 1;
-        return `  Question ${i + 1}: exactly ${count} correct answer${count > 1 ? 's' : ''}, "isMultiSelect": ${isMulti}`;
+    return Array.from({ length: questionsCount })
+      .map((_, i) => {
+        const rand = Math.random();
+        let count = 1;
+        if (rand > 0.95) {
+          count = 4;
+        } else if (rand > 0.85) {
+          count = 3;
+        } else if (rand > 0.6) {
+          count = 2;
+        } else {
+          count = 1;
+        }
+
+        count = Math.min(count, QuizConfig.OPTIONS.MAX);
+        return `  Question ${i + 1}: exactly ${count} correct answer${count > 1 ? 's' : ''}`;
       })
       .join('\n');
   }
@@ -96,7 +108,7 @@ export class AiQuizGeneratorService {
       .replaceAll('{{difficulty}}', dto.difficulty)
       .replaceAll('{{guidelines}}', QUIZ_AI_DIFFICULTY_GUIDELINES[dto.difficulty])
       .replaceAll('{{questionsCount}}', String(dto.questionsCount))
-      .replaceAll('{{optionsMax}}', String(QUIZ_OPTIONS_MAX))
+      .replaceAll('{{optionsMax}}', String(QuizConfig.OPTIONS.MAX))
       .replaceAll('{{questionsSpec}}', questionsSpec);
   }
 
@@ -140,8 +152,8 @@ export class AiQuizGeneratorService {
       throw new Error('Invalid quiz title');
     }
 
-    if (quiz.questions.length < QUIZ_QUESTIONS_MIN) {
-      throw new Error(`Quiz must have at least ${QUIZ_QUESTIONS_MIN} questions`);
+    if (quiz.questions.length < QuizConfig.OPTIONS.MIN) {
+      throw new Error(`Quiz must have at least ${QuizConfig.OPTIONS.MIN} questions`);
     }
 
     if (quiz.questions.length !== expectedCount) {
@@ -151,16 +163,6 @@ export class AiQuizGeneratorService {
       );
       quiz.questions = quiz.questions.slice(0, expectedCount);
     }
-
-    quiz.questions.forEach((q, index) => {
-      if (typeof q.isMultiSelect !== 'boolean') {
-        q.isMultiSelect = q.correctAnswers.length > 1;
-        this.logger.warn(
-          `Question ${index + 1}: isMultiSelect not provided, set to ${q.isMultiSelect}`,
-          AiQuizGeneratorService.name,
-        );
-      }
-    });
 
     validateQuizQuestions(quiz.questions);
   }

@@ -1,6 +1,5 @@
 import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
 import { QuizQuestionDto } from '../dto/req/quiz-question.dto';
-import { QUIZ_CORRECT_ANSWERS_MAX } from '../constants/quiz.constants';
 
 export function ValidateCorrectAnswers(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
@@ -34,29 +33,14 @@ export function ValidateCorrectAnswers(validationOptions?: ValidationOptions) {
             return false;
           }
 
-          const isMultiSelect = question.isMultiSelect ?? false;
-
-          if (!isMultiSelect && correctAnswers.length !== 1) {
-            return false;
-          }
-
-          if (
-            isMultiSelect &&
-            (correctAnswers.length < QUIZ_CORRECT_ANSWERS_MAX || correctAnswers.length > QUIZ_CORRECT_ANSWERS_MAX)
-          ) {
+          if (correctAnswers.length > question.options.length) {
             return false;
           }
 
           return true;
         },
-        defaultMessage(args: ValidationArguments): string {
-          const question = args.object as QuizQuestionDto;
-          const isMultiSelect = question.isMultiSelect ?? false;
-
-          if (isMultiSelect) {
-            return 'Multi-select question must have 2-4 correct answers within options range';
-          }
-          return 'Single-select question must have exactly 1 correct answer within options range';
+        defaultMessage(_args: ValidationArguments): string {
+          return 'Correct answers must be valid unique indices corresponding to the provided options';
         },
       },
     });

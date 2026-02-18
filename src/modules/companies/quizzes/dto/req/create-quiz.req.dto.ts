@@ -13,7 +13,7 @@ import {
   MaxLength,
   IsOptional,
 } from 'class-validator';
-import { QUIZ_QUESTIONS_MIN, QUIZ_QUESTIONS_MAX } from '../../constants/quiz.constants';
+import { QuizConfig } from '../../constants/quiz.constants';
 import { QuizQuestionDto } from './quiz-question.dto';
 
 export class CreateQuizDto {
@@ -34,8 +34,8 @@ export class CreateQuizDto {
   frequencyInDays: number;
 
   @IsArray({ message: 'Questions must be an array' })
-  @ArrayMinSize(QUIZ_QUESTIONS_MIN, { message: `Quiz must have at least ${QUIZ_QUESTIONS_MIN} questions` })
-  @ArrayMaxSize(QUIZ_QUESTIONS_MAX, { message: `Quiz can have maximum ${QUIZ_QUESTIONS_MAX} questions` })
+  @ArrayMinSize(QuizConfig.OPTIONS.MIN, { message: `Quiz must have at least ${QuizConfig.OPTIONS.MIN} questions` })
+  @ArrayMaxSize(QuizConfig.QUESTIONS.MAX, { message: `Quiz can have maximum ${QuizConfig.QUESTIONS.MAX} questions` })
   @ValidateNested({ each: true })
   @Type(() => QuizQuestionDto)
   questions: QuizQuestionDto[];

@@ -6,6 +6,5 @@ export function mapToQuizQuestions(questions: QuizQuestionDto[]): QuizQuestion[]
     question: q.question,
     options: q.options,
     correctAnswers: q.correctAnswers,
-    isMultiSelect: q.isMultiSelect ?? false,
   }));
 }

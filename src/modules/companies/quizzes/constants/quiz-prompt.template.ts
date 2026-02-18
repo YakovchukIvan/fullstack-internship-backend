@@ -11,8 +11,6 @@ Requirements:
 {{questionsSpec}}
 
 RULES:
-- If a question has exactly 1 correct answer → "isMultiSelect": false
-- If a question has 2, 3 or 4 correct answers → "isMultiSelect": true
 - correctAnswers array must contain EXACTLY the count specified above
 - correctAnswers are zero-based indices into the options array (0, 1, 2, or 3)
 - Do NOT deviate from the specified counts
@@ -27,8 +25,7 @@ JSON structure:
     {
       "question": "Question text?",
       "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correctAnswers": [1],
-      "isMultiSelect": false
+      "correctAnswers": [1]
     }
   ]
 }

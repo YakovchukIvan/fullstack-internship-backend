@@ -1,6 +1,14 @@
-export const QUIZ_QUESTIONS_MIN = 2;
-export const QUIZ_QUESTIONS_MAX = 20;
-export const QUIZ_OPTIONS_MIN = 1;
-export const QUIZ_OPTIONS_MAX = 4;
-export const QUIZ_CORRECT_ANSWERS_MIN_MULTI = 2;
-export const QUIZ_CORRECT_ANSWERS_MAX = 4;
+export const QuizConfig = {
+  QUESTIONS: {
+    MIN: 2,
+    MAX: 20,
+  },
+  OPTIONS: {
+    MIN: 2,
+    MAX: 4,
+  },
+  CORRECT_ANSWERS: {
+    MIN: 1,
+    MAX: 4,
+  },
+} as const;

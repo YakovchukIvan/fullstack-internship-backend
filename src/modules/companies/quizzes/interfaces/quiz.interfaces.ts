@@ -4,7 +4,6 @@ export interface QuizQuestion {
   question: string;
   options: string[];
   correctAnswers: number[];
-  isMultiSelect: boolean;
 }
 
 export interface QuizCreatedBySnapshot {
