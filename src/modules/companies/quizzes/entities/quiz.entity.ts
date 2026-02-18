@@ -1,10 +1,12 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, Index } from 'typeorm';
 import { BaseEntity } from '@/common/entities/base.entity';
 import { Company } from '../../entities/company.entity';
 import { ManyToOne, JoinColumn } from 'typeorm';
 import type { QuizCreatedBySnapshot, QuizQuestion } from '../interfaces/quiz.interfaces';
 
 @Entity('quizzes')
+@Index(['companyId'])
+@Index(['createdByUserId'])
 export class Quiz extends BaseEntity {
   @Column({ type: 'varchar', length: 255 })
   title: string;

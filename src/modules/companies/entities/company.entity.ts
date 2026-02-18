@@ -5,6 +5,8 @@ import { CompanyMember } from './company-member.entity';
 import { Exclude } from 'class-transformer';
 
 @Entity('companies')
+@Index(['slug'])
+@Index(['ownerId'])
 export class Company extends BaseEntity {
   @Column({ type: 'varchar', length: 255, unique: true, nullable: false })
   name: string;
