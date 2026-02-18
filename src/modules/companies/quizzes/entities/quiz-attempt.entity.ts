@@ -34,7 +34,7 @@ export class QuizAttempt extends BaseEntity {
   completedAt: Date;
 
   @Column({ name: 'duration_seconds', type: 'int', nullable: true })
-  durationSeconds: number;
+  durationSeconds?: number | undefined;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
