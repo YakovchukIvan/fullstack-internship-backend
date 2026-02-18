@@ -17,7 +17,13 @@ export class AppLogger extends ConsoleLogger {
     return (extraMessage?: string) => {
       const ms = (performance.now() - start).toFixed(2);
       const suffix = extraMessage ? ` | ${extraMessage}` : '';
-      super.log(`${label} - ${ms}ms${suffix}`, context);
+      const message = `${label} - ${ms}ms${suffix}`;
+
+      if (context || this.context) {
+        super.log(message, context || this.context);
+      } else {
+        super.log(message);
+      }
     };
   }
 
