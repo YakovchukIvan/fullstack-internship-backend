@@ -3,9 +3,12 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ConfigService } from '@nestjs/config';
 import { getGeminiConfig } from '@/config/gemini.config';
 import { GenerateQuizAiDto } from '../dto/req/generate-quiz-ai.req.dto';
-import { QuizQuestion } from '../entities/quiz.entity';
 import { AppLogger } from '@/common/logger/app-logger';
 import { QUIZ_QUESTIONS_MIN, QUIZ_OPTIONS_MAX } from '../constants/quiz.constants';
+import { QuizQuestion } from '../interfaces/quiz.interfaces';
+import { QUIZ_AI_DIFFICULTY_GUIDELINES } from '../constants/quiz-ai.constants';
+import { QUIZ_AI_PROMPT_TEMPLATE } from '../constants/quiz-prompt.template';
+import { GuardAssertions } from '@/common/helpers/assert.helper';
 
 interface AiQuizResponse {
   title: string;
@@ -40,9 +43,10 @@ export class AiQuizGeneratorService {
   }
 
   async generateQuiz(dto: GenerateQuizAiDto): Promise<AiGeneratedQuiz> {
-    if (!this.genAI) {
-      throw new BadRequestException('AI quiz generation not configured. Add GEMINI_API_KEY to .env');
-    }
+    GuardAssertions.isTrueBadRequest(
+      this.genAI !== null,
+      'AI quiz generation not configured. Add GEMINI_API_KEY to .env',
+    );
 
     const model = this.genAI.getGenerativeModel({ model: this.modelName });
     const prompt = this.buildPrompt(dto);
@@ -75,61 +79,24 @@ export class AiQuizGeneratorService {
     }
   }
 
-  private buildPrompt(dto: GenerateQuizAiDto): string {
-    const guidelines: Record<string, string> = {
-      easy: 'Use simple language and straightforward questions. Avoid tricky wording.',
-      medium: 'Use moderate complexity. Include some nuanced questions.',
-      hard: 'Use complex scenarios and challenging questions. Test deep understanding.',
-    };
-
-    const answerCounts = Array.from(
-      { length: dto.questionsCount },
-      () => Math.floor(Math.random() * QUIZ_OPTIONS_MAX) + 1,
-    );
-
-    const questionsSpec = answerCounts
+  private buildQuestionsSpec(questionsCount: number): string {
+    return Array.from({ length: questionsCount }, () => Math.floor(Math.random() * QUIZ_OPTIONS_MAX) + 1)
       .map((count, i) => {
         const isMulti = count > 1;
         return `  Question ${i + 1}: exactly ${count} correct answer${count > 1 ? 's' : ''}, "isMultiSelect": ${isMulti}`;
       })
       .join('\n');
+  }
 
-    return `
-      You are an expert quiz creator. Generate a quiz in valid JSON format.
+  private buildPrompt(dto: GenerateQuizAiDto): string {
+    const questionsSpec = this.buildQuestionsSpec(dto.questionsCount);
 
-      Requirements:
-      - Topic: "${dto.topic}"
-      - Difficulty: ${dto.difficulty}
-      - Guidelines: ${guidelines[dto.difficulty]}
-      - Number of questions: ${dto.questionsCount}
-      - Each question MUST have exactly ${QUIZ_OPTIONS_MAX} answer options
-      - Follow EXACTLY this correct answers count per question:
-      ${questionsSpec}
-
-      RULES:
-      - If a question has exactly 1 correct answer → "isMultiSelect": false
-      - If a question has 2, 3 or 4 correct answers → "isMultiSelect": true
-      - correctAnswers array must contain EXACTLY the count specified above
-      - correctAnswers are zero-based indices into the options array (0, 1, 2, or 3)
-      - Do NOT deviate from the specified counts
-
-      CRITICAL: Return ONLY valid JSON. No markdown formatting, no explanations, no code blocks.
-
-      JSON structure:
-      {
-        "title": "Engaging quiz title about ${dto.topic}",
-        "description": "Brief 1-2 sentence description of what this quiz tests",
-        "questions": [
-          {
-            "question": "Question text?",
-            "options": ["Option A", "Option B", "Option C", "Option D"],
-            "correctAnswers": [1],
-            "isMultiSelect": false
-          }
-        ]
-      }
-
-      Generate ${dto.questionsCount} questions now:`.trim();
+    return QUIZ_AI_PROMPT_TEMPLATE.replaceAll('{{topic}}', dto.topic)
+      .replaceAll('{{difficulty}}', dto.difficulty)
+      .replaceAll('{{guidelines}}', QUIZ_AI_DIFFICULTY_GUIDELINES[dto.difficulty])
+      .replaceAll('{{questionsCount}}', String(dto.questionsCount))
+      .replaceAll('{{optionsMax}}', String(QUIZ_OPTIONS_MAX))
+      .replaceAll('{{questionsSpec}}', questionsSpec);
   }
 
   private parseResponse(text: string): AiQuizResponse {

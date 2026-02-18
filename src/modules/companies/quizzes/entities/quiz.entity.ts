@@ -2,19 +2,7 @@ import { Entity, Column } from 'typeorm';
 import { BaseEntity } from '@/common/entities/base.entity';
 import { Company } from '../../entities/company.entity';
 import { ManyToOne, JoinColumn } from 'typeorm';
-import { CompanyRole } from '@/common/enums/company-role.enum';
-
-export interface QuizQuestion {
-  question: string;
-  options: string[];
-  correctAnswers: number[];
-  isMultiSelect: boolean;
-}
-
-export interface QuizCreatedBySnapshot {
-  displayName: string;
-  role: CompanyRole;
-}
+import type { QuizCreatedBySnapshot, QuizQuestion } from '../interfaces/quiz.interfaces';
 
 @Entity('quizzes')
 export class Quiz extends BaseEntity {

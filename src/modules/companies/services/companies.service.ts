@@ -10,7 +10,7 @@ import { Company } from '@/modules/companies/entities/company.entity';
 import { CompanyMembersService } from './company-members.service';
 import { CreateCompanyDto } from '../dto/req/company/create-company.req.dto';
 import { UpdateCompanyDto } from '../dto/req/company/update-company.req.dto';
-import { GuardAssertions } from '../guards/assert.helper';
+import { GuardAssertions } from '@/common/helpers/assert.helper';
 
 @Injectable()
 export class CompaniesService {

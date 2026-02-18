@@ -13,7 +13,7 @@ import { CompanyPaginationDto } from '../dto/req/requests/company-invitations-pa
 import { CompanyMembersService } from './company-members.service';
 import { CompanyEvents, CompanyInvitationEvent, CompanyMembershipEvent } from '../events/company.events';
 import { Company } from '../entities/company.entity';
-import { GuardAssertions } from '../guards/assert.helper';
+import { GuardAssertions } from '@/common/helpers/assert.helper';
 
 @Injectable()
 export class CompanyInvitationsService {

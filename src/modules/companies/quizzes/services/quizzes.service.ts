@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Quiz, QuizQuestion, QuizCreatedBySnapshot } from '../entities/quiz.entity';
+import { Quiz } from '../entities/quiz.entity';
 import { CreateQuizDto } from '../dto/req/create-quiz.req.dto';
 import { UpdateQuizDto } from '../dto/req/update-quiz.req.dto';
 import { GenerateQuizAiDto } from '../dto/req/generate-quiz-ai.req.dto';
@@ -13,6 +13,9 @@ import { AiQuizGeneratorService } from './ai-quiz-generator.service';
 import { AppLogger } from '@/common/logger/app-logger';
 import { CompanyMember } from '../../entities/company-member.entity';
 import { QuizQuestionDto } from '../dto/req/quiz-question.dto';
+import { QuizCreatedBySnapshot, QuizQuestion } from '../interfaces/quiz.interfaces';
+import { QUIZ_CORRECT_ANSWERS_MAX, QUIZ_CORRECT_ANSWERS_MIN_MULTI } from '../constants/quiz.constants';
+import { GuardAssertions } from '@/common/helpers/assert.helper';
 
 @Injectable()
 export class QuizzesService {
@@ -108,9 +111,7 @@ export class QuizzesService {
       where: { id, companyId: company.id },
     });
 
-    if (!quiz) {
-      throw new NotFoundException(`Quiz with ID ${id} not found in this company`);
-    }
+    GuardAssertions.exists(quiz, `Quiz with ID ${id} not found in this company`);
 
     return quiz;
   }
@@ -154,9 +155,7 @@ export class QuizzesService {
       relations: ['user'],
     });
 
-    if (!member) {
-      throw new NotFoundException(`Company member not found for user ${userId}`);
-    }
+    GuardAssertions.exists(member, `Company member not found for user ${userId}`);
 
     return {
       createdByUserId: member.userId,
@@ -194,9 +193,13 @@ export class QuizzesService {
         );
       }
 
-      if (isMultiSelect && (q.correctAnswers.length < 2 || q.correctAnswers.length > 20)) {
+      if (
+        isMultiSelect &&
+        (q.correctAnswers.length < QUIZ_CORRECT_ANSWERS_MIN_MULTI || q.correctAnswers.length > QUIZ_CORRECT_ANSWERS_MAX)
+      ) {
         throw new BadRequestException(
-          `Question ${index + 1}: Multi-select question must have between 2 and 20 correct answers`,
+          `Question ${index + 1}: Multi-select question must have between 
+          ${QUIZ_CORRECT_ANSWERS_MIN_MULTI} and ${QUIZ_CORRECT_ANSWERS_MAX} correct answers`,
         );
       }
     });
