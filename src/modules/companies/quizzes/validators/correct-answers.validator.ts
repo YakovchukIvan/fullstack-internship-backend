@@ -1,5 +1,6 @@
 import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
-import { QuizQuestionDto } from '../dto/req/create-quiz.req.dto';
+import { QuizQuestionDto } from '../dto/req/quiz-question.dto';
+import { QUIZ_CORRECT_ANSWERS_MAX } from '../constants/quiz.constants';
 
 export function ValidateCorrectAnswers(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
@@ -21,7 +22,9 @@ export function ValidateCorrectAnswers(validationOptions?: ValidationOptions) {
             return false;
           }
 
-          const allValid = correctAnswers.every((idx) => idx >= 0 && idx < question.options.length);
+          const allValid = correctAnswers.every(
+            (idx) => Number.isInteger(idx) && idx >= 0 && idx < question.options.length,
+          );
           if (!allValid) {
             return false;
           }
@@ -32,11 +35,15 @@ export function ValidateCorrectAnswers(validationOptions?: ValidationOptions) {
           }
 
           const isMultiSelect = question.isMultiSelect ?? false;
+
           if (!isMultiSelect && correctAnswers.length !== 1) {
             return false;
           }
 
-          if (isMultiSelect && correctAnswers.length < 2) {
+          if (
+            isMultiSelect &&
+            (correctAnswers.length < QUIZ_CORRECT_ANSWERS_MAX || correctAnswers.length > QUIZ_CORRECT_ANSWERS_MAX)
+          ) {
             return false;
           }
 

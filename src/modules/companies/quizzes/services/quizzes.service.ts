@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Quiz, QuizQuestion, QuizCreatedBySnapshot } from '../entities/quiz.entity';
-import { CreateQuizDto, QuizQuestionDto } from '../dto/req/create-quiz.req.dto';
+import { CreateQuizDto } from '../dto/req/create-quiz.req.dto';
 import { UpdateQuizDto } from '../dto/req/update-quiz.req.dto';
 import { GenerateQuizAiDto } from '../dto/req/generate-quiz-ai.req.dto';
 import { QuizzesPaginationDto } from '../dto/req/quizzes-pagination.req.dto';
@@ -12,6 +12,7 @@ import { CompaniesService } from '../../services/companies.service';
 import { AiQuizGeneratorService } from './ai-quiz-generator.service';
 import { AppLogger } from '@/common/logger/app-logger';
 import { CompanyMember } from '../../entities/company-member.entity';
+import { QuizQuestionDto } from '../dto/req/quiz-question.dto';
 
 @Injectable()
 export class QuizzesService {
