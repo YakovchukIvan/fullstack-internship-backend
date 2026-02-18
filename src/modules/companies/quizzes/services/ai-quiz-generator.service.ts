@@ -9,6 +9,7 @@ import { QuizQuestion } from '../interfaces/quiz.interfaces';
 import { QUIZ_AI_DIFFICULTY_GUIDELINES } from '../constants/quiz-ai.constants';
 import { QUIZ_AI_PROMPT_TEMPLATE } from '../constants/quiz-prompt.template';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
+import { validateQuizQuestions } from '../helper/quiz-questions.helper';
 
 interface AiQuizResponse {
   title: string;
@@ -63,7 +64,7 @@ export class AiQuizGeneratorService {
       this.logger.log(`Tokens used: ${JSON.stringify(result.response.usageMetadata)}`, AiQuizGeneratorService.name);
 
       const quiz = this.parseResponse(text);
-      this.validateQuiz(quiz, dto.questionsCount);
+      this.normalizeAndValidate(quiz, dto.questionsCount);
 
       const generatedQuiz: AiGeneratedQuiz = {
         ...quiz,
@@ -130,19 +131,13 @@ export class AiQuizGeneratorService {
     if (typeof data !== 'object' || data === null) {
       return false;
     }
-
     const obj = data as Record<string, unknown>;
-
     return typeof obj.title === 'string' && typeof obj.description === 'string' && Array.isArray(obj.questions);
   }
 
-  private validateQuiz(quiz: AiQuizResponse, expectedCount: number): void {
+  private normalizeAndValidate(quiz: AiQuizResponse, expectedCount: number): void {
     if (!quiz.title || typeof quiz.title !== 'string') {
       throw new Error('Invalid quiz title');
-    }
-
-    if (!quiz.questions || !Array.isArray(quiz.questions)) {
-      throw new Error('Quiz must have questions array');
     }
 
     if (quiz.questions.length < QUIZ_QUESTIONS_MIN) {
@@ -158,24 +153,6 @@ export class AiQuizGeneratorService {
     }
 
     quiz.questions.forEach((q, index) => {
-      if (!q.question || typeof q.question !== 'string') {
-        throw new Error(`Question ${index + 1}: Invalid question text`);
-      }
-
-      if (!Array.isArray(q.options) || q.options.length !== QUIZ_OPTIONS_MAX) {
-        throw new Error(`Question ${index + 1}: Must have exactly ${QUIZ_OPTIONS_MAX} options`);
-      }
-
-      if (!Array.isArray(q.correctAnswers) || q.correctAnswers.length === 0) {
-        throw new Error(`Question ${index + 1}: correctAnswers must be a non-empty array`);
-      }
-
-      q.correctAnswers.forEach((answerIdx) => {
-        if (typeof answerIdx !== 'number' || answerIdx < 0 || answerIdx >= QUIZ_OPTIONS_MAX) {
-          throw new Error(`Question ${index + 1}: Invalid correctAnswer index ${answerIdx}`);
-        }
-      });
-
       if (typeof q.isMultiSelect !== 'boolean') {
         q.isMultiSelect = q.correctAnswers.length > 1;
         this.logger.warn(
@@ -183,16 +160,8 @@ export class AiQuizGeneratorService {
           AiQuizGeneratorService.name,
         );
       }
-
-      if (q.isMultiSelect && (q.correctAnswers.length < 2 || q.correctAnswers.length > QUIZ_OPTIONS_MAX)) {
-        throw new Error(
-          `Question ${index + 1}: Multi-select must have between 2 and ${QUIZ_OPTIONS_MAX} correct answers`,
-        );
-      }
-
-      if (!q.isMultiSelect && q.correctAnswers.length !== 1) {
-        throw new Error(`Question ${index + 1}: Single-select must have exactly 1 correct answer`);
-      }
     });
+
+    validateQuizQuestions(quiz.questions);
   }
 }

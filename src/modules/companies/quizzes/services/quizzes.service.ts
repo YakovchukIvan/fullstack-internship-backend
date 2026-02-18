@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Quiz } from '../entities/quiz.entity';
@@ -12,10 +12,10 @@ import { CompaniesService } from '../../services/companies.service';
 import { AiQuizGeneratorService } from './ai-quiz-generator.service';
 import { AppLogger } from '@/common/logger/app-logger';
 import { CompanyMember } from '../../entities/company-member.entity';
-import { QuizQuestionDto } from '../dto/req/quiz-question.dto';
-import { QuizCreatedBySnapshot, QuizQuestion } from '../interfaces/quiz.interfaces';
-import { QUIZ_CORRECT_ANSWERS_MAX, QUIZ_CORRECT_ANSWERS_MIN_MULTI } from '../constants/quiz.constants';
+import { QuizCreatedBySnapshot } from '../interfaces/quiz.interfaces';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
+import { validateQuizQuestions } from '../helper/quiz-questions.helper';
+import { mapToQuizQuestions } from '../mappers/quiz-questions.mapper';
 
 @Injectable()
 export class QuizzesService {
@@ -33,7 +33,7 @@ export class QuizzesService {
 
   async create(slug: string, userId: string, dto: CreateQuizDto): Promise<Quiz> {
     const company = await this.companiesService.findBySlug(slug, userId);
-    this.validateQuestions(dto.questions);
+    validateQuizQuestions(dto.questions);
 
     const { createdByUserId, snapshot } = await this.buildCreatedBySnapshot(company.id, userId);
 
@@ -41,7 +41,7 @@ export class QuizzesService {
       title: dto.title,
       description: dto.description ?? null,
       frequencyInDays: dto.frequencyInDays,
-      questions: this.mapToQuizQuestions(dto.questions),
+      questions: mapToQuizQuestions(dto.questions),
       companyId: company.id,
       createdByUserId,
       createdBySnapshot: snapshot,
@@ -120,8 +120,8 @@ export class QuizzesService {
     const quiz = await this.findOne(id, slug, userId);
 
     if (dto.questions !== undefined) {
-      this.validateQuestions(dto.questions);
-      quiz.questions = this.mapToQuizQuestions(dto.questions);
+      validateQuizQuestions(dto.questions);
+      quiz.questions = mapToQuizQuestions(dto.questions);
     }
 
     if (dto.title !== undefined) {
@@ -164,44 +164,5 @@ export class QuizzesService {
         role: member.role,
       },
     };
-  }
-
-  private mapToQuizQuestions(questions: QuizQuestionDto[]): QuizQuestion[] {
-    return questions.map((q) => ({
-      question: q.question,
-      options: q.options,
-      correctAnswers: q.correctAnswers,
-      isMultiSelect: q.isMultiSelect ?? false,
-    }));
-  }
-
-  private validateQuestions(questions: QuizQuestionDto[]): void {
-    questions.forEach((q, index) => {
-      q.correctAnswers.forEach((idx) => {
-        if (idx < 0 || idx >= q.options.length) {
-          throw new BadRequestException(
-            `Question ${index + 1}: correctAnswer index ${idx} is out of range (0-${q.options.length - 1})`,
-          );
-        }
-      });
-
-      const isMultiSelect = q.isMultiSelect ?? false;
-
-      if (!isMultiSelect && q.correctAnswers.length !== 1) {
-        throw new BadRequestException(
-          `Question ${index + 1}: Single-select question must have exactly 1 correct answer`,
-        );
-      }
-
-      if (
-        isMultiSelect &&
-        (q.correctAnswers.length < QUIZ_CORRECT_ANSWERS_MIN_MULTI || q.correctAnswers.length > QUIZ_CORRECT_ANSWERS_MAX)
-      ) {
-        throw new BadRequestException(
-          `Question ${index + 1}: Multi-select question must have between 
-          ${QUIZ_CORRECT_ANSWERS_MIN_MULTI} and ${QUIZ_CORRECT_ANSWERS_MAX} correct answers`,
-        );
-      }
-    });
   }
 }
