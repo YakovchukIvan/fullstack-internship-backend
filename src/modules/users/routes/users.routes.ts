@@ -8,5 +8,6 @@ export const UsersRoutes = {
     JOIN_REQUESTS: 'join-requests',
     MEMBERSHIP: 'membership',
     QUIZZES: 'quizzes',
+    RATING: 'rating',
   },
 } as const;

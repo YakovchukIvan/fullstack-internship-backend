@@ -21,5 +21,6 @@ export const CompaniesRoutes = {
     UPDATE_ROLE: ':slug/members/:memberId/role',
   },
 
+  LEADERBOARD: ':slug/leaderboard',
   LEAVE: ':slug/leave',
 } as const;

@@ -30,12 +30,15 @@ import { toCompanyMemberResponseDto } from '../mappers/company-member.mapper';
 import { CompanyMembersListResponseDto } from '../dto/res/members/company-member.res.dto';
 import { CreateCompanyDto } from '../dto/req/company/create-company.req.dto';
 import { UpdateCompanyDto } from '../dto/req/company/update-company.req.dto';
+import { QuizAttemptsService } from '../quizzes/services/quiz-attempts.service';
+import { CompanyLeaderboardResponseDto } from '../quizzes/dto/res/leaderboard.res.dto';
 
 @Controller(CompaniesRoutes.ROOT)
 export class CompaniesController {
   constructor(
     private readonly companiesService: CompaniesService,
     private readonly membersService: CompanyMembersService,
+    private readonly quizAttemptsService: QuizAttemptsService,
   ) {}
 
   @Get()
@@ -52,6 +55,17 @@ export class CompaniesController {
       companies,
       pagination: result.pagination,
     };
+  }
+
+  @Get(CompaniesRoutes.LEADERBOARD)
+  @UseGuards(CompanyRoleGuard)
+  @ApiEndpoint(CompanyLeaderboardResponseDto, HttpStatus.OK)
+  @ResponseMessage('Leaderboard fetched successfully')
+  async getLeaderboard(
+    @Param('slug') slug: string,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<CompanyLeaderboardResponseDto> {
+    return this.quizAttemptsService.getCompanyLeaderboard(slug, user.sub);
   }
 
   @Get(CompaniesRoutes.MEMBERS.BASE)

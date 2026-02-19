@@ -2,7 +2,7 @@ import { Quiz } from '../entities/quiz.entity';
 import { QuizResponseDto } from '../dto/res/quiz.res.dto';
 import { toIso } from '@/common/helpers/date.transformer';
 
-export function toQuizResponseDto(quiz: Quiz): QuizResponseDto {
+export function toQuizResponseDto(quiz: Quiz, quotaRemaining?: number): QuizResponseDto {
   return {
     id: quiz.id,
     title: quiz.title,
@@ -18,5 +18,6 @@ export function toQuizResponseDto(quiz: Quiz): QuizResponseDto {
     aiPrompt: quiz.aiPrompt,
     createdAt: toIso(quiz.createdAt),
     updatedAt: toIso(quiz.updatedAt),
+    quotaRemaining: quotaRemaining ?? null,
   };
 }

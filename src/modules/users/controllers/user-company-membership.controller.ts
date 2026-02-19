@@ -21,6 +21,8 @@ import {
   toUserInvitationItemResponseDto,
   toUserJoinRequestItemResponseDto,
 } from '../mappers/user-company-interactions.res.dto';
+import { UserRatingResponseDto } from '@/modules/companies/quizzes/dto/res/user-rating.res.dto';
+import { QuizAttemptsService } from '@/modules/companies/quizzes/services/quiz-attempts.service';
 
 @Controller(UsersRoutes.COMPANY.ROOT)
 export class UserCompanyMembershipController {
@@ -29,6 +31,7 @@ export class UserCompanyMembershipController {
     private readonly joinRequestsService: CompanyJoinRequestsService,
     private readonly membersService: CompanyMembersService,
     private readonly quizzesService: QuizzesService,
+    private readonly quizAttemptsService: QuizAttemptsService,
   ) {}
 
   @Get(UsersRoutes.COMPANY.INVITATIONS)
@@ -89,5 +92,14 @@ export class UserCompanyMembershipController {
       quizzes: result.detail.map(toUserQuizListItemResponseDto),
       pagination: result.pagination,
     };
+  }
+
+  @Get(UsersRoutes.COMPANY.RATING)
+  @ApiEndpoint(UserRatingResponseDto, HttpStatus.OK)
+  @ResponseMessage('User rating fetched successfully')
+  async getMyRating(@CurrentUser() user: JwtPayload): Promise<{ rating: UserRatingResponseDto }> {
+    const rating = await this.quizAttemptsService.getUserRating(user.sub);
+
+    return { rating };
   }
 }

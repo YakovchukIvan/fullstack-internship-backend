@@ -1,4 +1,3 @@
-// modules/companies/quizzes/dto/req/quizzes-pagination.req.dto.ts
 import { PaginationQueryDto } from '@/common/dto/req/pagination-query.dto';
 import { IsEnum, IsOptional } from 'class-validator';
 import { QuizSortField } from '../../enums/quiz-sort-field.enum';
