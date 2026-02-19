@@ -16,6 +16,8 @@ import { QuizCreatedBySnapshot } from '../interfaces/quiz.interfaces';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { validateQuizQuestions } from '../helper/quiz-questions.helper';
 import { mapToQuizQuestions } from '../mappers/quiz-questions.mapper';
+import { UserRole } from '@/common/enums/user-role.enum';
+import { AiRateLimitService } from './ai-rate-limit.service';
 
 @Injectable()
 export class QuizzesService {
@@ -26,6 +28,7 @@ export class QuizzesService {
     private readonly companyMembersRepository: Repository<CompanyMember>,
     private readonly companiesService: CompaniesService,
     private readonly aiGenerator: AiQuizGeneratorService,
+    private readonly aiRateLimitService: AiRateLimitService,
     private readonly logger: AppLogger,
   ) {
     this.logger.setLoggerContext(QuizzesService.name);
@@ -56,10 +59,14 @@ export class QuizzesService {
     return this.findOne(saved.id, slug, userId);
   }
 
-  async generateWithAi(slug: string, userId: string, dto: GenerateQuizAiDto): Promise<Quiz> {
-    const company = await this.companiesService.findBySlug(slug, userId);
-
-    this.logger.log(`Generating AI quiz for company ${company.id}: ${dto.topic}`, QuizzesService.name);
+  async generateWithAi(
+    slug: string,
+    userId: string,
+    dto: GenerateQuizAiDto,
+    userRole?: UserRole,
+  ): Promise<{ quiz: Quiz; remaining: number }> {
+    const company = await this.companiesService.findBySlug(slug, userId, userRole);
+    const { remaining } = await this.aiRateLimitService.checkAndIncrement(company.id);
 
     const [aiQuiz, { createdByUserId, snapshot }] = await Promise.all([
       this.aiGenerator.generateQuiz(dto),
@@ -86,7 +93,10 @@ export class QuizzesService {
     const saved = await this.quizzesRepository.save(quiz);
     this.logger.log(`AI quiz generated and saved: ${saved.id} - "${saved.title}"`, QuizzesService.name);
 
-    return this.findOne(saved.id, slug, userId);
+    return {
+      quiz: await this.findOne(saved.id, slug, userId),
+      remaining,
+    };
   }
 
   async findAll(slug: string, userId: string, dto: QuizzesPaginationDto): Promise<PaginatedResultResponseDto<Quiz>> {
@@ -164,5 +174,15 @@ export class QuizzesService {
         role: member.role,
       },
     };
+  }
+
+  async getAiQuota(
+    slug: string,
+    userId: string,
+    userRole?: UserRole,
+  ): Promise<{ remaining: number; limit: number; resetsAt: Date }> {
+    const company = await this.companiesService.findBySlug(slug, userId, userRole);
+
+    return this.aiRateLimitService.getRemainingQuota(company.id);
   }
 }

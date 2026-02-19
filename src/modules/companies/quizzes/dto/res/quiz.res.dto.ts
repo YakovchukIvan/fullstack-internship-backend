@@ -23,4 +23,5 @@ export class QuizResponseDto {
   aiPrompt: string | null;
   createdAt: string;
   updatedAt: string;
+  quotaRemaining: number | null;
 }
