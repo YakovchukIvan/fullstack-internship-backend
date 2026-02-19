@@ -94,7 +94,7 @@ export class UserCompanyMembershipController {
     };
   }
 
-  @Get(UsersRoutes.RATING)
+  @Get(UsersRoutes.COMPANY.RATING)
   @ApiEndpoint(UserRatingResponseDto, HttpStatus.OK)
   @ResponseMessage('User rating fetched successfully')
   async getMyRating(@CurrentUser() user: JwtPayload): Promise<{ rating: UserRatingResponseDto }> {

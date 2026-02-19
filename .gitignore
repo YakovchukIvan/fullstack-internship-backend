@@ -57,3 +57,4 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 #
 create-quiz.example.json
+answer-quiz.example.json
