@@ -13,6 +13,8 @@ export class CreateCompanies1770731621752 implements MigrationInterface {
     await queryRunner.query(
       `CREATE TABLE "companies" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "name" character varying(255) NOT NULL, "slug" character varying(255) NOT NULL, "description" text, "avatar_url" character varying(500), "is_visible" boolean NOT NULL DEFAULT true, "owner_id" uuid NOT NULL, CONSTRAINT "UQ_3dacbb3eb4f095e29372ff8e131" UNIQUE ("name"), CONSTRAINT "UQ_b28b07d25e4324eee577de5496d" UNIQUE ("slug"), CONSTRAINT "PK_d4bc3e82a314fa9e29f652c2c22" PRIMARY KEY ("id"))`,
     );
+    await queryRunner.query(`CREATE INDEX "IDX_companies_slug" ON "companies" ("slug")`);
+    await queryRunner.query(`CREATE INDEX "IDX_companies_owner_id" ON "companies" ("owner_id")`);
     await queryRunner.query(`ALTER TYPE "public"."users_role_enum" RENAME TO "users_role_enum_old"`);
     await queryRunner.query(`CREATE TYPE "public"."users_role_enum" AS ENUM('user', 'owner')`);
     await queryRunner.query(`ALTER TABLE "users" ALTER COLUMN "role" DROP DEFAULT`);
@@ -44,6 +46,8 @@ export class CreateCompanies1770731621752 implements MigrationInterface {
     await queryRunner.query(`ALTER TABLE "users" ALTER COLUMN "role" SET DEFAULT 'user'`);
     await queryRunner.query(`DROP TYPE "public"."users_role_enum"`);
     await queryRunner.query(`ALTER TYPE "public"."users_role_enum_old" RENAME TO "users_role_enum"`);
+    await queryRunner.query(`DROP INDEX "public"."IDX_companies_owner_id"`);
+    await queryRunner.query(`DROP INDEX "public"."IDX_companies_slug"`);
     await queryRunner.query(`DROP TABLE "companies"`);
     await queryRunner.query(`DROP INDEX "public"."IDX_e33a61fd560f6412d3ffb39f22"`);
     await queryRunner.query(`DROP INDEX "public"."IDX_535b42b6c7557886fd1c44501e"`);

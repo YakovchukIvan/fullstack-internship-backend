@@ -8,13 +8,19 @@ import { CompanyJoinRequestsService } from '@/modules/companies/services/company
 import { CompanyMembersService } from '@/modules/companies/services/company-members.service';
 import { CompanyPaginationDto } from '@/modules/companies/dto/req/requests/company-invitations-pagination.req.dto';
 import { CompanyMembersPaginationDto } from '@/modules/companies/dto/req/members/company-members-pagination.req.dto';
-import { toUserJoinRequestItemResponseDto } from '@/modules/companies/mappers/company-join-request.mapper';
 import { UserMembershipListResponseDto } from '../dto/res/membership/user-membership-list.res.dto';
 import { UserInvitationsListResponseDto } from '../dto/res/membership/user-invitations-list.res.dto';
 import { UserJoinRequestsListResponseDto } from '../dto/res/membership/user-join-requests-list.res.dto';
 import { toUserMembershipResponseDto } from '../mappers/user-membership.mapper';
 import { UsersRoutes } from '../routes/users.routes';
-import { toUserInvitationItemResponseDto } from '@/modules/companies/mappers/company-invitation.mapper';
+import { QuizzesService } from '@/modules/companies/quizzes/services/quizzes.service';
+import { QuizzesPaginationDto } from '@/modules/companies/quizzes/dto/req/quizzes-pagination.req.dto';
+import { UserQuizzesListResponseDto } from '../dto/res/quizzes/user-quizzes-list.res.dto';
+import { toUserQuizListItemResponseDto } from '../mappers/user-quiz-list-item.mapper';
+import {
+  toUserInvitationItemResponseDto,
+  toUserJoinRequestItemResponseDto,
+} from '../mappers/user-company-interactions.res.dto';
 
 @Controller(UsersRoutes.COMPANY.ROOT)
 export class UserCompanyMembershipController {
@@ -22,6 +28,7 @@ export class UserCompanyMembershipController {
     private readonly invitationsService: CompanyInvitationsService,
     private readonly joinRequestsService: CompanyJoinRequestsService,
     private readonly membersService: CompanyMembersService,
+    private readonly quizzesService: QuizzesService,
   ) {}
 
   @Get(UsersRoutes.COMPANY.INVITATIONS)
@@ -65,6 +72,21 @@ export class UserCompanyMembershipController {
 
     return {
       membership: result.detail.map(toUserMembershipResponseDto),
+      pagination: result.pagination,
+    };
+  }
+
+  @Get(UsersRoutes.COMPANY.QUIZZES)
+  @ApiEndpoint(UserQuizzesListResponseDto, HttpStatus.OK)
+  @ResponseMessage('User quizzes fetched successfully')
+  async getMyQuizzes(
+    @CurrentUser() user: JwtPayload,
+    @Query() paginationDto: QuizzesPaginationDto,
+  ): Promise<UserQuizzesListResponseDto> {
+    const result = await this.quizzesService.findAllByUser(user.sub, paginationDto);
+
+    return {
+      quizzes: result.detail.map(toUserQuizListItemResponseDto),
       pagination: result.pagination,
     };
   }

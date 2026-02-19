@@ -12,17 +12,23 @@ export class AppLogger extends ConsoleLogger {
     this.context = context;
   }
 
-  time(label: string): EndTimer {
+  time(label: string, context?: string): EndTimer {
     const start = performance.now();
     return (extraMessage?: string) => {
       const ms = (performance.now() - start).toFixed(2);
       const suffix = extraMessage ? ` | ${extraMessage}` : '';
-      this.log(`${label} - ${ms}ms${suffix}`);
+      const message = `${label} - ${ms}ms${suffix}`;
+
+      if (context || this.context) {
+        super.log(message, context || this.context);
+      } else {
+        super.log(message);
+      }
     };
   }
 
-  async measure<T>(label: string, fn: () => Promise<T>): Promise<T> {
-    const end = this.time(label);
+  async measure<T>(label: string, fn: () => Promise<T>, context?: string): Promise<T> {
+    const end = this.time(label, context);
     try {
       const result = await fn();
       end();
@@ -33,8 +39,8 @@ export class AppLogger extends ConsoleLogger {
     }
   }
 
-  logError(message: string, error: unknown): void {
+  logError(message: string, error: unknown, context?: string): void {
     const stack = error instanceof Error ? error.stack : undefined;
-    this.error(message, stack);
+    super.error(message, stack, context);
   }
 }

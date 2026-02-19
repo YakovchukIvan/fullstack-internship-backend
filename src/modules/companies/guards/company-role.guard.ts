@@ -39,6 +39,10 @@ export class CompanyRoleGuard implements CanActivate {
       throw new ForbiddenException('You are not a member of this company');
     }
 
+    if (!requiredRoles) {
+      return true;
+    }
+
     if (!requiredRoles.includes(membership.role)) {
       throw new ForbiddenException('You do not have the required company permissions');
     }

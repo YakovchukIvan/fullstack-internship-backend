@@ -6,7 +6,7 @@ import { createPaginatedResult } from '@/common/helpers/create-paginated-result.
 import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
 import { CompanyMembersPaginationDto } from '../dto/req/members/company-members-pagination.req.dto';
 import { CompanyMember } from '../entities/company-member.entity';
-import { GuardAssertions } from '../guards/assert.helper';
+import { GuardAssertions } from '@/common/helpers/assert.helper';
 
 @Injectable()
 export class CompanyMembersService {

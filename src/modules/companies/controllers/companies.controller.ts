@@ -38,20 +38,6 @@ export class CompaniesController {
     private readonly membersService: CompanyMembersService,
   ) {}
 
-  @Post()
-  @ApiEndpoint(CompanyResponseDto, HttpStatus.CREATED)
-  @ResponseMessage('Company created successfully')
-  async create(
-    @Body() dto: CreateCompanyDto,
-    @CurrentUser() user: JwtPayload,
-  ): Promise<{ company: CompanyResponseDto }> {
-    const company = await this.companiesService.create(dto, user.sub);
-
-    return {
-      company: toCompanyResponseDto(company),
-    };
-  }
-
   @Get()
   @ApiEndpoint(CompaniesPaginatedBaseResponseDto, HttpStatus.OK)
   @ResponseMessage('Companies fetched successfully')
@@ -93,6 +79,20 @@ export class CompaniesController {
     @CurrentUser() user: JwtPayload,
   ): Promise<{ company: CompanyResponseDto }> {
     const company = await this.companiesService.findBySlug(slug, user.sub, user.role);
+
+    return {
+      company: toCompanyResponseDto(company),
+    };
+  }
+
+  @Post()
+  @ApiEndpoint(CompanyResponseDto, HttpStatus.CREATED)
+  @ResponseMessage('Company created successfully')
+  async create(
+    @Body() dto: CreateCompanyDto,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<{ company: CompanyResponseDto }> {
+    const company = await this.companiesService.create(dto, user.sub);
 
     return {
       company: toCompanyResponseDto(company),

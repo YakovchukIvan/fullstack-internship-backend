@@ -11,11 +11,6 @@ export class CompanyJoinRequestItemResponseDto {
   updatedAt: string;
 }
 
-export class UserJoinRequestItemResponseDto {
-  joinRequest: CompanyJoinRequestItemResponseDto;
-  company: CompanyBasicResponseDto;
-}
-
 export class CompanyJoinRequestPaginationResponseDto extends PaginatedBaseResponseDto {
   joinRequest: CompanyJoinRequestItemResponseDto[];
   company: CompanyBasicResponseDto;

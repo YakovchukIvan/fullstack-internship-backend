@@ -12,7 +12,7 @@ import { CompanyMembersService } from './company-members.service';
 import { CompanyEvents, CompanyMembershipEvent } from '../events/company.events';
 import { Company } from '../entities/company.entity';
 import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
-import { GuardAssertions } from '../guards/assert.helper';
+import { GuardAssertions } from '@/common/helpers/assert.helper';
 
 @Injectable()
 export class CompanyJoinRequestsService {
