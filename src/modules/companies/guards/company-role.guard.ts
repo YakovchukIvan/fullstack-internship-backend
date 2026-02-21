@@ -5,7 +5,7 @@ import { COMPANY_ROLES_KEY } from '../decorators/company-roles.decorator';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { CompanyMembersService } from '../services/company-members.service';
-import { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
+import { JwtPayload } from '@/common/interface/jwt-payload.interface';
 
 interface CompanyRequest extends Request {
   user: JwtPayload;

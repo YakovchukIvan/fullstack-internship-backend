@@ -22,7 +22,6 @@ import { CompaniesRoutes } from '../routes/companies.routes';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
-import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { toCompanyMemberResponseDto } from '../mappers/company-member.mapper';
 import { CompanyInvitationsService } from '../services/company-invitations.service';
@@ -35,6 +34,7 @@ import {
   CompanyInvitationsPaginationResponseDto,
 } from '../dto/res/requests/company-invitation.res.dto';
 import { CompanyJoinRequestPaginationResponseDto } from '../dto/res/requests/company-join-request.res.dto';
+import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
 
 @Controller(CompaniesRoutes.ROOT)
 @UseGuards(CompanyRoleGuard)

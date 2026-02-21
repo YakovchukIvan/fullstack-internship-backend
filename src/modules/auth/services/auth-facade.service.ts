@@ -14,7 +14,9 @@ import { MailService } from '@/modules/mail/mail.service';
 import { RegisterDto } from '../dto/req/register.dto';
 import { UserAuthRepository } from '../repositories/user-auth.repository';
 import { AuthRepository } from '../repositories/auth.repository';
+import { TokenRedisRepository } from '../repositories/token-redis.repository';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
+import { AccessTokenPayload } from '../interfaces/token-payload.interface';
 
 interface ForgotPasswordResult {
   resetToken?: string;
@@ -27,6 +29,7 @@ export class AuthFacadeService {
   constructor(
     private readonly userAuthRepository: UserAuthRepository,
     private readonly authRepository: AuthRepository,
+    private readonly tokenRedisRepository: TokenRedisRepository,
     private readonly passwordService: PasswordService,
     private readonly tokenService: TokenService,
     private readonly dataSource: DataSource,
@@ -60,9 +63,43 @@ export class AuthFacadeService {
     return { message: 'If an account exists with this email, you will receive instructions shortly' };
   }
 
-  async handleLogout(userId: string, response: Response): Promise<void> {
+  async handleLogout(user: AccessTokenPayload, response: Response): Promise<void> {
     this.tokenService.clearAuthCookies(response);
-    await this.authRepository.updateRefreshToken(userId, null);
+    await this.authRepository.updateRefreshToken(user.sub, null);
+
+    if (user.jti) {
+      await this.tokenRedisRepository.revokeAccessToken(user.sub, user.jti);
+    }
+  }
+
+  async handleRefresh(refreshToken: string, response: Response): Promise<AuthResponseDto> {
+    const payload = await this.tokenService.verifyRefreshToken(refreshToken);
+
+    const isValid = await this.tokenRedisRepository.isRefreshTokenValid(payload.sub, payload.jti);
+    GuardAssertions.isTrueBadRequest(isValid, 'Invalid or expired refresh token');
+
+    const tokenHash = this.passwordService.hashResetToken(refreshToken);
+    const auth = await this.authRepository.findByRefreshToken(tokenHash, payload.sub);
+    GuardAssertions.isTrueBadRequest(!!auth, 'Invalid refresh token');
+
+    await this.tokenRedisRepository.revokeRefreshToken(payload.sub, payload.jti);
+
+    const { token: newAccessToken, jti: newAccessJti } = this.tokenService.generateAccessToken(auth.user);
+    const { token: newRefreshToken, jti: newRefreshJti } = this.tokenService.generateRefreshToken(auth.user);
+
+    await this.tokenRedisRepository.saveAccessToken(auth.user.id, newAccessJti);
+    await this.tokenRedisRepository.saveRefreshToken(auth.user.id, newRefreshJti);
+    await this.authRepository.updateRefreshToken(auth.user.id, this.passwordService.hashResetToken(newRefreshToken));
+
+    this.tokenService.setAuthCookies(response, newAccessToken, newRefreshToken);
+
+    delete auth.user.auth;
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      user: toUserResponseDto(auth.user),
+      expiresIn: this.tokenService.getTokenExpirationTime(),
+    };
   }
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
@@ -80,6 +117,7 @@ export class AuthFacadeService {
     auth.resetPasswordExpiresAt = null;
     auth.refreshTokenHash = null;
 
+    await this.tokenRedisRepository.revokeAllUserTokens(auth.userId);
     await this.authRepository.save(auth);
   }
 
@@ -97,23 +135,6 @@ export class AuthFacadeService {
 
     delete user.auth;
     return user;
-  }
-
-  async refreshAccessToken(refreshToken: string): Promise<AuthResponseDto> {
-    const payload = await this.tokenService.verifyRefreshToken(refreshToken);
-    const tokenHash = this.passwordService.hashResetToken(refreshToken);
-
-    const auth = await this.authRepository.findByRefreshToken(tokenHash, payload.sub);
-    GuardAssertions.isTrueBadRequest(!!auth, 'Invalid refresh token');
-
-    const newAccessToken = this.tokenService.generateAccessToken(auth.user);
-    delete auth.user.auth;
-
-    return {
-      accessToken: newAccessToken,
-      user: toUserResponseDto(auth.user),
-      expiresIn: this.tokenService.getTokenExpirationTime(),
-    };
   }
 
   private async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
@@ -140,8 +161,11 @@ export class AuthFacadeService {
       return savedUser;
     });
 
-    const accessToken = this.tokenService.generateAccessToken(user);
-    const refreshToken = this.tokenService.generateRefreshToken(user);
+    const { token: accessToken, jti: accessJti } = this.tokenService.generateAccessToken(user);
+    const { token: refreshToken, jti: refreshJti } = this.tokenService.generateRefreshToken(user);
+
+    await this.tokenRedisRepository.saveAccessToken(user.id, accessJti);
+    await this.tokenRedisRepository.saveRefreshToken(user.id, refreshJti);
     await this.authRepository.updateRefreshToken(user.id, this.passwordService.hashResetToken(refreshToken));
 
     return {
@@ -158,8 +182,11 @@ export class AuthFacadeService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const accessToken = this.tokenService.generateAccessToken(user);
-    const refreshToken = this.tokenService.generateRefreshToken(user);
+    const { token: accessToken, jti: accessJti } = this.tokenService.generateAccessToken(user);
+    const { token: refreshToken, jti: refreshJti } = this.tokenService.generateRefreshToken(user);
+
+    await this.tokenRedisRepository.saveAccessToken(user.id, accessJti);
+    await this.tokenRedisRepository.saveRefreshToken(user.id, refreshJti);
     await this.authRepository.updateRefreshToken(user.id, this.passwordService.hashResetToken(refreshToken));
 
     return {

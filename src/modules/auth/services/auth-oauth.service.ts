@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Auth } from '../entities/auth.entity';
-import { Auth0Payload } from '../interfaces/jwt-payload.interface';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { UserAuthRepository } from '../repositories/user-auth.repository';
 import { AuthRepository } from '../repositories/auth.repository';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
+import { Auth0Payload } from '../interfaces/auth0-payload.interface';
 
 @Injectable()
 export class AuthOAuthService {

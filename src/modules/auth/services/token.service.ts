@@ -2,8 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { User } from '@/modules/users/entities/user.entity';
-import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { Response } from 'express';
+import { randomUUID } from 'crypto';
+import { AccessTokenPayload, RefreshTokenPayload } from '../interfaces/token-payload.interface';
 
 @Injectable()
 export class TokenService {
@@ -12,33 +13,33 @@ export class TokenService {
     private readonly configService: ConfigService,
   ) {}
 
-  generateAccessToken(user: User): string {
-    const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-    };
+  generateAccessToken(user: User): { token: string; jti: string } {
+    const jti = randomUUID();
+    const payload: AccessTokenPayload = { sub: user.id, email: user.email, role: user.role, jti };
 
-    return this.jwtService.sign(payload);
+    const token = this.jwtService.sign(payload);
+    return { token, jti };
   }
 
-  generateRefreshToken(user: User): string {
-    const payload: JwtPayload = {
+  generateRefreshToken(user: User): { token: string; jti: string } {
+    const jti = randomUUID();
+    const payload: RefreshTokenPayload = {
       sub: user.id,
-      email: user.email,
-      role: user.role,
+      jti,
     };
 
     const expiresIn = this.configService.getOrThrow('JWT_REFRESH_EXPIRES_IN') as JwtSignOptions['expiresIn'];
 
-    return this.jwtService.sign(payload, {
+    const token = this.jwtService.sign(payload, {
       secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
       expiresIn,
     });
+
+    return { token, jti };
   }
 
-  async verifyRefreshToken(token: string): Promise<JwtPayload> {
-    return this.jwtService.verifyAsync<JwtPayload>(token, {
+  async verifyRefreshToken(token: string): Promise<RefreshTokenPayload> {
+    return this.jwtService.verifyAsync<RefreshTokenPayload>(token, {
       secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
     });
   }

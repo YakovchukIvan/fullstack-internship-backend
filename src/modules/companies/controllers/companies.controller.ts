@@ -14,7 +14,6 @@ import {
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
-import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
 import { PaginationMetadataDto } from '@/common/dto/res/pagination-metadata.dto';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { RequireCompanyRoles } from './../decorators/company-roles.decorator';
@@ -32,6 +31,7 @@ import { CreateCompanyDto } from '../dto/req/company/create-company.req.dto';
 import { UpdateCompanyDto } from '../dto/req/company/update-company.req.dto';
 import { QuizAttemptsService } from '../quizzes/services/quiz-attempts.service';
 import { CompanyLeaderboardResponseDto } from '../quizzes/dto/res/leaderboard.res.dto';
+import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
 
 @Controller(CompaniesRoutes.ROOT)
 export class CompaniesController {
