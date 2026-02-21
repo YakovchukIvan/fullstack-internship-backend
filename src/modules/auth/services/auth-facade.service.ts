@@ -1,7 +1,6 @@
 import type { Response } from 'express';
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { User } from '@/modules/users/entities/user.entity';
 import { Auth } from '../entities/auth.entity';
 import { PasswordService } from './password.service';
@@ -13,6 +12,9 @@ import { UserRole } from '@/common/enums/user-role.enum';
 import { AppLogger } from '@/common/logger/app-logger';
 import { MailService } from '@/modules/mail/mail.service';
 import { RegisterDto } from '../dto/req/register.dto';
+import { UserAuthRepository } from '../repositories/user-auth.repository';
+import { AuthRepository } from '../repositories/auth.repository';
+import { GuardAssertions } from '@/common/helpers/assert.helper';
 
 interface ForgotPasswordResult {
   resetToken?: string;
@@ -23,15 +25,13 @@ interface ForgotPasswordResult {
 @Injectable()
 export class AuthFacadeService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    private readonly logger: AppLogger,
-    @InjectRepository(Auth)
-    private readonly authRepository: Repository<Auth>,
+    private readonly userAuthRepository: UserAuthRepository,
+    private readonly authRepository: AuthRepository,
     private readonly passwordService: PasswordService,
     private readonly tokenService: TokenService,
     private readonly dataSource: DataSource,
     private readonly mailService: MailService,
+    private readonly logger: AppLogger,
   ) {
     this.logger.setLoggerContext(AuthFacadeService.name);
   }
@@ -57,34 +57,25 @@ export class AuthFacadeService {
       await this.mailService.sendPasswordResetEmail(email, result.resetToken);
     }
 
-    return {
-      message: 'If an account exists with this email, you will receive instructions shortly',
-    };
+    return { message: 'If an account exists with this email, you will receive instructions shortly' };
   }
 
   async handleLogout(userId: string, response: Response): Promise<void> {
     this.tokenService.clearAuthCookies(response);
-    await this.authRepository.update({ user: { id: userId } }, { refreshTokenHash: null });
+    await this.authRepository.updateRefreshToken(userId, null);
   }
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
     const tokenHash = this.passwordService.hashResetToken(token);
+    const auth = await this.authRepository.findByResetToken(tokenHash);
 
-    const auth = await this.authRepository.findOne({
-      where: { resetPasswordTokenHash: tokenHash },
-      relations: ['user'],
-    });
+    GuardAssertions.isTrueBadRequest(!!auth, 'Invalid or expired reset token');
+    GuardAssertions.isTrueBadRequest(
+      !!auth.resetPasswordExpiresAt && !this.passwordService.isResetTokenExpired(auth.resetPasswordExpiresAt),
+      'Reset token has expired',
+    );
 
-    if (!auth) {
-      throw new BadRequestException('Invalid or expired reset token');
-    }
-
-    if (!auth.resetPasswordExpiresAt || this.passwordService.isResetTokenExpired(auth.resetPasswordExpiresAt)) {
-      throw new BadRequestException('Reset token has expired');
-    }
-
-    const passwordHash = await this.passwordService.hash(newPassword);
-    auth.passwordHash = passwordHash;
+    auth.passwordHash = await this.passwordService.hash(newPassword);
     auth.resetPasswordTokenHash = null;
     auth.resetPasswordExpiresAt = null;
     auth.refreshTokenHash = null;
@@ -93,10 +84,7 @@ export class AuthFacadeService {
   }
 
   async validateUser(email: string, password: string): Promise<User | null> {
-    const user = await this.userRepository.findOne({
-      where: { email: email.toLowerCase() },
-      relations: ['auth'],
-    });
+    const user = await this.userAuthRepository.findByEmailWithAuth(email.toLowerCase());
 
     if (!user || !user.auth?.passwordHash) {
       return null;
@@ -111,13 +99,28 @@ export class AuthFacadeService {
     return user;
   }
 
+  async refreshAccessToken(refreshToken: string): Promise<AuthResponseDto> {
+    const payload = await this.tokenService.verifyRefreshToken(refreshToken);
+    const tokenHash = this.passwordService.hashResetToken(refreshToken);
+
+    const auth = await this.authRepository.findByRefreshToken(tokenHash, payload.sub);
+    GuardAssertions.isTrueBadRequest(!!auth, 'Invalid refresh token');
+
+    const newAccessToken = this.tokenService.generateAccessToken(auth.user);
+    delete auth.user.auth;
+
+    return {
+      accessToken: newAccessToken,
+      user: toUserResponseDto(auth.user),
+      expiresIn: this.tokenService.getTokenExpirationTime(),
+    };
+  }
+
   private async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     const email = registerDto.email.toLowerCase();
 
-    const existingUser = await this.userRepository.findOne({ where: { email } });
-    if (existingUser) {
-      throw new ConflictException('User with this email already exists');
-    }
+    const existingUser = await this.userAuthRepository.findByEmail(email);
+    GuardAssertions.notExists(existingUser, 'User with this email already exists');
 
     const user = await this.dataSource.transaction(async (manager) => {
       const userRepo = manager.getRepository(User);
@@ -132,21 +135,14 @@ export class AuthFacadeService {
 
       const savedUser = await userRepo.save(newUser);
       const passwordHash = await this.passwordService.hash(registerDto.password);
-      const auth = authRepo.create({
-        user: savedUser,
-        passwordHash,
-      });
-
-      await authRepo.save(auth);
+      await authRepo.save(authRepo.create({ user: savedUser, passwordHash }));
 
       return savedUser;
     });
 
     const accessToken = this.tokenService.generateAccessToken(user);
     const refreshToken = this.tokenService.generateRefreshToken(user);
-
-    const refreshTokenHash = this.passwordService.hashResetToken(refreshToken);
-    await this.authRepository.update({ user: { id: user.id } }, { refreshTokenHash });
+    await this.authRepository.updateRefreshToken(user.id, this.passwordService.hashResetToken(refreshToken));
 
     return {
       accessToken,
@@ -158,16 +154,13 @@ export class AuthFacadeService {
 
   private async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const user = await this.validateUser(loginDto.email, loginDto.password);
-
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
     const accessToken = this.tokenService.generateAccessToken(user);
     const refreshToken = this.tokenService.generateRefreshToken(user);
-
-    const refreshTokenHash = this.passwordService.hashResetToken(refreshToken);
-    await this.authRepository.update({ user: { id: user.id } }, { refreshTokenHash });
+    await this.authRepository.updateRefreshToken(user.id, this.passwordService.hashResetToken(refreshToken));
 
     return {
       accessToken,
@@ -179,71 +172,29 @@ export class AuthFacadeService {
 
   private async forgotPassword(email: string): Promise<ForgotPasswordResult> {
     const normalizedEmail = email.toLowerCase();
-
-    const resetToken = this.passwordService.generateResetToken();
-    const resetTokenHash = this.passwordService.hashResetToken(resetToken);
-    const expiresAt = this.passwordService.getResetTokenExpiryDate();
-
-    const user = await this.userRepository.findOne({
-      where: { email: normalizedEmail },
-      relations: ['auth'],
-    });
+    const user = await this.userAuthRepository.findByEmailWithAuth(normalizedEmail);
 
     if (!user || !user.auth) {
-      this.logger.log(`❌ Forgot password: User not found - ${normalizedEmail}`, AuthFacadeService.name);
+      this.logger.log(`❌ Forgot password: User not found - ${normalizedEmail}`);
       return { isOAuthUser: false };
     }
 
     if (user.auth.googleId && !user.auth.passwordHash) {
-      this.logger.log(
-        `🔐 Forgot password: OAuth user detected - ${normalizedEmail} (${user.auth.googleId})`,
-        AuthFacadeService.name,
-      );
-      return {
-        isOAuthUser: true,
-        provider: 'Google',
-      };
+      this.logger.log(`🔐 Forgot password: OAuth user - ${normalizedEmail}`);
+      return { isOAuthUser: true, provider: 'Google' };
     }
 
     if (!user.auth.passwordHash) {
-      this.logger.log(`⚠️ Forgot password: No password hash found - ${normalizedEmail}`, AuthFacadeService.name);
+      this.logger.log(`⚠️ Forgot password: No password hash - ${normalizedEmail}`);
       return { isOAuthUser: false };
     }
 
-    user.auth.resetPasswordTokenHash = resetTokenHash;
-    user.auth.resetPasswordExpiresAt = expiresAt;
+    const resetToken = this.passwordService.generateResetToken();
+    user.auth.resetPasswordTokenHash = this.passwordService.hashResetToken(resetToken);
+    user.auth.resetPasswordExpiresAt = this.passwordService.getResetTokenExpiryDate();
     await this.authRepository.save(user.auth);
 
-    this.logger.log(`✅ Forgot password: Reset token generated for - ${normalizedEmail}`, AuthFacadeService.name);
-
-    return {
-      resetToken,
-      isOAuthUser: false,
-    };
-  }
-
-  async refreshAccessToken(refreshToken: string): Promise<AuthResponseDto> {
-    const payload = await this.tokenService.verifyRefreshToken(refreshToken);
-    const refreshTokenHash = this.passwordService.hashResetToken(refreshToken);
-
-    const auth = await this.authRepository.findOne({
-      where: {
-        refreshTokenHash,
-        user: { id: payload.sub },
-      },
-      relations: ['user'],
-    });
-
-    if (!auth) {
-      throw new UnauthorizedException('Invalid refresh token');
-    }
-
-    const newAccessToken = this.tokenService.generateAccessToken(auth.user);
-    delete auth.user.auth;
-    return {
-      accessToken: newAccessToken,
-      user: toUserResponseDto(auth.user),
-      expiresIn: this.tokenService.getTokenExpirationTime(),
-    };
+    this.logger.log(`✅ Forgot password: Reset token generated - ${normalizedEmail}`);
+    return { resetToken, isOAuthUser: false };
   }
 }

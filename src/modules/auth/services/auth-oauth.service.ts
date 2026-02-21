@@ -1,67 +1,57 @@
-import { Injectable, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from '@/modules/users/entities/user.entity';
+import { Injectable } from '@nestjs/common';
 import { Auth } from '../entities/auth.entity';
 import { Auth0Payload } from '../interfaces/jwt-payload.interface';
 import { UserRole } from '@/common/enums/user-role.enum';
+import { UserAuthRepository } from '../repositories/user-auth.repository';
+import { AuthRepository } from '../repositories/auth.repository';
+import { GuardAssertions } from '@/common/helpers/assert.helper';
 
 @Injectable()
 export class AuthOAuthService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(Auth)
-    private readonly authRepository: Repository<Auth>,
+    private readonly userAuthRepository: UserAuthRepository,
+    private readonly authRepository: AuthRepository,
   ) {}
 
   async validateAuth0User(auth0Payload: Auth0Payload): Promise<{ id: string; email: string; role: UserRole }> {
     const email = auth0Payload.email.toLowerCase();
-
-    let user = await this.userRepository.findOne({
-      where: { email },
-      select: ['id', 'email', 'role'],
-    });
+    const user = await this.userAuthRepository.findByEmailSelect(email);
 
     if (!user) {
-      user = await this.createUserFromAuth0(auth0Payload);
+      return this.createUserFromAuth0(auth0Payload);
     }
 
-    return {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    };
+    return { id: user.id, email: user.email, role: user.role };
   }
 
-  private async createUserFromAuth0(auth0Payload: Auth0Payload): Promise<User> {
+  private async createUserFromAuth0(
+    auth0Payload: Auth0Payload,
+  ): Promise<{ id: string; email: string; role: UserRole }> {
     const email = auth0Payload.email.toLowerCase();
 
-    const existingUser = await this.userRepository.findOne({ where: { email } });
-    if (existingUser) {
-      throw new ConflictException('User with this email already exists');
-    }
+    const existing = await this.userAuthRepository.findByEmail(email);
+    GuardAssertions.notExists(existing, 'User with this email already exists');
 
     const [firstName = 'User', lastName = 'Auth0'] = this.parseNameFromEmail(email);
 
-    const user = this.userRepository.create({
+    const user = this.userAuthRepository.create({
       email,
       firstName,
       lastName,
       role: UserRole.USER,
     });
 
-    await this.userRepository.save(user);
+    const savedUser = await this.userAuthRepository.save(user);
 
     const auth = this.authRepository.create({
-      user,
+      user: savedUser,
       passwordHash: null,
       googleId: auth0Payload.sub,
-    });
+    } as Partial<Auth>);
 
     await this.authRepository.save(auth);
 
-    return user;
+    return { id: savedUser.id, email: savedUser.email, role: savedUser.role };
   }
 
   private parseNameFromEmail(email: string): [string, string] {

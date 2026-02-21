@@ -1,31 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Quiz } from '../entities/quiz.entity';
 import { CreateQuizDto } from '../dto/req/create-quiz.req.dto';
 import { UpdateQuizDto } from '../dto/req/update-quiz.req.dto';
 import { GenerateQuizAiDto } from '../dto/req/generate-quiz-ai.req.dto';
 import { QuizzesPaginationDto } from '../dto/req/quizzes-pagination.req.dto';
 import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
-import { createPaginatedResult } from '@/common/helpers/create-paginated-result.helper';
 import { CompaniesService } from '../../services/companies.service';
 import { AiQuizGeneratorService } from './ai-quiz-generator.service';
+import { AiRateLimitService } from './ai-rate-limit.service';
 import { AppLogger } from '@/common/logger/app-logger';
-import { CompanyMember } from '../../entities/company-member.entity';
-import { QuizCreatedBySnapshot } from '../interfaces/quiz.interfaces';
-import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { validateQuizQuestions } from '../helper/quiz-questions.helper';
 import { mapToQuizQuestions } from '../mappers/quiz-questions.mapper';
 import { UserRole } from '@/common/enums/user-role.enum';
-import { AiRateLimitService } from './ai-rate-limit.service';
+import { QuizRepository } from '../repositories/quiz.repository';
+import { CompanyMemberRepository } from '../../repositories/company-member.repository';
 
 @Injectable()
 export class QuizzesService {
   constructor(
-    @InjectRepository(Quiz)
-    private readonly quizzesRepository: Repository<Quiz>,
-    @InjectRepository(CompanyMember)
-    private readonly companyMembersRepository: Repository<CompanyMember>,
+    private readonly quizRepository: QuizRepository,
+    private readonly companyMemberRepository: CompanyMemberRepository,
     private readonly companiesService: CompaniesService,
     private readonly aiGenerator: AiQuizGeneratorService,
     private readonly aiRateLimitService: AiRateLimitService,
@@ -40,7 +34,7 @@ export class QuizzesService {
 
     const { createdByUserId, snapshot } = await this.buildCreatedBySnapshot(company.id, userId);
 
-    const quiz = this.quizzesRepository.create({
+    const quiz = this.quizRepository.create({
       title: dto.title,
       description: dto.description ?? null,
       frequencyInDays: dto.frequencyInDays,
@@ -53,10 +47,9 @@ export class QuizzesService {
       aiMetadata: null,
     });
 
-    const saved = await this.quizzesRepository.save(quiz);
-    this.logger.log(`Quiz created: ${saved.id} - "${saved.title}"`, QuizzesService.name);
-
-    return this.findOne(saved.id, slug, userId);
+    const saved = await this.quizRepository.save(quiz);
+    this.logger.log(`Quiz created: ${saved.id} - "${saved.title}"`);
+    return this.quizRepository.findOneInCompanyOrFail(saved.id, company.id);
   }
 
   async generateWithAi(
@@ -73,7 +66,7 @@ export class QuizzesService {
       this.buildCreatedBySnapshot(company.id, userId),
     ]);
 
-    const quiz = this.quizzesRepository.create({
+    const quiz = this.quizRepository.create({
       title: aiQuiz.title,
       description: aiQuiz.description,
       frequencyInDays: dto.frequencyInDays,
@@ -83,47 +76,30 @@ export class QuizzesService {
       createdBySnapshot: snapshot,
       isAiGenerated: true,
       aiPrompt: `${dto.topic} (${dto.difficulty})`,
-      aiMetadata: {
-        model: aiQuiz.model,
-        generatedAt: new Date(),
-        difficulty: dto.difficulty,
-      },
+      aiMetadata: { model: aiQuiz.model, generatedAt: new Date(), difficulty: dto.difficulty },
     });
 
-    const saved = await this.quizzesRepository.save(quiz);
-    this.logger.log(`AI quiz generated and saved: ${saved.id} - "${saved.title}"`, QuizzesService.name);
+    const saved = await this.quizRepository.save(quiz);
+    this.logger.log(`AI quiz generated: ${saved.id} - "${saved.title}"`);
 
     return {
-      quiz: await this.findOne(saved.id, slug, userId),
+      quiz: await this.quizRepository.findOneInCompanyOrFail(saved.id, company.id),
       remaining,
     };
   }
 
   async findAll(slug: string, userId: string, dto: QuizzesPaginationDto): Promise<PaginatedResultResponseDto<Quiz>> {
     const company = await this.companiesService.findBySlug(slug, userId);
-
-    return createPaginatedResult(this.quizzesRepository, dto, {
-      where: { companyId: company.id },
-    });
+    return this.quizRepository.findPaginatedByCompany(company.id, dto);
   }
 
   async findAllByUser(userId: string, dto: QuizzesPaginationDto): Promise<PaginatedResultResponseDto<Quiz>> {
-    return createPaginatedResult(this.quizzesRepository, dto, {
-      where: { createdByUserId: userId },
-      relations: ['company'],
-    });
+    return this.quizRepository.findPaginatedByUser(userId, dto);
   }
 
   async findOne(id: string, slug: string, userId: string): Promise<Quiz> {
     const company = await this.companiesService.findBySlug(slug, userId);
-
-    const quiz = await this.quizzesRepository.findOne({
-      where: { id, companyId: company.id },
-    });
-
-    GuardAssertions.exists(quiz, `Quiz with ID ${id} not found in this company`);
-
-    return quiz;
+    return this.quizRepository.findOneInCompanyOrFail(id, company.id);
   }
 
   async update(id: string, slug: string, userId: string, dto: UpdateQuizDto): Promise<Quiz> {
@@ -133,7 +109,6 @@ export class QuizzesService {
       validateQuizQuestions(dto.questions);
       quiz.questions = mapToQuizQuestions(dto.questions);
     }
-
     if (dto.title !== undefined) {
       quiz.title = dto.title;
     }
@@ -144,29 +119,24 @@ export class QuizzesService {
       quiz.frequencyInDays = dto.frequencyInDays;
     }
 
-    const updated = await this.quizzesRepository.save(quiz);
-    this.logger.log(`Quiz updated: ${updated.id} by user ${userId}`, QuizzesService.name);
-
+    const updated = await this.quizRepository.save(quiz);
+    this.logger.log(`Quiz updated: ${updated.id} by user ${userId}`);
     return updated;
   }
 
   async remove(id: string, slug: string, userId: string): Promise<void> {
     const quiz = await this.findOne(id, slug, userId);
-    await this.quizzesRepository.remove(quiz);
-    this.logger.log(`Quiz deleted: ${id} by user ${userId}`, QuizzesService.name);
+    await this.quizRepository.remove(quiz);
+    this.logger.log(`Quiz deleted: ${id} by user ${userId}`);
   }
 
-  private async buildCreatedBySnapshot(
-    companyId: string,
-    userId: string,
-  ): Promise<{ createdByUserId: string; snapshot: QuizCreatedBySnapshot }> {
-    const member = await this.companyMembersRepository.findOne({
-      where: { companyId, userId },
-      relations: ['user'],
-    });
+  async getAiQuota(slug: string, userId: string, userRole?: UserRole) {
+    const company = await this.companiesService.findBySlug(slug, userId, userRole);
+    return this.aiRateLimitService.getRemainingQuota(company.id);
+  }
 
-    GuardAssertions.exists(member, `Company member not found for user ${userId}`);
-
+  private async buildCreatedBySnapshot(companyId: string, userId: string) {
+    const member = await this.companyMemberRepository.findMemberWithUserOrFail(companyId, userId);
     return {
       createdByUserId: member.userId,
       snapshot: {
@@ -174,15 +144,5 @@ export class QuizzesService {
         role: member.role,
       },
     };
-  }
-
-  async getAiQuota(
-    slug: string,
-    userId: string,
-    userRole?: UserRole,
-  ): Promise<{ remaining: number; limit: number; resetsAt: Date }> {
-    const company = await this.companiesService.findBySlug(slug, userId, userRole);
-
-    return this.aiRateLimitService.getRemainingQuota(company.id);
   }
 }

@@ -1,4 +1,5 @@
-import { PerformanceLevel, PerformanceResult } from '../interfaces/quiz-attempt.interfaces';
+import { PerformanceLevel } from '../enums/quiz-performance-level.enum';
+import { PerformanceResult } from '../interfaces/quiz-attempt.interfaces';
 
 const PERFORMANCE_THRESHOLDS: Array<{
   min: number;
