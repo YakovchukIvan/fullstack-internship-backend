@@ -13,6 +13,7 @@ import { databaseConfig } from './config/database.config';
 import { appProviders } from './app.providers';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { RedisModule } from './modules/redis/redis.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     TypeOrmModule.forRootAsync(databaseConfig),
     ThrottlerModule.forRootAsync(throttlerConfig),
     EventEmitterModule.forRoot(),
+    RedisModule,
     LoggerModule,
     AuthModule,
     UsersModule,

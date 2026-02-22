@@ -16,6 +16,9 @@ import { Auth0Strategy } from './strategies/auth0.strategy';
 import { RolesGuard } from './guards/roles.guard';
 import { AuthFacadeService } from './services/auth-facade.service';
 import { AuthOAuthService } from './services/auth-oauth.service';
+import { UserAuthRepository } from './repositories/user-auth.repository';
+import { AuthRepository } from './repositories/auth.repository';
+import { TokenRedisRepository } from './repositories/token-redis.repository';
 
 @Module({
   imports: [
@@ -30,6 +33,9 @@ import { AuthOAuthService } from './services/auth-oauth.service';
   ],
   controllers: [AuthController],
   providers: [
+    UserAuthRepository,
+    AuthRepository,
+    TokenRedisRepository,
     AuthCredentialsService,
     PasswordService,
     TokenService,

@@ -4,13 +4,13 @@ import { CompaniesRoutes } from '../routes/companies.routes';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
-import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
 import { toCompanyMemberResponseDto } from '../mappers/company-member.mapper';
 import { toCompanyJoinRequestItemResponseDto } from '../mappers/company-join-request.mapper';
 import { CompanyMembersService } from '../services/company-members.service';
 import { CompanyInvitationsService } from '../services/company-invitations.service';
 import { CompanyJoinRequestsService } from '../services/company-join-requests.service';
 import { CompanyJoinRequestItemResponseDto } from '../dto/res/requests/company-join-request.res.dto';
+import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
 
 @Controller(CompaniesRoutes.ROOT)
 export class CompanyMembersController {

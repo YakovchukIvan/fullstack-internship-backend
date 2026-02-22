@@ -1,6 +1,5 @@
 import { Controller, Get, Query, HttpStatus } from '@nestjs/common';
 import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
-import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { CompanyInvitationsService } from '@/modules/companies/services/company-invitations.service';
@@ -23,6 +22,7 @@ import {
 } from '../mappers/user-company-interactions.res.dto';
 import { UserRatingResponseDto } from '@/modules/companies/quizzes/dto/res/user-rating.res.dto';
 import { QuizAttemptsService } from '@/modules/companies/quizzes/services/quiz-attempts.service';
+import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
 
 @Controller(UsersRoutes.COMPANY.ROOT)
 export class UserCompanyMembershipController {

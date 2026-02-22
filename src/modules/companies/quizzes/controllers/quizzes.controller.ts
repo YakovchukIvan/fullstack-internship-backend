@@ -14,7 +14,6 @@ import {
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
-import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { RequireCompanyRoles } from '../../decorators/company-roles.decorator';
 import { CompanyRoleGuard } from '../../guards/company-role.guard';
@@ -26,6 +25,7 @@ import { QuizResponseDto } from '../dto/res/quiz.res.dto';
 import { QuizzesPaginatedResponseDto } from '../dto/res/quizzes-paginated.res.dto';
 import { QuizzesRoutes } from '../routes/quizzes.routes';
 import { toQuizResponseDto } from '../mappers/quiz.mapper';
+import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
 
 @Controller(QuizzesRoutes.ROOT)
 @UseGuards(CompanyRoleGuard)

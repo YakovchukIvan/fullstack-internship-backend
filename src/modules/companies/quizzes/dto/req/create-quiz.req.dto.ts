@@ -19,7 +19,7 @@ import { QuizQuestionDto } from './quiz-question.dto';
 export class CreateQuizDto {
   @IsString({ message: 'Title must be a string' })
   @IsNotEmpty({ message: 'Title is required' })
-  @MinLength(3, { message: 'Title must be at least 3 characters' })
+  @MinLength(2, { message: 'Title must be at least 2 characters' })
   @MaxLength(255, { message: 'Title must not exceed 255 characters' })
   title: string;
 
@@ -34,7 +34,7 @@ export class CreateQuizDto {
   frequencyInDays: number;
 
   @IsArray({ message: 'Questions must be an array' })
-  @ArrayMinSize(QuizConfig.OPTIONS.MIN, { message: `Quiz must have at least ${QuizConfig.OPTIONS.MIN} questions` })
+  @ArrayMinSize(QuizConfig.QUESTIONS.MIN, { message: `Quiz must have at least ${QuizConfig.QUESTIONS.MIN} questions` })
   @ArrayMaxSize(QuizConfig.QUESTIONS.MAX, { message: `Quiz can have maximum ${QuizConfig.QUESTIONS.MAX} questions` })
   @ValidateNested({ each: true })
   @Type(() => QuizQuestionDto)

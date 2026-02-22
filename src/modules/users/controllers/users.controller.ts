@@ -12,8 +12,8 @@ import { ResponseMessage } from '@/common/decorators/response-message.decorator'
 import { UsersPaginatedBaseResponseDto } from '../dto/res/users/users-paginated.res.dto';
 import { Roles } from '@/modules/auth/decorators/roles.decorator';
 import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
-import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
 import { toUserResponseDto } from '../mappers/user.mapper';
+import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
 
 @Controller(UsersRoutes.ROOT)
 export class UsersController {

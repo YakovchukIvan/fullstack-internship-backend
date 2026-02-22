@@ -2,7 +2,6 @@ import { Body, Controller, Get, HttpStatus, Param, Post, UseGuards } from '@nest
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
-import type { JwtPayload } from '@/modules/auth/interfaces/jwt-payload.interface';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { RequireCompanyRoles } from '../../decorators/company-roles.decorator';
 import { CompanyRoleGuard } from '../../guards/company-role.guard';
@@ -13,6 +12,7 @@ import { AiQuotaResponseDto } from '../dto/res/ai-quota.res.dto';
 import { toQuizResponseDto } from '../mappers/quiz.mapper';
 import { QuizzesRoutes } from '../routes/quizzes.routes';
 import { toIso } from '@/common/helpers/date.transformer';
+import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
 
 @Controller(QuizzesRoutes.ROOT)
 @UseGuards(CompanyRoleGuard)
