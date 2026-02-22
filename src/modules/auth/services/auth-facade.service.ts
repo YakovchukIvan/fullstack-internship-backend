@@ -63,12 +63,19 @@ export class AuthFacadeService {
     return { message: 'If an account exists with this email, you will receive instructions shortly' };
   }
 
-  async handleLogout(user: AccessTokenPayload, response: Response): Promise<void> {
+  async handleLogout(user: AccessTokenPayload, refreshToken: string | undefined, response: Response): Promise<void> {
     this.tokenService.clearAuthCookies(response);
     await this.authRepository.updateRefreshToken(user.sub, null);
 
     if (user.jti) {
       await this.tokenRedisRepository.revokeAccessToken(user.sub, user.jti);
+    }
+
+    if (refreshToken) {
+      const payload = this.tokenService.decodeRefreshToken(refreshToken);
+      if (payload?.jti) {
+        await this.tokenRedisRepository.revokeRefreshToken(user.sub, payload.jti);
+      }
     }
   }
 

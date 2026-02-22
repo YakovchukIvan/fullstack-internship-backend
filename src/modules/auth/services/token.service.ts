@@ -64,6 +64,10 @@ export class TokenService {
     return value * (multipliers[unit] || 3600);
   }
 
+  decodeRefreshToken(token: string): RefreshTokenPayload | null {
+    return this.jwtService.decode<RefreshTokenPayload>(token);
+  }
+
   setAuthCookies(response: Response, accessToken: string, refreshToken: string): void {
     const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
 

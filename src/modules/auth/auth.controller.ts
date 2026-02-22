@@ -106,9 +106,11 @@ export class AuthController {
   @ResponseMessage('Logout successful')
   async logout(
     @CurrentUser() user: AccessTokenPayload,
+    @Req() request: RequestWithCookies,
     @Res({ passthrough: true }) response: Response,
   ): Promise<{ message: string }> {
-    await this.authFacadeService.handleLogout(user, response);
+    const refreshToken = request.cookies['refresh_token'];
+    await this.authFacadeService.handleLogout(user, refreshToken, response);
     return { message: 'You have been logged out successfully' };
   }
 }

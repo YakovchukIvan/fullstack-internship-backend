@@ -20,11 +20,7 @@ export class UniversalAuthGuard extends AuthGuard(['jwt', 'auth0']) {
       return true;
     }
 
-    try {
-      return (await super.canActivate(context)) as boolean;
-    } catch {
-      throw new UnauthorizedException('Invalid or expired token');
-    }
+    return super.canActivate(context) as Promise<boolean>;
   }
 
   handleRequest<TUser = User>(
