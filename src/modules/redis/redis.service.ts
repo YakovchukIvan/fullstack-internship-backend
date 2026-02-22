@@ -67,7 +67,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     await this.client.del(...keys);
   }
 
-  private async scanKeys(pattern: string): Promise<string[]> {
+  async scanKeys(pattern: string): Promise<string[]> {
     const keys: string[] = [];
     let cursor = '0';
 

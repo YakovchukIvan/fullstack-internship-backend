@@ -12,6 +12,8 @@ import { QuizAttemptAnswer } from '../interfaces/quiz-attempt.interfaces';
 import { QuizRepository } from '../repositories/quiz.repository';
 import { QuizAttemptRepository } from '../repositories/quiz-attempt.repository';
 import { CompanyMemberRepository } from '../../repositories/company-member.repository';
+import { QuizAnswerRedisRepository } from '../repositories/quiz-answer-redis.repository';
+import { QuizAnswerSnapshot, QuizAnswerRecord } from '../interfaces/quiz-answer-snapshot.interface';
 
 @Injectable()
 export class QuizAttemptsService {
@@ -20,6 +22,7 @@ export class QuizAttemptsService {
     private readonly quizRepository: QuizRepository,
     private readonly companyMemberRepository: CompanyMemberRepository,
     private readonly companiesService: CompaniesService,
+    private readonly quizAnswerRedisRepository: QuizAnswerRedisRepository,
     private readonly logger: AppLogger,
   ) {
     this.logger.setLoggerContext(QuizAttemptsService.name);
@@ -52,6 +55,11 @@ export class QuizAttemptsService {
 
     const saved = await this.attemptRepository.save(attempt);
     this.logger.log(`Quiz attempt saved: ${saved.id} for user ${userId}`);
+
+    const snapshot = this.buildSnapshot(saved.id, userId, company.id, quiz, answers, totalPoints);
+    await this.quizAnswerRedisRepository.saveAnswers(snapshot);
+    this.logger.log(`Quiz answers cached in Redis: attempt ${saved.id}`);
+
     return toQuizAttemptResponseDto(saved);
   }
 
@@ -68,6 +76,42 @@ export class QuizAttemptsService {
 
   async getUserRating(userId: string): Promise<UserRatingResponseDto> {
     return this.attemptRepository.getUserRatingStats(userId);
+  }
+
+  private buildSnapshot(
+    attemptId: string,
+    userId: string,
+    companyId: string,
+    quiz: Quiz,
+    answers: QuizAttemptAnswer[],
+    totalPoints: number,
+  ): QuizAnswerSnapshot {
+    const answerRecords: QuizAnswerRecord[] = answers.map((answer) => {
+      const question = quiz.questions[answer.questionIndex];
+      const isCorrect = answer.questionScore === 1;
+
+      return {
+        questionIndex: answer.questionIndex,
+        questionText: question.question,
+        options: question.options,
+        selectedAnswers: answer.selectedAnswers,
+        correctAnswers: answer.correctAnswers,
+        isCorrect,
+        questionScore: answer.questionScore,
+      };
+    });
+
+    return {
+      attemptId,
+      userId,
+      companyId,
+      quizId: quiz.id,
+      quizTitle: quiz.title,
+      completedAt: new Date().toISOString(),
+      totalPoints,
+      maxPossiblePoints: quiz.questions.length,
+      answers: answerRecords,
+    };
   }
 
   private calculateAnswers(quiz: Quiz, dto: SubmitQuizDto): QuizAttemptAnswer[] {

@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CacheModule } from '@nestjs/cache-manager';
 import { Quiz } from './entities/quiz.entity';
 import { QuizAttempt } from './entities/quiz-attempt.entity';
 import { QuizRepository } from './repositories/quiz.repository';
@@ -17,13 +16,15 @@ import { CompanyMembersService } from '../services/company-members.service';
 import { CompanyRepository } from '../repositories/company.repository';
 import { CompanyMemberRepository } from '../repositories/company-member.repository';
 import { AppLogger } from '@/common/logger/app-logger';
+import { QuizAnswerRedisRepository } from './repositories/quiz-answer-redis.repository';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Quiz, QuizAttempt]), CacheModule.register()],
+  imports: [TypeOrmModule.forFeature([Quiz, QuizAttempt])],
   controllers: [QuizzesController, QuizzesAiController, QuizAttemptsController],
   providers: [
     QuizRepository,
     QuizAttemptRepository,
+    QuizAnswerRedisRepository,
     CompanyRepository,
     CompanyMemberRepository,
     QuizzesService,
@@ -34,6 +35,6 @@ import { AppLogger } from '@/common/logger/app-logger';
     CompanyMembersService,
     AppLogger,
   ],
-  exports: [QuizRepository, QuizAttemptRepository, QuizzesService, QuizAttemptsService],
+  exports: [QuizRepository, QuizAttemptRepository, QuizAnswerRedisRepository, QuizzesService, QuizAttemptsService],
 })
 export class QuizzesModule {}
