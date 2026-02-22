@@ -3,7 +3,6 @@ import { BaseEntity } from '@/common/entities/base.entity';
 import { Quiz } from '../entities/quiz.entity';
 import { Company } from '../../entities/company.entity';
 import { User } from '@/modules/users/entities/user.entity';
-import { QuizAttemptAnswer } from '../interfaces/quiz-attempt.interfaces';
 
 @Entity('quiz_attempts')
 @Index(['userId'])
@@ -26,9 +25,6 @@ export class QuizAttempt extends BaseEntity {
 
   @Column({ name: 'max_possible_points', type: 'int' })
   maxPossiblePoints: number;
-
-  @Column({ type: 'jsonb' })
-  answers: QuizAttemptAnswer[];
 
   @Column({ name: 'completed_at', type: 'timestamptz' })
   completedAt: Date;

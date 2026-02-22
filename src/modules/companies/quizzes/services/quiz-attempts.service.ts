@@ -41,6 +41,7 @@ export class QuizAttemptsService {
 
     const answers = this.calculateAnswers(quiz, dto);
     const totalPoints = Number(answers.reduce((sum, a) => sum + a.questionScore, 0).toFixed(4));
+    const completedAt = new Date();
 
     const attempt = this.attemptRepository.create({
       userId,
@@ -48,17 +49,21 @@ export class QuizAttemptsService {
       companyId: company.id,
       totalPoints,
       maxPossiblePoints: quiz.questions.length,
-      answers,
       durationSeconds: dto.durationSeconds ?? undefined,
-      completedAt: new Date(),
+      completedAt,
     });
 
     const saved = await this.attemptRepository.save(attempt);
     this.logger.log(`Quiz attempt saved: ${saved.id} for user ${userId}`);
 
-    const snapshot = this.buildSnapshot(saved.id, userId, company.id, quiz, answers, totalPoints);
-    await this.quizAnswerRedisRepository.saveAnswers(snapshot);
-    this.logger.log(`Quiz answers cached in Redis: attempt ${saved.id}`);
+    const snapshot = this.buildSnapshot(saved.id, userId, company.id, quiz, answers, totalPoints, completedAt);
+
+    try {
+      await this.quizAnswerRedisRepository.saveAnswers(snapshot);
+      this.logger.log(`Quiz answers cached in Redis: attempt ${saved.id}`);
+    } catch (err: unknown) {
+      this.logger.logError(`Failed to cache quiz answers for attempt ${saved.id}`, err);
+    }
 
     return toQuizAttemptResponseDto(saved);
   }
@@ -85,10 +90,10 @@ export class QuizAttemptsService {
     quiz: Quiz,
     answers: QuizAttemptAnswer[],
     totalPoints: number,
+    completedAt: Date,
   ): QuizAnswerSnapshot {
     const answerRecords: QuizAnswerRecord[] = answers.map((answer) => {
       const question = quiz.questions[answer.questionIndex];
-      const isCorrect = answer.questionScore === 1;
 
       return {
         questionIndex: answer.questionIndex,
@@ -96,7 +101,7 @@ export class QuizAttemptsService {
         options: question.options,
         selectedAnswers: answer.selectedAnswers,
         correctAnswers: answer.correctAnswers,
-        isCorrect,
+        isCorrect: answer.questionScore === 1,
         questionScore: answer.questionScore,
       };
     });
@@ -107,7 +112,7 @@ export class QuizAttemptsService {
       companyId,
       quizId: quiz.id,
       quizTitle: quiz.title,
-      completedAt: new Date().toISOString(),
+      completedAt: completedAt.toISOString(),
       totalPoints,
       maxPossiblePoints: quiz.questions.length,
       answers: answerRecords,

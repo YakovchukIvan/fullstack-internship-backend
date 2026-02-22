@@ -16,10 +16,6 @@ export function toQuizAttemptResponseDto(attempt: QuizAttempt): QuizAttemptRespo
     accuracyPercent,
     performanceLevel: performance.level,
     performanceMessage: performance.message,
-    answers: attempt.answers.map((a) => ({
-      ...a,
-      questionScore: Number((a.questionScore * 100).toFixed(2)),
-    })),
     durationSeconds: attempt.durationSeconds ?? null,
     completedAt: toIso(attempt.completedAt),
   };
