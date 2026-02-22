@@ -65,7 +65,6 @@ export class AuthFacadeService {
 
   async handleLogout(user: AccessTokenPayload, refreshToken: string | undefined, response: Response): Promise<void> {
     this.tokenService.clearAuthCookies(response);
-    await this.authRepository.updateRefreshToken(user.sub, null);
 
     if (user.jti) {
       await this.tokenRedisRepository.revokeAccessToken(user.sub, user.jti);
@@ -85,26 +84,25 @@ export class AuthFacadeService {
     const isValid = await this.tokenRedisRepository.isRefreshTokenValid(payload.sub, payload.jti);
     GuardAssertions.isTrueBadRequest(isValid, 'Invalid or expired refresh token');
 
-    const tokenHash = this.passwordService.hashResetToken(refreshToken);
-    const auth = await this.authRepository.findByRefreshToken(tokenHash, payload.sub);
-    GuardAssertions.isTrueBadRequest(!!auth, 'Invalid refresh token');
-
     await this.tokenRedisRepository.revokeRefreshToken(payload.sub, payload.jti);
 
-    const { token: newAccessToken, jti: newAccessJti } = this.tokenService.generateAccessToken(auth.user);
-    const { token: newRefreshToken, jti: newRefreshJti } = this.tokenService.generateRefreshToken(auth.user);
+    const user = await this.userAuthRepository.findById(payload.sub);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
 
-    await this.tokenRedisRepository.saveAccessToken(auth.user.id, newAccessJti);
-    await this.tokenRedisRepository.saveRefreshToken(auth.user.id, newRefreshJti);
-    await this.authRepository.updateRefreshToken(auth.user.id, this.passwordService.hashResetToken(newRefreshToken));
+    const { token: newAccessToken, jti: newAccessJti } = this.tokenService.generateAccessToken(user);
+    const { token: newRefreshToken, jti: newRefreshJti } = this.tokenService.generateRefreshToken(user);
+
+    await this.tokenRedisRepository.saveAccessToken(user.id, newAccessJti);
+    await this.tokenRedisRepository.saveRefreshToken(user.id, newRefreshJti);
 
     this.tokenService.setAuthCookies(response, newAccessToken, newRefreshToken);
 
-    delete auth.user.auth;
     return {
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
-      user: toUserResponseDto(auth.user),
+      user: toUserResponseDto(user),
       expiresIn: this.tokenService.getTokenExpirationTime(),
     };
   }
@@ -122,7 +120,6 @@ export class AuthFacadeService {
     auth.passwordHash = await this.passwordService.hash(newPassword);
     auth.resetPasswordTokenHash = null;
     auth.resetPasswordExpiresAt = null;
-    auth.refreshTokenHash = null;
 
     await this.tokenRedisRepository.revokeAllUserTokens(auth.userId);
     await this.authRepository.save(auth);
@@ -173,7 +170,6 @@ export class AuthFacadeService {
 
     await this.tokenRedisRepository.saveAccessToken(user.id, accessJti);
     await this.tokenRedisRepository.saveRefreshToken(user.id, refreshJti);
-    await this.authRepository.updateRefreshToken(user.id, this.passwordService.hashResetToken(refreshToken));
 
     return {
       accessToken,
@@ -194,7 +190,6 @@ export class AuthFacadeService {
 
     await this.tokenRedisRepository.saveAccessToken(user.id, accessJti);
     await this.tokenRedisRepository.saveRefreshToken(user.id, refreshJti);
-    await this.authRepository.updateRefreshToken(user.id, this.passwordService.hashResetToken(refreshToken));
 
     return {
       accessToken,

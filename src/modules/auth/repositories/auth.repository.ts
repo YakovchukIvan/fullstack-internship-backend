@@ -14,15 +14,4 @@ export class AuthRepository extends Repository<Auth> {
       relations: ['user'],
     });
   }
-
-  async findByRefreshToken(tokenHash: string, userId: string): Promise<Auth | null> {
-    return this.findOne({
-      where: { refreshTokenHash: tokenHash, user: { id: userId } },
-      relations: ['user'],
-    });
-  }
-
-  async updateRefreshToken(userId: string, hash: string | null): Promise<void> {
-    await this.update({ user: { id: userId } }, { refreshTokenHash: hash });
-  }
 }

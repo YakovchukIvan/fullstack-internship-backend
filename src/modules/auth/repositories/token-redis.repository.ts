@@ -1,19 +1,30 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { RedisService } from '@/modules/redis/redis.service';
-import { RedisKeys, REDIS_TTL } from '@/modules/redis/redis.constants';
+import { RedisKeys } from '@/modules/redis/redis.constants';
+import { parseJwtExpiry } from '../helpers/jwt-expiry.helper';
 
 @Injectable()
 export class TokenRedisRepository {
-  constructor(private readonly redisService: RedisService) {}
+  private readonly accessTokenTtl: number;
+  private readonly refreshTokenTtl: number;
+
+  constructor(
+    private readonly redisService: RedisService,
+    private readonly configService: ConfigService,
+  ) {
+    this.accessTokenTtl = parseJwtExpiry(this.configService.getOrThrow<string>('JWT_EXPIRES_IN'));
+    this.refreshTokenTtl = parseJwtExpiry(this.configService.getOrThrow<string>('JWT_REFRESH_EXPIRES_IN'));
+  }
 
   async saveAccessToken(userId: string, jti: string): Promise<void> {
     const key = RedisKeys.accessToken(userId, jti);
-    await this.redisService.set(key, '1', REDIS_TTL.ACCESS_TOKEN);
+    await this.redisService.set(key, '1', this.accessTokenTtl);
   }
 
   async saveRefreshToken(userId: string, jti: string): Promise<void> {
     const key = RedisKeys.refreshToken(userId, jti);
-    await this.redisService.set(key, '1', REDIS_TTL.REFRESH_TOKEN);
+    await this.redisService.set(key, '1', this.refreshTokenTtl);
   }
 
   async isAccessTokenValid(userId: string, jti: string): Promise<boolean> {

@@ -25,4 +25,8 @@ export class UserAuthRepository extends Repository<User> {
       select: ['id', 'email', 'role'],
     });
   }
+
+  async findById(id: string): Promise<User | null> {
+    return this.findOne({ where: { id } });
+  }
 }
