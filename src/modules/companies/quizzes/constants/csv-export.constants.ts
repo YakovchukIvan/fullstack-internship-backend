@@ -1,0 +1,16 @@
+export const CSV_EXPORT_HEADERS = [
+  'attemptId',
+  'quizId',
+  'quizTitle',
+  'completedAt',
+  'totalPoints',
+  'maxPossiblePoints',
+  'accuracyPercent',
+  'questionIndex',
+  'questionText',
+  'options',
+  'selectedAnswers',
+  'correctAnswers',
+  'isCorrect',
+  'questionScore',
+] as const;

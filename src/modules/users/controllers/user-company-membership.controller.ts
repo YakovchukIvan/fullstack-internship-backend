@@ -1,4 +1,5 @@
-import { Controller, Get, Query, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Param, Query, HttpStatus, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
@@ -22,7 +23,10 @@ import {
 } from '../mappers/user-company-interactions.res.dto';
 import { UserRatingResponseDto } from '@/modules/companies/quizzes/dto/res/user-rating.res.dto';
 import { QuizAttemptsService } from '@/modules/companies/quizzes/services/quiz-attempts.service';
+import { QuizExportService } from '@/modules/companies/quizzes/services/quiz-export.service';
+import { ExportQueryDto, ExportFormat } from '@/modules/companies/quizzes/dto/req/export-query.req.dto';
 import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import { UserExportResponseDto } from '../dto/res/quizzes/user-export.res.dto';
 
 @Controller(UsersRoutes.COMPANY.ROOT)
 export class UserCompanyMembershipController {
@@ -32,6 +36,7 @@ export class UserCompanyMembershipController {
     private readonly membersService: CompanyMembersService,
     private readonly quizzesService: QuizzesService,
     private readonly quizAttemptsService: QuizAttemptsService,
+    private readonly quizExportService: QuizExportService,
   ) {}
 
   @Get(UsersRoutes.COMPANY.INVITATIONS)
@@ -42,7 +47,6 @@ export class UserCompanyMembershipController {
     @Query() paginationDto: CompanyPaginationDto,
   ): Promise<UserInvitationsListResponseDto> {
     const result = await this.invitationsService.getUserInvitations(user.sub, paginationDto);
-
     return {
       invitations: result.detail.map(toUserInvitationItemResponseDto),
       pagination: result.pagination,
@@ -57,7 +61,6 @@ export class UserCompanyMembershipController {
     @Query() paginationDto: CompanyPaginationDto,
   ): Promise<UserJoinRequestsListResponseDto> {
     const result = await this.joinRequestsService.getUserJoinRequests(user.sub, paginationDto);
-
     return {
       joinRequests: result.detail.map(toUserJoinRequestItemResponseDto),
       pagination: result.pagination,
@@ -72,7 +75,6 @@ export class UserCompanyMembershipController {
     @Query() paginationDto: CompanyMembersPaginationDto,
   ): Promise<UserMembershipListResponseDto> {
     const result = await this.membersService.getUserMembership(user.sub, paginationDto);
-
     return {
       membership: result.detail.map(toUserMembershipResponseDto),
       pagination: result.pagination,
@@ -87,7 +89,6 @@ export class UserCompanyMembershipController {
     @Query() paginationDto: QuizzesPaginationDto,
   ): Promise<UserQuizzesListResponseDto> {
     const result = await this.quizzesService.findAllByUser(user.sub, paginationDto);
-
     return {
       quizzes: result.detail.map(toUserQuizListItemResponseDto),
       pagination: result.pagination,
@@ -99,7 +100,29 @@ export class UserCompanyMembershipController {
   @ResponseMessage('User rating fetched successfully')
   async getMyRating(@CurrentUser() user: JwtPayload): Promise<{ rating: UserRatingResponseDto }> {
     const rating = await this.quizAttemptsService.getUserRating(user.sub);
-
     return { rating };
+  }
+
+  @Get(UsersRoutes.COMPANY.EXPORT.ME)
+  @ApiEndpoint(UserExportResponseDto, HttpStatus.OK)
+  @ResponseMessage('Export completed successfully')
+  async exportMyResults(
+    @CurrentUser() user: JwtPayload,
+    @Param('slug') slug: string,
+    @Query() query: ExportQueryDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<UserExportResponseDto | void> {
+    if (query.format === ExportFormat.CSV) {
+      const snapshots = await this.quizExportService.getSnapshotsForMemberExport(slug, user.sub, query);
+      const csv = this.quizExportService.buildCsv(snapshots);
+      const filename = `export-my-${slug}-${new Date().toISOString().slice(0, 10)}.csv`;
+
+      response.setHeader('Content-Type', 'text/csv');
+      response.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      response.send(csv);
+      return;
+    }
+
+    return this.quizExportService.exportMyResults(slug, user.sub, query);
   }
 }
