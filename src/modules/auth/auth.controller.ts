@@ -18,7 +18,7 @@ import { Public } from './decorators/public.decorator';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { Roles } from './decorators/roles.decorator';
 import { UnauthorizedException } from '@nestjs/common';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 import type { AccessTokenPayload } from './interfaces/token-payload.interface';
 
 interface RequestWithCookies extends Request {

@@ -1,7 +1,7 @@
 import { CSV_EXPORT_HEADERS } from './../constants/csv-export.constants';
 import { Injectable } from '@nestjs/common';
 import { QuizAnswerSnapshot } from '../interfaces/quiz-answer-snapshot.interface';
-import { calculateAccuracy } from '../helper/quiz-math.helper';
+import { calculateAccuracy } from '../helpers/quiz-math.helper';
 
 @Injectable()
 export class CsvExportService {

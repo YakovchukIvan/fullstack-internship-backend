@@ -4,7 +4,7 @@ import { UserRole } from '@/common/enums/user-role.enum';
 import { UserAuthRepository } from '../repositories/user-auth.repository';
 import { AuthRepository } from '../repositories/auth.repository';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
-import { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 type Auth0IncomingPayload = Omit<JwtPayload, 'role'>;
 

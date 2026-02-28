@@ -32,7 +32,7 @@ import { CreateCompanyDto } from '../dto/req/company/create-company.req.dto';
 import { UpdateCompanyDto } from '../dto/req/company/update-company.req.dto';
 import { QuizAttemptsService } from '../quizzes/services/quiz-attempts.service';
 import { CompanyLeaderboardResponseDto } from '../quizzes/dto/res/leaderboard.res.dto';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 @Controller(CompaniesRoutes.ROOT)
 export class CompaniesController {

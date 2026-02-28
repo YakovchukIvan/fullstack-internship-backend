@@ -25,10 +25,10 @@ import { UserRatingResponseDto } from '@/modules/companies/quizzes/dto/res/user-
 import { QuizAttemptsService } from '@/modules/companies/quizzes/services/quiz-attempts.service';
 import { QuizExportService } from '@/modules/companies/quizzes/services/quiz-export.service';
 import { PersonalExportQueryDto } from '@/modules/companies/quizzes/dto/req/export-query.req.dto';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 import { UserExportResponseDto } from '../dto/res/quizzes/user-export.res.dto';
 import { ExportFormat } from '@/modules/companies/quizzes/enums/export-format.enum';
-import { buildExportFilename } from '@/modules/companies/quizzes/helper/export-filename.helper';
+import { buildExportFilename } from '@/modules/companies/quizzes/helpers/export-filename.helper';
 import { UserCompanyMembershipSwagger } from '@/common/constants/swagger-docs/users.swagger';
 
 @Controller(UsersRoutes.COMPANY.ROOT)

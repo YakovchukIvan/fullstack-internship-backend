@@ -9,7 +9,7 @@ import { CompaniesService } from '../../services/companies.service';
 import { AiQuizGeneratorService } from './ai-quiz-generator.service';
 import { AiRateLimitService } from './ai-rate-limit.service';
 import { AppLogger } from '@/common/logger/app-logger';
-import { validateQuizQuestions } from '../helper/quiz-questions.helper';
+import { validateQuizQuestions } from '../helpers/quiz-questions.helper';
 import { mapToQuizQuestions } from '../mappers/quiz-questions.mapper';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { QuizRepository } from '../repositories/quiz.repository';

@@ -9,7 +9,7 @@ import { QuizQuestion } from '../interfaces/quiz.interfaces';
 import { QUIZ_AI_DIFFICULTY_GUIDELINES } from '../constants/quiz-ai.constants';
 import { QUIZ_AI_PROMPT_TEMPLATE } from '../constants/quiz-prompt.template';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
-import { validateQuizQuestions } from '../helper/quiz-questions.helper';
+import { validateQuizQuestions } from '../helpers/quiz-questions.helper';
 
 interface AiQuizResponse {
   title: string;

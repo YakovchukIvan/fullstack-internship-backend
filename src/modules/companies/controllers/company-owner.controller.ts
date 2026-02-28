@@ -35,7 +35,7 @@ import {
   CompanyInvitationsPaginationResponseDto,
 } from '../dto/res/requests/company-invitation.res.dto';
 import { CompanyJoinRequestPaginationResponseDto } from '../dto/res/requests/company-join-request.res.dto';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 @Controller(CompaniesRoutes.ROOT)
 @UseGuards(CompanyRoleGuard)

@@ -10,10 +10,10 @@ import { QuizExportService } from '../services/quiz-export.service';
 import { ExportQueryDto } from '../dto/req/export-query.req.dto';
 import { CompanyExportResponseDto } from '../dto/res/export.res.dto';
 import { QuizzesRoutes } from '../routes/quizzes.routes';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 import { UserExportResponseDto } from '@/modules/users/dto/res/quizzes/user-export.res.dto';
 import { ExportFormat } from '../enums/export-format.enum';
-import { buildExportFilename } from '../helper/export-filename.helper';
+import { buildExportFilename } from '../helpers/export-filename.helper';
 import { QuizExportSwagger } from '@/common/constants/swagger-docs/quizzes.swagger';
 
 @Controller(QuizzesRoutes.ROOT)

@@ -12,7 +12,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '@/modules/users/entities/user.entity';
 import { toExportAttemptResponseDto } from '../mappers/quiz-export-answer.mapper';
-import { calculateAccuracy } from '../helper/quiz-math.helper';
+import { calculateAccuracy } from '../helpers/quiz-math.helper';
 
 @Injectable()
 export class QuizExportService {

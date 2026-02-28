@@ -26,7 +26,7 @@ import { QuizzesPaginatedResponseDto } from '../dto/res/quizzes-paginated.res.dt
 import { QuizzesRoutes } from '../routes/quizzes.routes';
 import { toQuizResponseDto } from '../mappers/quiz.mapper';
 import { QuizzesSwagger } from '@/common/constants/swagger-docs/quizzes.swagger';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 @Controller(QuizzesRoutes.ROOT)
 @UseGuards(CompanyRoleGuard)

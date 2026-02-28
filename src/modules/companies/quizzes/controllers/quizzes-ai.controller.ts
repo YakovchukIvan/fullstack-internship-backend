@@ -13,7 +13,7 @@ import { toQuizResponseDto } from '../mappers/quiz.mapper';
 import { QuizzesRoutes } from '../routes/quizzes.routes';
 import { toIso } from '@/common/helpers/date.transformer';
 import { QuizzesAiSwagger } from '@/common/constants/swagger-docs/quizzes.swagger';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 @Controller(QuizzesRoutes.ROOT)
 @UseGuards(CompanyRoleGuard)
