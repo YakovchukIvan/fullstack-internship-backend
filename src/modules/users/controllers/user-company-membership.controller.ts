@@ -20,7 +20,7 @@ import { toUserQuizListItemResponseDto } from '../mappers/user-quiz-list-item.ma
 import {
   toUserInvitationItemResponseDto,
   toUserJoinRequestItemResponseDto,
-} from '../mappers/user-company-interactions.res.dto';
+} from '../mappers/user-company-interactions';
 import { UserRatingResponseDto } from '@/modules/companies/quizzes/dto/res/user-rating.res.dto';
 import { QuizAttemptsService } from '@/modules/companies/quizzes/services/quiz-attempts.service';
 import { QuizExportService } from '@/modules/companies/quizzes/services/quiz-export.service';
