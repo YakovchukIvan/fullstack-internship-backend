@@ -1,5 +1,5 @@
-import { QuizAttempt } from '../entities/quiz-attempt.entity';
-import { QuizAttemptResponseDto } from '../dto/res/quiz-attempt.res.dto';
+import { QuizAttempt } from '../../entities/quiz-attempt.entity';
+import { QuizAttemptResponseDto } from '../../dto/res/quiz-attempt.res.dto';
 import { toIso } from '@/common/helpers/date.transformer';
 import { getPerformanceResult } from '../helpers/quiz-performance.helper';
 import { calculateAccuracy } from '../helpers/quiz-math.helper';

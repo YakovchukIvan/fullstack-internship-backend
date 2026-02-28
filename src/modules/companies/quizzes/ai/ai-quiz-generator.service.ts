@@ -4,12 +4,12 @@ import { ConfigService } from '@nestjs/config';
 import { getGeminiConfig } from '@/config/gemini.config';
 import { GenerateQuizAiDto } from '../dto/req/generate-quiz-ai.req.dto';
 import { AppLogger } from '@/common/logger/app-logger';
-import { QuizConfig } from '../constants/quiz.constants';
-import { QuizQuestion } from '../interfaces/quiz.interfaces';
-import { QUIZ_AI_DIFFICULTY_GUIDELINES } from '../constants/quiz-ai.constants';
-import { QUIZ_AI_PROMPT_TEMPLATE } from '../constants/quiz-prompt.template';
+import { QuizConfig } from '../shared/constants/quiz.constants';
+import { QuizQuestion } from '../shared/interfaces/quiz.interfaces';
+import { QUIZ_AI_DIFFICULTY_GUIDELINES } from '../shared/constants/quiz-ai.constants';
+import { QUIZ_AI_PROMPT_TEMPLATE } from '../shared/constants/quiz-prompt.template';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
-import { validateQuizQuestions } from '../helpers/quiz-questions.helper';
+import { validateQuizQuestions } from '../shared/helpers/quiz-questions.helper';
 
 interface AiQuizResponse {
   title: string;

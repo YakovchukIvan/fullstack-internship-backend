@@ -8,8 +8,8 @@ import {
   MinLength,
   MaxLength,
 } from 'class-validator';
-import { ValidateCorrectAnswers } from '../../validators/correct-answers.validator';
-import { QuizConfig } from '../../constants/quiz.constants';
+import { ValidateCorrectAnswers } from '../../shared/validators/correct-answers.validator';
+import { QuizConfig } from '../../shared/constants/quiz.constants';
 
 export class QuizQuestionDto {
   @IsString({ message: 'Question must be a string' })

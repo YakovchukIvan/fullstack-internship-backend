@@ -1,6 +1,6 @@
 import { Entity, Column, OneToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from '@/common/entities/base.entity';
-import { UserRole } from '../../../common/enums/user-role.enum';
+import { UserRole } from '@/common/enums/user-role.enum';
 import { Auth } from '@/modules/auth/entities/auth.entity';
 import { Exclude } from 'class-transformer';
 import { Company } from '@/modules/companies/entities/company.entity';

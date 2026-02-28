@@ -5,16 +5,16 @@ import { SubmitQuizDto } from '../dto/req/submit-quiz.req.dto';
 import { QuizAttemptResponseDto } from '../dto/res/quiz-attempt.res.dto';
 import { CompanyLeaderboardResponseDto } from '../dto/res/leaderboard.res.dto';
 import { UserRatingResponseDto } from '../dto/res/user-rating.res.dto';
-import { toAttemptCreatePayload, toQuizAttemptResponseDto } from '../mappers/quiz-attempt.mapper';
+import { toAttemptCreatePayload, toQuizAttemptResponseDto } from '../shared/mappers/quiz-attempt.mapper';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { AppLogger } from '@/common/logger/app-logger';
-import { BuildSnapshotParams, QuizAttemptAnswer } from '../interfaces/quiz-attempt.interfaces';
+import { BuildSnapshotParams, QuizAttemptAnswer } from '../shared/interfaces/quiz-attempt.interfaces';
 import { QuizRepository } from '../repositories/quiz.repository';
 import { QuizAttemptRepository } from '../repositories/quiz-attempt.repository';
 import { CompanyMemberRepository } from '../../repositories/company-member.repository';
 import { QuizAnswerRedisRepository } from '../repositories/quiz-answer-redis.repository';
-import { QuizAnswerSnapshot } from '../interfaces/quiz-answer-snapshot.interface';
-import { toAnswerRecord, toAnswerSnapshot, toQuizAttemptAnswer } from '../mappers/quiz-snapshot.mapper';
+import { QuizAnswerSnapshot } from '../shared/interfaces/quiz-answer-snapshot.interface';
+import { toAnswerRecord, toAnswerSnapshot, toQuizAttemptAnswer } from '../shared/mappers/quiz-snapshot.mapper';
 
 @Injectable()
 export class QuizAttemptsService {

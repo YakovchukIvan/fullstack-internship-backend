@@ -5,8 +5,8 @@ import { UserRepository } from './repositories/user.repository';
 import { UserCompanyMembershipController } from './controllers/user-company-membership.controller';
 import { UsersController } from './controllers/users.controller';
 import { User } from './entities/user.entity';
-import { AuthModule } from '../auth/auth.module';
-import { CompaniesModule } from '../companies/companies.module';
+import { AuthModule } from '@/modules/auth/auth.module';
+import { CompaniesModule } from '@/modules/companies/companies.module';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User]), AuthModule, CompaniesModule],

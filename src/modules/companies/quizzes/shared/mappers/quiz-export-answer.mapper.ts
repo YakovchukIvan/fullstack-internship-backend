@@ -1,6 +1,6 @@
 import { QuizAnswerSnapshot } from '../interfaces/quiz-answer-snapshot.interface';
-import { ExportAttemptDto } from '../dto/res/export.res.dto';
 import { calculateAccuracy } from '../helpers/quiz-math.helper';
+import { ExportAttemptDto } from '../../dto/res/export.res.dto';
 
 export function toExportAttemptResponseDto(snapshot: QuizAnswerSnapshot): ExportAttemptDto {
   return {

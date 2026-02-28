@@ -1,5 +1,5 @@
-import { Quiz } from '../entities/quiz.entity';
-import { QuizResponseDto } from '../dto/res/quiz.res.dto';
+import { Quiz } from '../../entities/quiz.entity';
+import { QuizResponseDto } from '../../dto/res/quiz.res.dto';
 import { toIso } from '@/common/helpers/date.transformer';
 
 export function toQuizResponseDto(quiz: Quiz, quotaRemaining?: number): QuizResponseDto {
