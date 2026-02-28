@@ -3,9 +3,10 @@ import { CompanyMemberResponseDto } from '../dto/res/members/company-member.res.
 import { CompaniesRoutes } from '../routes/companies.routes';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
-import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { toCompanyMemberResponseDto } from '../mappers/company-member.mapper';
 import { toCompanyJoinRequestItemResponseDto } from '../mappers/company-join-request.mapper';
+import { CompanyMembersSwagger } from '@/common/constants/swagger-docs/companies.swagger';
 import { CompanyMembersService } from '../services/company-members.service';
 import { CompanyInvitationsService } from '../services/company-invitations.service';
 import { CompanyJoinRequestsService } from '../services/company-join-requests.service';
@@ -21,7 +22,7 @@ export class CompanyMembersController {
   ) {}
 
   @Post(CompaniesRoutes.INVITATIONS.ACCEPT)
-  @ApiEndpoint(CompanyMemberResponseDto, HttpStatus.OK)
+  @ApiEndpoint(CompanyMemberResponseDto, HttpStatus.OK, CompanyMembersSwagger.ACCEPT_INVITATION)
   @ResponseMessage('Invitation accepted successfully')
   async acceptInvitation(
     @Param('slug') slug: string,
@@ -35,6 +36,7 @@ export class CompanyMembersController {
   }
 
   @Post(CompaniesRoutes.INVITATIONS.DECLINE)
+  @ApiEndpoint(Object, HttpStatus.OK, CompanyMembersSwagger.DECLINE_INVITATION)
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Invitation declined successfully')
   async declineInvitation(@Param('slug') slug: string, @CurrentUser() user: JwtPayload): Promise<{ message: string }> {
@@ -43,7 +45,7 @@ export class CompanyMembersController {
   }
 
   @Post(CompaniesRoutes.JOIN_REQUESTS.BASE)
-  @ApiEndpoint(CompanyJoinRequestItemResponseDto, HttpStatus.CREATED)
+  @ApiEndpoint(CompanyJoinRequestItemResponseDto, HttpStatus.CREATED, CompanyMembersSwagger.SEND_JOIN_REQUEST)
   @ResponseMessage('Join request sent successfully')
   async sendJoinRequest(
     @Param('slug') slug: string,
@@ -55,6 +57,7 @@ export class CompanyMembersController {
   }
 
   @Delete(CompaniesRoutes.JOIN_REQUESTS.BASE)
+  @ApiEndpoint(Object, HttpStatus.OK, CompanyMembersSwagger.CANCEL_JOIN_REQUEST)
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Join request cancelled successfully')
   async cancelJoinRequest(@Param('slug') slug: string, @CurrentUser() user: JwtPayload): Promise<void> {
@@ -62,6 +65,7 @@ export class CompanyMembersController {
   }
 
   @Delete(CompaniesRoutes.LEAVE)
+  @ApiEndpoint(Object, HttpStatus.OK, CompanyMembersSwagger.LEAVE_COMPANY)
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Successfully left the company')
   async leaveCompany(@Param('slug') slug: string, @CurrentUser() user: JwtPayload): Promise<{ message: string }> {

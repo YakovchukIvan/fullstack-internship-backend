@@ -93,8 +93,17 @@ export class QuizzesService {
     return this.quizRepository.findPaginatedByCompany(company.id, dto);
   }
 
-  async findAllByUser(userId: string, dto: QuizzesPaginationDto): Promise<PaginatedResultResponseDto<Quiz>> {
-    return this.quizRepository.findPaginatedByUser(userId, dto);
+  async findAllByUser(
+    userId: string,
+    dto: QuizzesPaginationDto,
+    companySlug?: string,
+  ): Promise<PaginatedResultResponseDto<Quiz>> {
+    let companyId: string | undefined;
+    if (companySlug) {
+      const company = await this.companiesService.findBySlug(companySlug, userId);
+      companyId = company.id;
+    }
+    return this.quizRepository.findPaginatedByUser(userId, dto, companyId);
   }
 
   async findOne(id: string, slug: string, userId: string): Promise<Quiz> {

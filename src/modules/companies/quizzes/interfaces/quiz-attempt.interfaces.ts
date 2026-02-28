@@ -1,3 +1,4 @@
+import { Quiz } from '../entities/quiz.entity';
 import { PerformanceLevel } from '../enums/quiz-performance-level.enum';
 
 export interface QuizAttemptAnswer {
@@ -11,4 +12,14 @@ export interface PerformanceResult {
   level: PerformanceLevel;
   message: string;
   accuracyPercent: number;
+}
+
+export interface BuildSnapshotParams {
+  attemptId: string;
+  userId: string;
+  companyId: string;
+  quiz: Quiz;
+  answers: QuizAttemptAnswer[];
+  totalPoints: number;
+  completedAt: Date;
 }

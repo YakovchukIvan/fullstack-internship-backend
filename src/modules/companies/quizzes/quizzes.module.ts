@@ -20,9 +20,10 @@ import { CompanyRepository } from '../repositories/company.repository';
 import { CompanyMemberRepository } from '../repositories/company-member.repository';
 import { AppLogger } from '@/common/logger/app-logger';
 import { QuizExportController } from './controllers/quiz-export.controller';
+import { User } from '@/modules/users/entities/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Quiz, QuizAttempt])],
+  imports: [TypeOrmModule.forFeature([Quiz, QuizAttempt, User])],
   controllers: [QuizzesController, QuizzesAiController, QuizAttemptsController, QuizExportController],
   providers: [
     QuizRepository,

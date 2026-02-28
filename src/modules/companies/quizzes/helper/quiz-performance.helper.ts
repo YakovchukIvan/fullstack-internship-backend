@@ -12,7 +12,6 @@ const PERFORMANCE_THRESHOLDS: Array<{
   { min: 40, max: 60, level: PerformanceLevel.GOOD, message: 'Good effort! You are getting there.' },
   { min: 60, max: 80, level: PerformanceLevel.GREAT, message: 'Great job! You know this well.' },
   { min: 80, max: 100, level: PerformanceLevel.EXCELLENT, message: 'Excellent! Outstanding result.' },
-  { min: 100, max: 100, level: PerformanceLevel.PERFECT, message: 'Perfect score! Magnifico! 🏆' },
 ];
 
 export function getPerformanceResult(accuracyPercent: number): PerformanceResult {

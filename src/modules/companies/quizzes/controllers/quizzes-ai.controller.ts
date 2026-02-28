@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpStatus, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
-import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { RequireCompanyRoles } from '../../decorators/company-roles.decorator';
 import { CompanyRoleGuard } from '../../guards/company-role.guard';
@@ -12,6 +12,7 @@ import { AiQuotaResponseDto } from '../dto/res/ai-quota.res.dto';
 import { toQuizResponseDto } from '../mappers/quiz.mapper';
 import { QuizzesRoutes } from '../routes/quizzes.routes';
 import { toIso } from '@/common/helpers/date.transformer';
+import { QuizzesAiSwagger } from '@/common/constants/swagger-docs/quizzes.swagger';
 import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
 
 @Controller(QuizzesRoutes.ROOT)
@@ -21,7 +22,7 @@ export class QuizzesAiController {
 
   @Get(QuizzesRoutes.AI_QUOTA)
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @ApiEndpoint(AiQuotaResponseDto, HttpStatus.OK)
+  @ApiEndpoint(AiQuotaResponseDto, HttpStatus.OK, QuizzesAiSwagger.AI_QUOTA)
   @ResponseMessage('AI quota fetched successfully')
   async getQuota(@Param('slug') slug: string, @CurrentUser() user: JwtPayload): Promise<AiQuotaResponseDto> {
     const quota = await this.quizzesService.getAiQuota(slug, user.sub, user.role);
@@ -35,7 +36,7 @@ export class QuizzesAiController {
 
   @Post(QuizzesRoutes.GENERATE_AI)
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @ApiEndpoint(QuizResponseDto, HttpStatus.CREATED)
+  @ApiEndpoint(QuizResponseDto, HttpStatus.CREATED, QuizzesAiSwagger.GENERATE_AI)
   @ResponseMessage('Quiz generated successfully with AI')
   async generate(
     @Param('slug') slug: string,

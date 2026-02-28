@@ -10,7 +10,7 @@ export const UsersRoutes = {
     QUIZZES: 'quizzes',
     RATING: 'rating',
     EXPORT: {
-      ME: ':slug/export/me',
+      ME: 'export/me',
     },
   },
 } as const;

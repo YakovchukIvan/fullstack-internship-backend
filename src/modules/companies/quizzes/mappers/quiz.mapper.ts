@@ -8,7 +8,10 @@ export function toQuizResponseDto(quiz: Quiz, quotaRemaining?: number): QuizResp
     title: quiz.title,
     description: quiz.description,
     frequencyInDays: quiz.frequencyInDays,
-    questions: quiz.questions,
+    questions: quiz.questions.map((q) => ({
+      question: q.question,
+      options: q.options,
+    })),
     createdByUserId: quiz.createdByUserId,
     createdBy: {
       displayName: quiz.createdBySnapshot.displayName,

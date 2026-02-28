@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
-import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { PaginationMetadataDto } from '@/common/dto/res/pagination-metadata.dto';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { RequireCompanyRoles } from './../decorators/company-roles.decorator';
@@ -24,6 +24,7 @@ import { CompaniesService } from '@/modules/companies/services/companies.service
 import { CompaniesRoutes } from './../routes/companies.routes';
 import { toCompanyResponseDto } from '../mappers/company.mapper';
 import { CompanyMembersPaginationDto } from '../dto/req/members/company-members-pagination.req.dto';
+import { CompaniesSwagger } from '@/common/constants/swagger-docs/companies.swagger';
 import { CompanyMembersService } from '../services/company-members.service';
 import { toCompanyMemberResponseDto } from '../mappers/company-member.mapper';
 import { CompanyMembersListResponseDto } from '../dto/res/members/company-member.res.dto';
@@ -42,7 +43,7 @@ export class CompaniesController {
   ) {}
 
   @Get()
-  @ApiEndpoint(CompaniesPaginatedBaseResponseDto, HttpStatus.OK)
+  @ApiEndpoint(CompaniesPaginatedBaseResponseDto, HttpStatus.OK, CompaniesSwagger.FIND_ALL)
   @ResponseMessage('Companies fetched successfully')
   async findAll(
     @CurrentUser() user: JwtPayload,
@@ -59,7 +60,7 @@ export class CompaniesController {
 
   @Get(CompaniesRoutes.LEADERBOARD)
   @UseGuards(CompanyRoleGuard)
-  @ApiEndpoint(CompanyLeaderboardResponseDto, HttpStatus.OK)
+  @ApiEndpoint(CompanyLeaderboardResponseDto, HttpStatus.OK, CompaniesSwagger.LEADERBOARD)
   @ResponseMessage('Leaderboard fetched successfully')
   async getLeaderboard(
     @Param('slug') slug: string,
@@ -69,7 +70,7 @@ export class CompaniesController {
   }
 
   @Get(CompaniesRoutes.MEMBERS.BASE)
-  @ApiEndpoint(CompanyMembersListResponseDto, HttpStatus.OK)
+  @ApiEndpoint(CompanyMembersListResponseDto, HttpStatus.OK, CompaniesSwagger.GET_MEMBERS)
   @ResponseMessage('Members fetched successfully')
   async getCompanyMembers(
     @Param('slug') slug: string,
@@ -86,7 +87,7 @@ export class CompaniesController {
   }
 
   @Get(CompaniesRoutes.BY_SLUG)
-  @ApiEndpoint(CompanyResponseDto, HttpStatus.OK)
+  @ApiEndpoint(CompanyResponseDto, HttpStatus.OK, CompaniesSwagger.FIND_ONE)
   @ResponseMessage('Company fetched successfully')
   async findOne(
     @Param('slug') slug: string,
@@ -100,7 +101,7 @@ export class CompaniesController {
   }
 
   @Post()
-  @ApiEndpoint(CompanyResponseDto, HttpStatus.CREATED)
+  @ApiEndpoint(CompanyResponseDto, HttpStatus.CREATED, CompaniesSwagger.CREATE)
   @ResponseMessage('Company created successfully')
   async create(
     @Body() dto: CreateCompanyDto,
@@ -116,7 +117,7 @@ export class CompaniesController {
   @Patch(CompaniesRoutes.BY_SLUG)
   @UseGuards(CompanyRoleGuard)
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @ApiEndpoint(CompanyResponseDto, HttpStatus.OK)
+  @ApiEndpoint(CompanyResponseDto, HttpStatus.OK, CompaniesSwagger.UPDATE)
   @ResponseMessage('Company updated successfully')
   async update(@Param('slug') slug: string, @Body() dto: UpdateCompanyDto): Promise<{ company: CompanyResponseDto }> {
     const company = await this.companiesService.updateBySlug(slug, dto);
@@ -129,6 +130,7 @@ export class CompaniesController {
   @Delete(CompaniesRoutes.BY_SLUG)
   @UseGuards(CompanyRoleGuard)
   @RequireCompanyRoles(CompanyRole.OWNER)
+  @ApiEndpoint(Object, HttpStatus.OK, CompaniesSwagger.REMOVE)
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Company deleted successfully')
   async remove(@Param('slug') slug: string): Promise<void> {

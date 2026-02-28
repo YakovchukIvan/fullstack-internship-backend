@@ -10,6 +10,5 @@ export const QuizzesRoutes = {
   EXPORT: {
     COMPANY: 'export/company',
     USER: 'export/users/:userId',
-    QUIZ: 'export/quiz/:quizId',
   },
 } as const;

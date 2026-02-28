@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
-import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { RequireCompanyRoles } from '../../decorators/company-roles.decorator';
 import { CompanyRoleGuard } from '../../guards/company-role.guard';
@@ -25,6 +25,7 @@ import { QuizResponseDto } from '../dto/res/quiz.res.dto';
 import { QuizzesPaginatedResponseDto } from '../dto/res/quizzes-paginated.res.dto';
 import { QuizzesRoutes } from '../routes/quizzes.routes';
 import { toQuizResponseDto } from '../mappers/quiz.mapper';
+import { QuizzesSwagger } from '@/common/constants/swagger-docs/quizzes.swagger';
 import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
 
 @Controller(QuizzesRoutes.ROOT)
@@ -33,7 +34,7 @@ export class QuizzesController {
   constructor(private readonly quizzesService: QuizzesService) {}
 
   @Get()
-  @ApiEndpoint(QuizzesPaginatedResponseDto, HttpStatus.OK)
+  @ApiEndpoint(QuizzesPaginatedResponseDto, HttpStatus.OK, QuizzesSwagger.FIND_ALL)
   @ResponseMessage('Quizzes fetched successfully')
   async findAll(
     @Param('slug') slug: string,
@@ -49,7 +50,7 @@ export class QuizzesController {
   }
 
   @Get(QuizzesRoutes.BY_ID)
-  @ApiEndpoint(QuizResponseDto, HttpStatus.OK)
+  @ApiEndpoint(QuizResponseDto, HttpStatus.OK, QuizzesSwagger.FIND_ONE)
   @ResponseMessage('Quiz fetched successfully')
   async findOne(
     @Param('slug') slug: string,
@@ -65,7 +66,7 @@ export class QuizzesController {
 
   @Post()
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @ApiEndpoint(QuizResponseDto, HttpStatus.CREATED)
+  @ApiEndpoint(QuizResponseDto, HttpStatus.CREATED, QuizzesSwagger.CREATE)
   @ResponseMessage('Quiz created successfully')
   async create(
     @Param('slug') slug: string,
@@ -81,7 +82,7 @@ export class QuizzesController {
 
   @Patch(QuizzesRoutes.BY_ID)
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @ApiEndpoint(QuizResponseDto, HttpStatus.OK)
+  @ApiEndpoint(QuizResponseDto, HttpStatus.OK, QuizzesSwagger.UPDATE)
   @ResponseMessage('Quiz updated successfully')
   async update(
     @Param('slug') slug: string,
@@ -98,6 +99,7 @@ export class QuizzesController {
 
   @Delete(QuizzesRoutes.BY_ID)
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
+  @ApiEndpoint(Object, HttpStatus.OK, QuizzesSwagger.REMOVE)
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Quiz deleted successfully')
   async remove(

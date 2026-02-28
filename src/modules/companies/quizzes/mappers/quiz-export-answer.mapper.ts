@@ -1,7 +1,8 @@
 import { QuizAnswerSnapshot } from '../interfaces/quiz-answer-snapshot.interface';
 import { ExportAttemptDto } from '../dto/res/export.res.dto';
+import { calculateAccuracy } from '../helper/quiz-math.helper';
 
-export function toExportAttemptDto(snapshot: QuizAnswerSnapshot): ExportAttemptDto {
+export function toExportAttemptResponseDto(snapshot: QuizAnswerSnapshot): ExportAttemptDto {
   return {
     attemptId: snapshot.attemptId,
     quizId: snapshot.quizId,
@@ -9,7 +10,7 @@ export function toExportAttemptDto(snapshot: QuizAnswerSnapshot): ExportAttemptD
     completedAt: snapshot.completedAt,
     totalPoints: snapshot.totalPoints,
     maxPossiblePoints: snapshot.maxPossiblePoints,
-    accuracyPercent: Number(((snapshot.totalPoints / snapshot.maxPossiblePoints) * 100).toFixed(2)),
+    accuracyPercent: calculateAccuracy(snapshot.totalPoints, snapshot.maxPossiblePoints),
     answers: snapshot.answers,
   };
 }

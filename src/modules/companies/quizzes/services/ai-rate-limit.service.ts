@@ -16,23 +16,9 @@ export class AiRateLimitService {
     this.dailyLimit = config.dailyLimit;
   }
 
-  async checkLimit(companyId: string): Promise<{ allowed: boolean; remaining: number; resetsAt: Date }> {
-    const currentCount: number = await this.getCurrentCount(companyId);
-
-    const now = new Date();
-    const resetsAt = new Date(now);
-    resetsAt.setDate(resetsAt.getDate() + 1);
-    resetsAt.setHours(0, 0, 0, 0);
-
-    const allowed: boolean = currentCount < this.dailyLimit;
-    const remaining: number = Math.max(0, this.dailyLimit - currentCount);
-
-    return { allowed, remaining, resetsAt };
-  }
-
   async checkAndIncrement(companyId: string): Promise<{ remaining: number }> {
     const key = this.getCacheKey(companyId);
-    const currentCount: number = await this.getCurrentCount(companyId);
+    const currentCount = await this.getCurrentCount(companyId);
 
     if (currentCount >= this.dailyLimit) {
       throw new HttpException(
@@ -41,38 +27,34 @@ export class AiRateLimitService {
       );
     }
 
-    const ttl: number = this.getMsUntilMidnight();
-    await this.cacheManager.set(key, currentCount + 1, ttl);
+    await this.cacheManager.set(key, currentCount + 1, this.getMsUntilMidnight());
 
-    const remaining: number = this.dailyLimit - (currentCount + 1);
-
-    return { remaining };
+    return { remaining: this.dailyLimit - (currentCount + 1) };
   }
 
   async getRemainingQuota(companyId: string): Promise<{ remaining: number; limit: number; resetsAt: Date }> {
-    const { remaining, resetsAt } = await this.checkLimit(companyId);
+    const currentCount = await this.getCurrentCount(companyId);
+    const resetsAt = new Date();
+    resetsAt.setDate(resetsAt.getDate() + 1);
+    resetsAt.setHours(0, 0, 0, 0);
 
     return {
-      remaining,
+      remaining: Math.max(0, this.dailyLimit - currentCount),
       limit: this.dailyLimit,
       resetsAt,
     };
   }
 
   private async getCurrentCount(companyId: string): Promise<number> {
-    const key = this.getCacheKey(companyId);
-    const count = await this.cacheManager.get<number>(key);
-
+    const count = await this.cacheManager.get<number>(this.getCacheKey(companyId));
     return count ?? 0;
   }
 
   private getMsUntilMidnight(): number {
-    const now = new Date();
-    const midnight = new Date(now);
+    const midnight = new Date();
     midnight.setDate(midnight.getDate() + 1);
     midnight.setHours(0, 0, 0, 0);
-
-    return midnight.getTime() - now.getTime();
+    return midnight.getTime() - Date.now();
   }
 
   private getCacheKey(companyId: string): string {

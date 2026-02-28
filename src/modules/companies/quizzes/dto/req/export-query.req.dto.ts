@@ -1,9 +1,5 @@
-import { IsEnum, IsISO8601, IsOptional, IsUUID } from 'class-validator';
-
-export enum ExportFormat {
-  JSON = 'json',
-  CSV = 'csv',
-}
+import { IsEnum, IsISO8601, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ExportFormat } from '../../enums/export-format.enum';
 
 export class ExportQueryDto {
   @IsOptional()
@@ -21,4 +17,10 @@ export class ExportQueryDto {
   @IsOptional()
   @IsISO8601()
   to?: string;
+}
+
+export class PersonalExportQueryDto extends ExportQueryDto {
+  @IsOptional()
+  @IsString()
+  companySlug?: string;
 }
