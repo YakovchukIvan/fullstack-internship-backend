@@ -22,5 +22,5 @@ export class ExportQueryDto {
 export class PersonalExportQueryDto extends ExportQueryDto {
   @IsOptional()
   @IsString()
-  companySlug?: string;
+  slug?: string;
 }

@@ -34,8 +34,8 @@ export class AnalyticsService {
   async getMyStreak(userId: string, query: PersonalAnalyticsQueryDto): Promise<StreakResponseDto> {
     let companyId: string | undefined;
 
-    if (query.companySlug) {
-      const company = await this.companiesService.findBySlug(query.companySlug, userId);
+    if (query.slug) {
+      const company = await this.companiesService.findBySlug(query.slug, userId);
       companyId = company.id;
     }
 
@@ -46,8 +46,8 @@ export class AnalyticsService {
   async getMyDuration(userId: string, query: PersonalAnalyticsQueryDto): Promise<DurationStatsResponseDto> {
     let companyId: string | undefined;
 
-    if (query.companySlug) {
-      const company = await this.companiesService.findBySlug(query.companySlug, userId);
+    if (query.slug) {
+      const company = await this.companiesService.findBySlug(query.slug, userId);
       companyId = company.id;
     }
 
@@ -64,8 +64,8 @@ export class AnalyticsService {
   async getMyDynamics(userId: string, query: PersonalAnalyticsQueryDto): Promise<ScoreDynamicsResponseDto> {
     let companyId: string | undefined;
 
-    if (query.companySlug) {
-      const company = await this.companiesService.findBySlug(query.companySlug, userId);
+    if (query.slug) {
+      const company = await this.companiesService.findBySlug(query.slug, userId);
       companyId = company.id;
     }
 
@@ -80,8 +80,8 @@ export class AnalyticsService {
   ): Promise<PerformanceDistributionResponseDto> {
     let companyId: string | undefined;
 
-    if (query.companySlug) {
-      const company = await this.companiesService.findBySlug(query.companySlug, userId);
+    if (query.slug) {
+      const company = await this.companiesService.findBySlug(query.slug, userId);
       companyId = company.id;
     }
 

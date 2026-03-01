@@ -27,8 +27,8 @@ export class QuizExportService {
   async exportMyResults(userId: string, query: PersonalExportQueryDto): Promise<UserExportResponseDto> {
     let snapshots: QuizAnswerSnapshot[] = [];
 
-    if (query.companySlug) {
-      const company = await this.companiesService.findBySlug(query.companySlug, userId);
+    if (query.slug) {
+      const company = await this.companiesService.findBySlug(query.slug, userId);
       snapshots = await this.quizAnswerRedisRepository.getCompanyAnswers(company.id, userId);
     } else {
       snapshots = await this.quizAnswerRedisRepository.getUserAnswers(userId);
@@ -86,8 +86,8 @@ export class QuizExportService {
   ): Promise<{ snapshots: QuizAnswerSnapshot[]; firstName: string; lastName: string }> {
     let snapshots: QuizAnswerSnapshot[] = [];
 
-    if (query.companySlug) {
-      const company = await this.companiesService.findBySlug(query.companySlug, userId);
+    if (query.slug) {
+      const company = await this.companiesService.findBySlug(query.slug, userId);
       snapshots = await this.quizAnswerRedisRepository.getCompanyAnswers(company.id, userId);
     } else {
       snapshots = await this.quizAnswerRedisRepository.getUserAnswers(userId);

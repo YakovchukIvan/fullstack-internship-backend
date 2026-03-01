@@ -7,7 +7,7 @@ export function toUserQuizListItemResponseDto(quiz: Quiz): UserQuizListItemRespo
     id: quiz.id,
     title: quiz.title,
     companyName: quiz.company.name,
-    companySlug: quiz.company.slug,
+    slug: quiz.company.slug,
     isAiGenerated: quiz.isAiGenerated,
     aiPrompt: quiz.aiPrompt,
     createdAt: toIso(quiz.createdAt),

@@ -4,7 +4,7 @@ export class UserQuizListItemResponseDto {
   id: string;
   title: string;
   companyName: string;
-  companySlug: string;
+  slug: string;
   isAiGenerated: boolean;
   aiPrompt: string | null;
   createdAt: string;

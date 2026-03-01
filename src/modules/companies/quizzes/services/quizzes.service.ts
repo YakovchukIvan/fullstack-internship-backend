@@ -96,11 +96,11 @@ export class QuizzesService {
   async findAllByUser(
     userId: string,
     dto: QuizzesPaginationDto,
-    companySlug?: string,
+    slug?: string,
   ): Promise<PaginatedResultResponseDto<Quiz>> {
     let companyId: string | undefined;
-    if (companySlug) {
-      const company = await this.companiesService.findBySlug(companySlug, userId);
+    if (slug) {
+      const company = await this.companiesService.findBySlug(slug, userId);
       companyId = company.id;
     }
     return this.quizRepository.findPaginatedByUser(userId, dto, companyId);

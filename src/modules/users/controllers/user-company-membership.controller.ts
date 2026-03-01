@@ -90,9 +90,9 @@ export class UserCompanyMembershipController {
   async getMyQuizzes(
     @CurrentUser() user: JwtPayload,
     @Query() paginationDto: QuizzesPaginationDto,
-    @Query('companySlug') companySlug?: string,
+    @Query('slug') slug?: string,
   ): Promise<UserQuizzesListResponseDto> {
-    const result = await this.quizzesService.findAllByUser(user.sub, paginationDto, companySlug);
+    const result = await this.quizzesService.findAllByUser(user.sub, paginationDto, slug);
     return {
       quizzes: result.detail.map(toUserQuizListItemResponseDto),
       pagination: result.pagination,
@@ -122,7 +122,7 @@ export class UserCompanyMembershipController {
       );
       const csv = this.quizExportService.buildCsv(snapshots);
 
-      const slugName = query.companySlug || 'all-companies';
+      const slugName = query.slug || 'all-companies';
       const filename = buildExportFilename('personal', slugName, snapshots, { firstName, lastName });
 
       response.setHeader('Content-Type', 'text/csv');

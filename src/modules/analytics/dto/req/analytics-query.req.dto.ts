@@ -13,5 +13,5 @@ export class AnalyticsQueryDto {
 export class PersonalAnalyticsQueryDto extends AnalyticsQueryDto {
   @IsOptional()
   @IsString()
-  companySlug?: string;
+  slug?: string;
 }
