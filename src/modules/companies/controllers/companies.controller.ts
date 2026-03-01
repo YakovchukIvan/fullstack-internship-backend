@@ -31,8 +31,9 @@ import { CompanyMembersListResponseDto } from '../dto/res/members/company-member
 import { CreateCompanyDto } from '../dto/req/company/create-company.req.dto';
 import { UpdateCompanyDto } from '../dto/req/company/update-company.req.dto';
 import { QuizAttemptsService } from '../quizzes/services/quiz-attempts.service';
-import { CompanyLeaderboardResponseDto } from '../quizzes/dto/res/leaderboard.res.dto';
+import { CompanyLeaderboardResponseDto } from '../../analytics/dto/res/leaderboard.res.dto';
 import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import { AnalyticsService } from '@/modules/analytics/services/analytics.service';
 
 @Controller(CompaniesRoutes.ROOT)
 export class CompaniesController {
@@ -40,6 +41,7 @@ export class CompaniesController {
     private readonly companiesService: CompaniesService,
     private readonly membersService: CompanyMembersService,
     private readonly quizAttemptsService: QuizAttemptsService,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   @Get()
@@ -62,11 +64,11 @@ export class CompaniesController {
   @UseGuards(CompanyRoleGuard)
   @ApiEndpoint(CompanyLeaderboardResponseDto, HttpStatus.OK, CompaniesSwagger.LEADERBOARD)
   @ResponseMessage('Leaderboard fetched successfully')
-  async getLeaderboard(
+  async getCompanyLeaderboard(
     @Param('slug') slug: string,
     @CurrentUser() user: JwtPayload,
   ): Promise<CompanyLeaderboardResponseDto> {
-    return this.quizAttemptsService.getCompanyLeaderboard(slug, user.sub);
+    return this.analyticsService.getCompanyLeaderboard(slug, user.sub);
   }
 
   @Get(CompaniesRoutes.MEMBERS.BASE)

@@ -1,0 +1,3 @@
+export const ANALYTICS_CONSTANTS = {
+  MINIMUM_ATTEMPTS_FOR_RATING: 3,
+} as const;

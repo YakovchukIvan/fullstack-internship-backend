@@ -2,10 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { QuizAttempt } from '../entities/quiz-attempt.entity';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
-import { LeaderboardEntryDto } from '../dto/res/leaderboard.res.dto';
 import { UserRatingResponseDto } from '../dto/res/user-rating.res.dto';
-import { toLeaderboardEntryDto } from '../mappers/leaderboard.mapper';
-import { LeaderboardRawRow } from '@/modules/analytics/interfaces/analytics.interfaces';
 import { calculateRating } from '../helper/quiz-math.helper';
 
 @Injectable()
@@ -29,27 +26,6 @@ export class QuizAttemptRepository extends Repository<QuizAttempt> {
       diffDays >= frequencyInDays,
       `You can retake this quiz in ${Math.ceil(frequencyInDays - diffDays)} day(s)`,
     );
-  }
-
-  async getLeaderboardByCompany(companyId: string): Promise<LeaderboardEntryDto[]> {
-    const rows = await this.createQueryBuilder('attempt')
-      .select('attempt.user_id', 'userId')
-      .addSelect('SUM(attempt.total_points)', 'sumPoints')
-      .addSelect('SUM(attempt.max_possible_points)', 'sumMaxPoints')
-      .addSelect('COUNT(attempt.id)', 'totalAttempts')
-      .addSelect('user.first_name', 'firstName')
-      .addSelect('user.last_name', 'lastName')
-      .addSelect('user.avatar_url', 'avatarUrl')
-      .innerJoin('attempt.user', 'user')
-      .where('attempt.company_id = :companyId', { companyId })
-      .groupBy('attempt.user_id')
-      .addGroupBy('user.first_name')
-      .addGroupBy('user.last_name')
-      .addGroupBy('user.avatar_url')
-      .orderBy('SUM(attempt.total_points) / SUM(attempt.max_possible_points)', 'DESC')
-      .getRawMany<LeaderboardRawRow>();
-
-    return rows.map((row, index) => toLeaderboardEntryDto(row, index + 1));
   }
 
   async getUserRatingStats(userId: string): Promise<UserRatingResponseDto> {

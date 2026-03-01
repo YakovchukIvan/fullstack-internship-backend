@@ -1,6 +1,6 @@
 import { LeaderboardRawRow } from '@/modules/analytics/interfaces/analytics.interfaces';
 import { LeaderboardEntryDto } from '../dto/res/leaderboard.res.dto';
-import { calculateRating } from '../helper/quiz-math.helper';
+import { calculateRating } from '../../companies/quizzes/helper/quiz-math.helper';
 
 export function toLeaderboardEntryDto(row: LeaderboardRawRow, rank: number): LeaderboardEntryDto {
   return {

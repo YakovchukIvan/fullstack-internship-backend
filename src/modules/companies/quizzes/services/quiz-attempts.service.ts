@@ -3,7 +3,6 @@ import { Quiz } from '../entities/quiz.entity';
 import { CompaniesService } from '../../services/companies.service';
 import { SubmitQuizDto } from '../dto/req/submit-quiz.req.dto';
 import { QuizAttemptResponseDto } from '../dto/res/quiz-attempt.res.dto';
-import { CompanyLeaderboardResponseDto } from '../dto/res/leaderboard.res.dto';
 import { UserRatingResponseDto } from '../dto/res/user-rating.res.dto';
 import { toAttemptCreatePayload, toQuizAttemptResponseDto } from '../mappers/quiz-attempt.mapper';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
@@ -11,7 +10,6 @@ import { AppLogger } from '@/common/logger/app-logger';
 import { BuildSnapshotParams, QuizAttemptAnswer } from '../interfaces/quiz-attempt.interfaces';
 import { QuizRepository } from '../repositories/quiz.repository';
 import { QuizAttemptRepository } from '../repositories/quiz-attempt.repository';
-import { CompanyMemberRepository } from '../../repositories/company-member.repository';
 import { QuizAnswerRedisRepository } from '../repositories/quiz-answer-redis.repository';
 import { QuizAnswerSnapshot } from '../interfaces/quiz-answer-snapshot.interface';
 import { toAnswerRecord, toAnswerSnapshot, toQuizAttemptAnswer } from '../mappers/quiz-snapshot.mapper';
@@ -21,7 +19,6 @@ export class QuizAttemptsService {
   constructor(
     private readonly attemptRepository: QuizAttemptRepository,
     private readonly quizRepository: QuizRepository,
-    private readonly companyMemberRepository: CompanyMemberRepository,
     private readonly companiesService: CompaniesService,
     private readonly quizAnswerRedisRepository: QuizAnswerRedisRepository,
     private readonly logger: AppLogger,
@@ -77,17 +74,6 @@ export class QuizAttemptsService {
     }
 
     return toQuizAttemptResponseDto(saved);
-  }
-
-  async getCompanyLeaderboard(slug: string, userId: string): Promise<CompanyLeaderboardResponseDto> {
-    const company = await this.companiesService.findBySlug(slug, userId);
-
-    const [leaderboard, totalMembers] = await Promise.all([
-      this.attemptRepository.getLeaderboardByCompany(company.id),
-      this.companyMemberRepository.count({ where: { companyId: company.id } }),
-    ]);
-
-    return { leaderboard, totalMembers };
   }
 
   async getUserRating(userId: string): Promise<UserRatingResponseDto> {
