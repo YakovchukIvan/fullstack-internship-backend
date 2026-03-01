@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsInt, IsOptional, IsPositive, Min, ValidateNested } from 'class-validator';
+import { ArrayMinSize, IsArray, IsInt, Min, ValidateNested } from 'class-validator';
 
 export class QuizQuestionAnswerDto {
   @IsArray()
@@ -14,9 +14,4 @@ export class SubmitQuizDto {
   @ValidateNested({ each: true })
   @Type(() => QuizQuestionAnswerDto)
   answers: QuizQuestionAnswerDto[];
-
-  @IsOptional()
-  @IsInt()
-  @IsPositive()
-  durationSeconds?: number;
 }

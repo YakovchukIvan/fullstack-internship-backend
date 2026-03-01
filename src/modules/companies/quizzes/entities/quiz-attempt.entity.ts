@@ -10,6 +10,7 @@ import { User } from '@/modules/users/entities/user.entity';
 @Index(['companyId'])
 @Index(['userId', 'companyId'])
 @Index(['userId', 'quizId'])
+@Index(['userId', 'completedAt'])
 export class QuizAttempt extends BaseEntity {
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;

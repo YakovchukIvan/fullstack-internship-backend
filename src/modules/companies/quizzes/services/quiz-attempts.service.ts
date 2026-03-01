@@ -13,6 +13,8 @@ import { QuizAttemptRepository } from '../repositories/quiz-attempt.repository';
 import { QuizAnswerRedisRepository } from '../repositories/quiz-answer-redis.repository';
 import { QuizAnswerSnapshot } from '../interfaces/quiz-answer-snapshot.interface';
 import { toAnswerRecord, toAnswerSnapshot, toQuizAttemptAnswer } from '../mappers/quiz-snapshot.mapper';
+import { RedisService } from '@/modules/redis/redis.service';
+import { RedisKeys } from '@/modules/redis/redis.constants';
 
 @Injectable()
 export class QuizAttemptsService {
@@ -21,6 +23,7 @@ export class QuizAttemptsService {
     private readonly quizRepository: QuizRepository,
     private readonly companiesService: CompaniesService,
     private readonly quizAnswerRedisRepository: QuizAnswerRedisRepository,
+    private readonly redisService: RedisService,
     private readonly logger: AppLogger,
   ) {
     this.logger.setLoggerContext(QuizAttemptsService.name);
@@ -37,6 +40,7 @@ export class QuizAttemptsService {
       `Expected ${quiz.questions.length} answers, got ${dto.answers.length}`,
     );
 
+    const durationSeconds = await this.calculateDuration(userId, quizId);
     const answers = this.calculateAnswers(quiz, dto);
     const totalPoints = Number(answers.reduce((sum, a) => sum + a.questionScore, 0).toFixed(4));
     const completedAt = new Date();
@@ -49,7 +53,7 @@ export class QuizAttemptsService {
         totalPoints,
         quiz.questions.length,
         completedAt,
-        dto.durationSeconds,
+        durationSeconds,
       ),
     );
 
@@ -78,6 +82,18 @@ export class QuizAttemptsService {
 
   async getUserRating(userId: string): Promise<UserRatingResponseDto> {
     return this.attemptRepository.getUserRatingStats(userId);
+  }
+
+  private async calculateDuration(userId: string, quizId: string): Promise<number | undefined> {
+    const key = RedisKeys.quizStart(userId, quizId);
+    const startedAt = await this.redisService.get<string>(key);
+
+    if (!startedAt) {
+      return undefined;
+    }
+
+    await this.redisService.del(key);
+    return Math.round((Date.now() - Number(startedAt)) / 1000);
   }
 
   private buildSnapshot(params: BuildSnapshotParams): QuizAnswerSnapshot {
