@@ -14,6 +14,13 @@ export interface PerformanceResult {
   accuracyPercent: number;
 }
 
+export interface PerformanceThreshold {
+  min: number;
+  max: number;
+  level: PerformanceLevel;
+  message: string;
+}
+
 export interface BuildSnapshotParams {
   attemptId: string;
   userId: string;

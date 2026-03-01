@@ -4,6 +4,9 @@ import { QuizAttempt } from '../entities/quiz-attempt.entity';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { LeaderboardEntryDto } from '../dto/res/leaderboard.res.dto';
 import { UserRatingResponseDto } from '../dto/res/user-rating.res.dto';
+import { toLeaderboardEntryDto } from '../mappers/leaderboard.mapper';
+import { LeaderboardRawRow } from '@/modules/analytics/interfaces/analytics.interfaces';
+import { calculateRating } from '../helper/quiz-math.helper';
 
 @Injectable()
 export class QuizAttemptRepository extends Repository<QuizAttempt> {
@@ -29,39 +32,24 @@ export class QuizAttemptRepository extends Repository<QuizAttempt> {
   }
 
   async getLeaderboardByCompany(companyId: string): Promise<LeaderboardEntryDto[]> {
-    const results = await this.createQueryBuilder('attempt')
+    const rows = await this.createQueryBuilder('attempt')
       .select('attempt.user_id', 'userId')
       .addSelect('SUM(attempt.total_points)', 'sumPoints')
       .addSelect('SUM(attempt.max_possible_points)', 'sumMaxPoints')
       .addSelect('COUNT(attempt.id)', 'totalAttempts')
-      .innerJoin('attempt.user', 'user')
       .addSelect('user.first_name', 'firstName')
       .addSelect('user.last_name', 'lastName')
       .addSelect('user.avatar_url', 'avatarUrl')
+      .innerJoin('attempt.user', 'user')
       .where('attempt.company_id = :companyId', { companyId })
       .groupBy('attempt.user_id')
       .addGroupBy('user.first_name')
       .addGroupBy('user.last_name')
       .addGroupBy('user.avatar_url')
       .orderBy('SUM(attempt.total_points) / SUM(attempt.max_possible_points)', 'DESC')
-      .getRawMany<{
-        userId: string;
-        sumPoints: string;
-        sumMaxPoints: string;
-        totalAttempts: string;
-        firstName: string;
-        lastName: string;
-        avatarUrl: string | null;
-      }>();
+      .getRawMany<LeaderboardRawRow>();
 
-    return results.map((row, index) => ({
-      userId: row.userId,
-      displayName: `${row.firstName} ${row.lastName}`.trim(),
-      avatarUrl: row.avatarUrl ?? null,
-      rating: Number((Number(row.sumPoints) / Number(row.sumMaxPoints)).toFixed(4)),
-      totalAttempts: Number(row.totalAttempts),
-      rank: index + 1,
-    }));
+    return rows.map((row, index) => toLeaderboardEntryDto(row, index + 1));
   }
 
   async getUserRatingStats(userId: string): Promise<UserRatingResponseDto> {
@@ -75,7 +63,7 @@ export class QuizAttemptRepository extends Repository<QuizAttempt> {
     const totalPoints = Number(result?.sumPoints ?? 0);
     const totalMaxPoints = Number(result?.sumMaxPoints ?? 0);
     const totalAttempts = Number(result?.totalAttempts ?? 0);
-    const rating = totalMaxPoints > 0 ? Number((totalPoints / totalMaxPoints).toFixed(4)) : 0;
+    const rating = calculateRating(totalPoints, totalMaxPoints);
 
     return {
       rating,
