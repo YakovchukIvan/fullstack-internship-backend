@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { QuizAttempt } from '@/modules/companies/quizzes/entities/quiz-attempt.entity';
+import { CompanyMember } from '@/modules/companies/entities/company-member.entity';
+import { Company } from '@/modules/companies/entities/company.entity';
 import { AnalyticsController } from './controllers/analytics.controller';
 import { AnalyticsService } from './services/analytics.service';
 import { AnalyticsRepository } from './repositories/analytics.repository';
@@ -11,7 +13,7 @@ import { CompanyMemberRepository } from '@/modules/companies/repositories/compan
 import { AppLogger } from '@/common/logger/app-logger';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([QuizAttempt])],
+  imports: [TypeOrmModule.forFeature([QuizAttempt, CompanyMember, Company])],
   controllers: [AnalyticsController],
   providers: [
     AnalyticsService,
@@ -22,5 +24,6 @@ import { AppLogger } from '@/common/logger/app-logger';
     CompanyMemberRepository,
     AppLogger,
   ],
+  exports: [AnalyticsService],
 })
 export class AnalyticsModule {}

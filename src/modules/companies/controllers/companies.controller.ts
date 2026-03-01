@@ -30,7 +30,6 @@ import { toCompanyMemberResponseDto } from '../mappers/company-member.mapper';
 import { CompanyMembersListResponseDto } from '../dto/res/members/company-member.res.dto';
 import { CreateCompanyDto } from '../dto/req/company/create-company.req.dto';
 import { UpdateCompanyDto } from '../dto/req/company/update-company.req.dto';
-import { QuizAttemptsService } from '../quizzes/services/quiz-attempts.service';
 import { CompanyLeaderboardResponseDto } from '../../analytics/dto/res/leaderboard.res.dto';
 import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
 import { AnalyticsService } from '@/modules/analytics/services/analytics.service';
@@ -40,7 +39,6 @@ export class CompaniesController {
   constructor(
     private readonly companiesService: CompaniesService,
     private readonly membersService: CompanyMembersService,
-    private readonly quizAttemptsService: QuizAttemptsService,
     private readonly analyticsService: AnalyticsService,
   ) {}
 

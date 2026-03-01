@@ -5,7 +5,6 @@ import { CompanyMember } from './entities/company-member.entity';
 import { CompanyInvitation } from './entities/company-invitation.entity';
 import { CompanyJoinRequest } from './entities/company-join-request.entity';
 import { User } from '../users/entities/user.entity';
-import { QuizAttempt } from './quizzes/entities/quiz-attempt.entity';
 import { CompanyRepository } from './repositories/company.repository';
 import { CompanyMemberRepository } from './repositories/company-member.repository';
 import { CompanyInvitationRepository } from './repositories/company-invitation.repository';
@@ -19,14 +18,13 @@ import { CompanyMembersController } from './controllers/company-members.controll
 import { CompanyOwnerController } from './controllers/company-owner.controller';
 import { CompanyRoleGuard } from './guards/company-role.guard';
 import { QuizzesModule } from './quizzes/quizzes.module';
-import { AnalyticsService } from '../analytics/services/analytics.service';
-import { AnalyticsRepository } from '../analytics/repositories/analytics.repository';
-import { AppLogger } from '@/common/logger/app-logger';
+import { AnalyticsModule } from '../analytics/analytics.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Company, CompanyMember, CompanyInvitation, CompanyJoinRequest, User, QuizAttempt]),
+    TypeOrmModule.forFeature([Company, CompanyMember, CompanyInvitation, CompanyJoinRequest, User]),
     QuizzesModule,
+    AnalyticsModule,
   ],
   controllers: [CompaniesController, CompanyOwnerController, CompanyMembersController],
   providers: [
@@ -39,9 +37,6 @@ import { AppLogger } from '@/common/logger/app-logger';
     CompanyJoinRequestsService,
     CompanyMembersService,
     CompanyRoleGuard,
-    AnalyticsService,
-    AnalyticsRepository,
-    AppLogger,
   ],
   exports: [
     CompanyRepository,
