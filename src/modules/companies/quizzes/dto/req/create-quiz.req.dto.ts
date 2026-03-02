@@ -39,4 +39,9 @@ export class CreateQuizDto {
   @ValidateNested({ each: true })
   @Type(() => QuizQuestionDto)
   questions: QuizQuestionDto[];
+
+  @IsInt({ message: 'Time limit must be a number' })
+  @Min(20, { message: 'Time limit must be at least 20 minutes' })
+  @Max(120, { message: 'Time limit must not exceed 120 minutes' })
+  timeLimitMinutes: number;
 }

@@ -15,6 +15,7 @@ export class QuizResponseDto {
   title: string;
   description: string | null;
   frequencyInDays: number;
+  timeLimitMinutes: number;
   questions: QuizQuestionResponseDto[];
   createdByUserId: string;
   createdBy: QuizCreatedBySnapshotDto;
@@ -23,4 +24,8 @@ export class QuizResponseDto {
   createdAt: string;
   updatedAt: string;
   quotaRemaining: number | null;
+}
+
+export class QuizStartResponseDto extends QuizResponseDto {
+  startedAt: string;
 }

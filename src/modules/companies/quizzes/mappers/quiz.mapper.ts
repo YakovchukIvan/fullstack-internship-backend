@@ -1,5 +1,5 @@
 import { Quiz } from '../entities/quiz.entity';
-import { QuizResponseDto } from '../dto/res/quiz.res.dto';
+import { QuizResponseDto, QuizStartResponseDto } from '../dto/res/quiz.res.dto';
 import { toIso } from '@/common/helpers/date.transformer';
 
 export function toQuizResponseDto(quiz: Quiz, quotaRemaining?: number): QuizResponseDto {
@@ -8,6 +8,7 @@ export function toQuizResponseDto(quiz: Quiz, quotaRemaining?: number): QuizResp
     title: quiz.title,
     description: quiz.description,
     frequencyInDays: quiz.frequencyInDays,
+    timeLimitMinutes: quiz.timeLimitMinutes,
     questions: quiz.questions.map((q) => ({
       question: q.question,
       options: q.options,
@@ -22,5 +23,12 @@ export function toQuizResponseDto(quiz: Quiz, quotaRemaining?: number): QuizResp
     createdAt: toIso(quiz.createdAt),
     updatedAt: toIso(quiz.updatedAt),
     quotaRemaining: quotaRemaining ?? null,
+  };
+}
+
+export function toQuizStartResponseDto(quiz: Quiz, startedAt: Date): QuizStartResponseDto {
+  return {
+    ...toQuizResponseDto(quiz),
+    startedAt: toIso(startedAt),
   };
 }

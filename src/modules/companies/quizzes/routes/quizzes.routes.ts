@@ -3,9 +3,11 @@ export const QuizzesRoutes = {
   BY_ID: ':quizId',
   GENERATE_AI: 'generate',
   AI_QUOTA: 'ai/quota',
-  ATTEMPTS: {
-    BASE: ':quizId/attempts',
-    MY: ':quizId/attempts/my',
+  SESSION: {
+    START: ':quizId',
+    SUBMIT: ':quizId/attempts',
+    ME_ATTEMPTS: ':quizId/attempts/me',
+    MEMBER_ATTEMPTS: ':quizId/attempts/members/:userId',
   },
   EXPORT: {
     COMPANY: 'export/company',

@@ -13,18 +13,18 @@ import { QuizExportService } from './services/quiz-export.service';
 import { CsvExportService } from './services/csv-export.service';
 import { QuizzesController } from './controllers/quizzes.controller';
 import { QuizzesAiController } from './controllers/quizzes-ai.controller';
-import { QuizAttemptsController } from './controllers/quiz-attempts.controller';
+import { QuizSessionController } from './controllers/quiz-session.controller';
+import { QuizExportController } from './controllers/quiz-export.controller';
 import { CompaniesService } from '../services/companies.service';
 import { CompanyMembersService } from '../services/company-members.service';
 import { CompanyRepository } from '../repositories/company.repository';
 import { CompanyMemberRepository } from '../repositories/company-member.repository';
 import { AppLogger } from '@/common/logger/app-logger';
-import { QuizExportController } from './controllers/quiz-export.controller';
 import { User } from '@/modules/users/entities/user.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Quiz, QuizAttempt, User])],
-  controllers: [QuizzesController, QuizzesAiController, QuizAttemptsController, QuizExportController],
+  controllers: [QuizzesController, QuizzesAiController, QuizSessionController, QuizExportController],
   providers: [
     QuizRepository,
     QuizAttemptRepository,

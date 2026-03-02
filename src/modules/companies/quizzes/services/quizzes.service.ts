@@ -14,6 +14,8 @@ import { mapToQuizQuestions } from '../mappers/quiz-questions.mapper';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { QuizRepository } from '../repositories/quiz.repository';
 import { CompanyMemberRepository } from '../../repositories/company-member.repository';
+import { RedisService } from '@/modules/redis/redis.service';
+import { RedisKeys } from '@/modules/redis/redis.constants';
 
 @Injectable()
 export class QuizzesService {
@@ -23,6 +25,7 @@ export class QuizzesService {
     private readonly companiesService: CompaniesService,
     private readonly aiGenerator: AiQuizGeneratorService,
     private readonly aiRateLimitService: AiRateLimitService,
+    private readonly redisService: RedisService,
     private readonly logger: AppLogger,
   ) {
     this.logger.setLoggerContext(QuizzesService.name);
@@ -38,6 +41,7 @@ export class QuizzesService {
       title: dto.title,
       description: dto.description ?? null,
       frequencyInDays: dto.frequencyInDays,
+      timeLimitMinutes: dto.timeLimitMinutes,
       questions: mapToQuizQuestions(dto.questions),
       companyId: company.id,
       createdByUserId,
@@ -70,6 +74,7 @@ export class QuizzesService {
       title: aiQuiz.title,
       description: aiQuiz.description,
       frequencyInDays: dto.frequencyInDays,
+      timeLimitMinutes: dto.timeLimitMinutes,
       questions: aiQuiz.questions,
       companyId: company.id,
       createdByUserId,
@@ -106,13 +111,21 @@ export class QuizzesService {
     return this.quizRepository.findPaginatedByUser(userId, dto, companyId);
   }
 
-  async findOne(id: string, slug: string, userId: string): Promise<Quiz> {
+  async findOne(id: string, slug: string, userId: string): Promise<{ quiz: Quiz; startedAt: Date }> {
     const company = await this.companiesService.findBySlug(slug, userId);
-    return this.quizRepository.findOneInCompanyOrFail(id, company.id);
+    const quiz = await this.quizRepository.findOneInCompanyOrFail(id, company.id);
+
+    const startedAt = new Date();
+    const key = RedisKeys.quizStart(userId, id);
+    await this.redisService.set(key, startedAt.getTime().toString(), quiz.timeLimitMinutes * 60);
+
+    this.logger.log(`Quiz started: ${id} by user ${userId}, limit: ${quiz.timeLimitMinutes}min`);
+
+    return { quiz, startedAt };
   }
 
   async update(id: string, slug: string, userId: string, dto: UpdateQuizDto): Promise<Quiz> {
-    const quiz = await this.findOne(id, slug, userId);
+    const quiz = await this.findOneInternal(id, slug, userId);
 
     if (dto.questions !== undefined) {
       validateQuizQuestions(dto.questions);
@@ -127,6 +140,9 @@ export class QuizzesService {
     if (dto.frequencyInDays !== undefined) {
       quiz.frequencyInDays = dto.frequencyInDays;
     }
+    if (dto.timeLimitMinutes !== undefined) {
+      quiz.timeLimitMinutes = dto.timeLimitMinutes;
+    }
 
     const updated = await this.quizRepository.save(quiz);
     this.logger.log(`Quiz updated: ${updated.id} by user ${userId}`);
@@ -134,7 +150,7 @@ export class QuizzesService {
   }
 
   async remove(id: string, slug: string, userId: string): Promise<void> {
-    const quiz = await this.findOne(id, slug, userId);
+    const quiz = await this.findOneInternal(id, slug, userId);
     await this.quizRepository.remove(quiz);
     this.logger.log(`Quiz deleted: ${id} by user ${userId}`);
   }
@@ -142,6 +158,11 @@ export class QuizzesService {
   async getAiQuota(slug: string, userId: string, userRole?: UserRole) {
     const company = await this.companiesService.findBySlug(slug, userId, userRole);
     return this.aiRateLimitService.getRemainingQuota(company.id);
+  }
+
+  private async findOneInternal(id: string, slug: string, userId: string): Promise<Quiz> {
+    const company = await this.companiesService.findBySlug(slug, userId);
+    return this.quizRepository.findOneInCompanyOrFail(id, company.id);
   }
 
   private async buildCreatedBySnapshot(companyId: string, userId: string) {

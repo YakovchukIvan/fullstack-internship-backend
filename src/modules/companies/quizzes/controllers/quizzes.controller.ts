@@ -44,24 +44,8 @@ export class QuizzesController {
     const result = await this.quizzesService.findAll(slug, user.sub, dto);
 
     return {
-      quizzes: result.detail.map(toQuizResponseDto),
+      quizzes: result.detail.map((quiz) => toQuizResponseDto(quiz)),
       pagination: result.pagination,
-    };
-  }
-
-  @Get(QuizzesRoutes.BY_ID)
-  @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @ApiEndpoint(QuizResponseDto, HttpStatus.OK, QuizzesSwagger.FIND_ONE)
-  @ResponseMessage('Quiz fetched successfully')
-  async findOne(
-    @Param('slug') slug: string,
-    @Param('quizId') quizId: string,
-    @CurrentUser() user: JwtPayload,
-  ): Promise<{ quiz: QuizResponseDto }> {
-    const quiz = await this.quizzesService.findOne(quizId, slug, user.sub);
-
-    return {
-      quiz: toQuizResponseDto(quiz),
     };
   }
 

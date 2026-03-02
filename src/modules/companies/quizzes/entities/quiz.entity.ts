@@ -33,6 +33,9 @@ export class Quiz extends BaseEntity {
   @Column({ type: 'jsonb', name: 'created_by_snapshot' })
   createdBySnapshot: QuizCreatedBySnapshot;
 
+  @Column({ type: 'int', name: 'time_limit_minutes', default: 30 })
+  timeLimitMinutes: number;
+
   @Column({ type: 'boolean', default: false, name: 'is_ai_generated' })
   isAiGenerated: boolean;
 

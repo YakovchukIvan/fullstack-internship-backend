@@ -5,11 +5,6 @@ export const QuizzesSwagger: Record<string, Partial<OperationObject>> = {
     summary: 'Get all quizzes',
     description: 'Returns paginated list of quizzes for the company. All members can view.',
   },
-  FIND_ONE: {
-    summary: 'Get quiz by ID',
-    description:
-      'Returns full quiz details including all questions and answer options. Requires company OWNER or company ADMIN.',
-  },
   CREATE: {
     summary: 'Create quiz',
     description:
@@ -38,11 +33,26 @@ export const QuizzesAiSwagger: Record<string, Partial<OperationObject>> = {
   },
 };
 
-export const QuizAttemptsSwagger: Record<string, Partial<OperationObject>> = {
-  SUBMIT_ATTEMPT: {
+export const QuizSessionSwagger: Record<string, Partial<OperationObject>> = {
+  START: {
+    summary: 'Start quiz',
+    description:
+      'Returns full quiz details with questions and options. Starts the time limit timer in Redis. Available to all company members.',
+  },
+  SUBMIT: {
     summary: 'Submit quiz answers',
     description:
-      'Submits answers for a quiz. Validates frequency limit. Calculates score and saves result to DB + Redis (48h).',
+      'Submits answers for a quiz. Validates time limit and frequency. Calculates score and saves result to DB + Redis (48h). Available to all company members.',
+  },
+  ME_ATTEMPTS: {
+    summary: 'Get my attempts',
+    description:
+      'Returns all quiz attempts for the current user for a specific quiz from Redis (48h window). Available to all company members.',
+  },
+  MEMBER_ATTEMPTS: {
+    summary: 'Get member attempts',
+    description:
+      'Returns all quiz attempts for a specific company member for a specific quiz from Redis (48h window). Requires company OWNER or company ADMIN.',
   },
 };
 

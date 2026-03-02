@@ -78,6 +78,25 @@ export class QuizAttemptsService {
     return toQuizAttemptResponseDto(saved);
   }
 
+  async getMyAttempts(slug: string, quizId: string, userId: string): Promise<QuizAnswerSnapshot[]> {
+    const company = await this.companiesService.findBySlug(slug, userId);
+    await this.quizRepository.findOneInCompanyOrFail(quizId, company.id);
+
+    return this.quizAnswerRedisRepository.getUserAnswersForQuiz(userId, quizId);
+  }
+
+  async getMemberAttempts(
+    slug: string,
+    quizId: string,
+    requesterId: string,
+    memberId: string,
+  ): Promise<QuizAnswerSnapshot[]> {
+    const company = await this.companiesService.findBySlug(slug, requesterId);
+    await this.quizRepository.findOneInCompanyOrFail(quizId, company.id);
+
+    return this.quizAnswerRedisRepository.getUserAnswersForQuiz(memberId, quizId);
+  }
+
   async getUserRating(userId: string): Promise<UserRatingResponseDto> {
     return this.attemptRepository.getUserRatingStats(userId);
   }
@@ -86,7 +105,7 @@ export class QuizAttemptsService {
     const key = RedisKeys.quizStart(userId, quizId);
     const startedAt = await this.redisService.get<string>(key);
 
-    GuardAssertions.isTrueBadRequest(!!startedAt, 'Quiz session expired or not started');
+    GuardAssertions.isTrueBadRequest(!!startedAt, 'Quiz time limit exceeded, please reopen the quiz');
 
     await this.redisService.del(key);
     return Math.round((Date.now() - Number(startedAt)) / 1000);

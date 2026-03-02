@@ -30,6 +30,7 @@ import { UserExportResponseDto } from '../dto/res/quizzes/user-export.res.dto';
 import { ExportFormat } from '@/modules/companies/quizzes/enums/export-format.enum';
 import { buildExportFilename } from '@/modules/companies/quizzes/helper/export-filename.helper';
 import { UserCompanyMembershipSwagger } from '@/common/constants/swagger-docs/users.swagger';
+import { sendCsvResponse } from '@/common/helpers/csv-response.helper';
 
 @Controller(UsersRoutes.COMPANY.ROOT)
 export class UserCompanyMembershipController {
@@ -125,9 +126,7 @@ export class UserCompanyMembershipController {
       const slugName = query.slug || 'all-companies';
       const filename = buildExportFilename('personal', slugName, snapshots, { firstName, lastName });
 
-      response.setHeader('Content-Type', 'text/csv');
-      response.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      response.send(csv);
+      sendCsvResponse(response, csv, filename);
       return;
     }
 

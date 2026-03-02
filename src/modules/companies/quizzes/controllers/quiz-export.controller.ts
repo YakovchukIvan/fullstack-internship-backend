@@ -15,6 +15,7 @@ import { UserExportResponseDto } from '@/modules/users/dto/res/quizzes/user-expo
 import { ExportFormat } from '../enums/export-format.enum';
 import { buildExportFilename } from '../helper/export-filename.helper';
 import { QuizExportSwagger } from '@/common/constants/swagger-docs/quizzes.swagger';
+import { sendCsvResponse } from '@/common/helpers/csv-response.helper';
 
 @Controller(QuizzesRoutes.ROOT)
 @UseGuards(CompanyRoleGuard)
@@ -36,9 +37,7 @@ export class QuizExportController {
       const csv = this.quizExportService.buildCsv(snapshots);
       const filename = buildExportFilename('company', slug, snapshots);
 
-      response.setHeader('Content-Type', 'text/csv');
-      response.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      response.send(csv);
+      sendCsvResponse(response, csv, filename);
       return;
     }
 
@@ -65,9 +64,7 @@ export class QuizExportController {
       const csv = this.quizExportService.buildCsv(snapshots);
       const filename = buildExportFilename('member', slug, snapshots, { firstName, lastName });
 
-      response.setHeader('Content-Type', 'text/csv');
-      response.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      response.send(csv);
+      sendCsvResponse(response, csv, filename);
       return;
     }
 

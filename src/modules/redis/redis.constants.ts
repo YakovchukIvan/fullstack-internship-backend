@@ -1,6 +1,5 @@
 export const REDIS_TTL = {
   QUIZ_ANSWERS: 48 * 3600,
-  QUIZ_START: 2 * 3600,
 } as const;
 
 export const RedisKeys = {
