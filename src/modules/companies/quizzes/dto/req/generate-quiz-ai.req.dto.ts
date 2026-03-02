@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty, IsEnum, IsInt, Min, Max, MinLength, MaxLength } from 'class-validator';
 import { QuizDifficulty } from '../../enums/quiz-difficulty.enum';
-import { QuizConfig } from '../../constants/quiz.constants';
+import { QuizConfig } from '../../shared/constants/quiz.constants';
 
 export class GenerateQuizAiDto {
   @IsString({ message: 'Topic must be a string' })

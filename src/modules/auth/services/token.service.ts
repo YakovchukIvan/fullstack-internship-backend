@@ -5,6 +5,7 @@ import { User } from '@/modules/users/entities/user.entity';
 import { Response } from 'express';
 import { randomUUID } from 'crypto';
 import { AccessTokenPayload, RefreshTokenPayload } from '../interfaces/token-payload.interface';
+import { parseJwtExpiry } from '../helpers/jwt-expiry.helper';
 
 @Injectable()
 export class TokenService {
@@ -46,22 +47,7 @@ export class TokenService {
 
   getTokenExpirationTime(): number {
     const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN', '1h');
-    const match = expiresIn.match(/^(\d+)([smhd])$/);
-    if (!match) {
-      return 3600;
-    }
-
-    const value = parseInt(match[1], 10);
-    const unit = match[2];
-
-    const multipliers: Record<string, number> = {
-      s: 1,
-      m: 60,
-      h: 3600,
-      d: 86400,
-    };
-
-    return value * (multipliers[unit] || 3600);
+    return parseJwtExpiry(expiresIn);
   }
 
   decodeRefreshToken(token: string): RefreshTokenPayload | null {
@@ -82,7 +68,7 @@ export class TokenService {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'strict' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: parseJwtExpiry(this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d')) * 1000,
     });
   }
 

@@ -12,16 +12,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CompanyMemberResponseDto } from '../dto/res/members/company-member.res.dto';
-import { toCompanyInvitationItemResponseDto } from '@/modules/companies/mappers/company-invitation.mapper';
-import { toCompanyJoinRequestItemResponseDto } from '@/modules/companies/mappers/company-join-request.mapper';
+import { toCompanyInvitationItemResponseDto } from '../mappers/company-invitation.mapper';
+import { toCompanyJoinRequestItemResponseDto } from '../mappers/company-join-request.mapper';
 import { RequireCompanyRoles } from '../decorators/company-roles.decorator';
 import { CompanyRoleGuard } from '../guards/company-role.guard';
 import { InviteUserDto } from '../dto/req/requests/invite-user.req.dto';
 import { UpdateMemberRoleDto } from '../dto/req/members/update-member-role.req.dto';
 import { CompaniesRoutes } from '../routes/companies.routes';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
+import { CompanyOwnerSwagger } from '@/common/constants/swagger-docs/companies.swagger';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
-import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { toCompanyMemberResponseDto } from '../mappers/company-member.mapper';
 import { CompanyInvitationsService } from '../services/company-invitations.service';
@@ -34,7 +35,7 @@ import {
   CompanyInvitationsPaginationResponseDto,
 } from '../dto/res/requests/company-invitation.res.dto';
 import { CompanyJoinRequestPaginationResponseDto } from '../dto/res/requests/company-join-request.res.dto';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 @Controller(CompaniesRoutes.ROOT)
 @UseGuards(CompanyRoleGuard)
@@ -47,7 +48,7 @@ export class CompanyOwnerController {
   ) {}
 
   @Get(CompaniesRoutes.INVITATIONS.BASE)
-  @ApiEndpoint(CompanyInvitationsPaginationResponseDto, HttpStatus.OK)
+  @ApiEndpoint(CompanyInvitationsPaginationResponseDto, HttpStatus.OK, CompanyOwnerSwagger.GET_INVITATIONS)
   @ResponseMessage('Invitations fetched successfully')
   async getCompanyInvitations(
     @Param('slug') slug: string,
@@ -63,7 +64,7 @@ export class CompanyOwnerController {
   }
 
   @Get(CompaniesRoutes.JOIN_REQUESTS.BASE)
-  @ApiEndpoint(CompanyJoinRequestPaginationResponseDto, HttpStatus.OK)
+  @ApiEndpoint(CompanyJoinRequestPaginationResponseDto, HttpStatus.OK, CompanyOwnerSwagger.GET_JOIN_REQUESTS)
   @ResponseMessage('Join requests fetched successfully')
   async getCompanyJoinRequests(
     @Param('slug') slug: string,
@@ -79,7 +80,7 @@ export class CompanyOwnerController {
   }
 
   @Post(CompaniesRoutes.INVITATIONS.BASE)
-  @ApiEndpoint(CompanyInvitationItemResponseDto, HttpStatus.CREATED)
+  @ApiEndpoint(CompanyInvitationItemResponseDto, HttpStatus.CREATED, CompanyOwnerSwagger.INVITE_USER)
   @ResponseMessage('User invited successfully')
   async inviteUser(
     @Param('slug') slug: string,
@@ -92,7 +93,7 @@ export class CompanyOwnerController {
   }
 
   @Post(CompaniesRoutes.JOIN_REQUESTS.ACCEPT)
-  @ApiEndpoint(CompanyMemberResponseDto, HttpStatus.OK)
+  @ApiEndpoint(CompanyMemberResponseDto, HttpStatus.OK, CompanyOwnerSwagger.ACCEPT_JOIN_REQUEST)
   @ResponseMessage('Join request accepted successfully')
   async acceptJoinRequest(
     @Param('slug') slug: string,
@@ -106,6 +107,7 @@ export class CompanyOwnerController {
   }
 
   @Post(CompaniesRoutes.JOIN_REQUESTS.DECLINE)
+  @ApiEndpoint(Object, HttpStatus.OK, CompanyOwnerSwagger.DECLINE_JOIN_REQUEST)
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Join request declined successfully')
   async declineJoinRequest(@Param('slug') slug: string, @Param('requestId') requestId: string): Promise<void> {
@@ -114,7 +116,7 @@ export class CompanyOwnerController {
 
   @Patch(CompaniesRoutes.MEMBERS.UPDATE_ROLE)
   @RequireCompanyRoles(CompanyRole.OWNER)
-  @ApiEndpoint(CompanyMemberResponseDto, HttpStatus.OK)
+  @ApiEndpoint(CompanyMemberResponseDto, HttpStatus.OK, CompanyOwnerSwagger.UPDATE_MEMBER_ROLE)
   @ResponseMessage('Member role updated successfully')
   async updateMemberRole(
     @Param('slug') slug: string,
@@ -129,6 +131,7 @@ export class CompanyOwnerController {
   }
 
   @Delete(CompaniesRoutes.INVITATIONS.BY_ID)
+  @ApiEndpoint(Object, HttpStatus.OK, CompanyOwnerSwagger.CANCEL_INVITATION)
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Invitation cancelled successfully')
   async cancelInvitation(@Param('slug') slug: string, @Param('invitationId') invitationId: string): Promise<void> {
@@ -136,6 +139,7 @@ export class CompanyOwnerController {
   }
 
   @Delete(CompaniesRoutes.MEMBERS.BY_ID)
+  @ApiEndpoint(Object, HttpStatus.OK, CompanyOwnerSwagger.REMOVE_MEMBER)
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Member removed successfully')
   async removeMember(

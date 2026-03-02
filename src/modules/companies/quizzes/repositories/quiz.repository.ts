@@ -25,9 +25,13 @@ export class QuizRepository extends Repository<Quiz> {
     return createPaginatedResult(this, dto, { where: { companyId } });
   }
 
-  async findPaginatedByUser(userId: string, dto: QuizzesPaginationDto): Promise<PaginatedResultResponseDto<Quiz>> {
+  async findPaginatedByUser(
+    userId: string,
+    dto: QuizzesPaginationDto,
+    companyId?: string,
+  ): Promise<PaginatedResultResponseDto<Quiz>> {
     return createPaginatedResult(this, dto, {
-      where: { createdByUserId: userId },
+      where: companyId ? { createdByUserId: userId, companyId } : { createdByUserId: userId },
       relations: ['company'],
     });
   }

@@ -1,5 +1,6 @@
-import { Controller, Get, Query, HttpStatus } from '@nestjs/common';
-import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
+import { Controller, Get, Query, HttpStatus, Res } from '@nestjs/common';
+import type { Response } from 'express';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { CompanyInvitationsService } from '@/modules/companies/services/company-invitations.service';
@@ -12,17 +13,23 @@ import { UserInvitationsListResponseDto } from '../dto/res/membership/user-invit
 import { UserJoinRequestsListResponseDto } from '../dto/res/membership/user-join-requests-list.res.dto';
 import { toUserMembershipResponseDto } from '../mappers/user-membership.mapper';
 import { UsersRoutes } from '../routes/users.routes';
-import { QuizzesService } from '@/modules/companies/quizzes/services/quizzes.service';
+import { QuizzesService } from '@/modules/companies/quizzes/quiz/quizzes.service';
 import { QuizzesPaginationDto } from '@/modules/companies/quizzes/dto/req/quizzes-pagination.req.dto';
 import { UserQuizzesListResponseDto } from '../dto/res/quizzes/user-quizzes-list.res.dto';
 import { toUserQuizListItemResponseDto } from '../mappers/user-quiz-list-item.mapper';
 import {
   toUserInvitationItemResponseDto,
   toUserJoinRequestItemResponseDto,
-} from '../mappers/user-company-interactions.res.dto';
+} from '../mappers/user-company-interactions';
 import { UserRatingResponseDto } from '@/modules/companies/quizzes/dto/res/user-rating.res.dto';
-import { QuizAttemptsService } from '@/modules/companies/quizzes/services/quiz-attempts.service';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import { QuizAttemptsService } from '@/modules/companies/quizzes/attempts/quiz-attempts.service';
+import { QuizExportService } from '@/modules/companies/quizzes/export/quiz-export.service';
+import { PersonalExportQueryDto } from '@/modules/companies/quizzes/dto/req/export-query.req.dto';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
+import { UserExportResponseDto } from '../dto/res/quizzes/user-export.res.dto';
+import { ExportFormat } from '@/modules/companies/quizzes/enums/export-format.enum';
+import { buildExportFilename } from '@/modules/companies/quizzes/shared/helpers/export-filename.helper';
+import { UserCompanyMembershipSwagger } from '@/common/constants/swagger-docs/users.swagger';
 
 @Controller(UsersRoutes.COMPANY.ROOT)
 export class UserCompanyMembershipController {
@@ -32,17 +39,17 @@ export class UserCompanyMembershipController {
     private readonly membersService: CompanyMembersService,
     private readonly quizzesService: QuizzesService,
     private readonly quizAttemptsService: QuizAttemptsService,
+    private readonly quizExportService: QuizExportService,
   ) {}
 
   @Get(UsersRoutes.COMPANY.INVITATIONS)
-  @ApiEndpoint(UserInvitationsListResponseDto, HttpStatus.OK)
+  @ApiEndpoint(UserInvitationsListResponseDto, HttpStatus.OK, UserCompanyMembershipSwagger.COMPANY_INVITATIONS)
   @ResponseMessage('User invitations fetched successfully')
   async getInvitations(
     @CurrentUser() user: JwtPayload,
     @Query() paginationDto: CompanyPaginationDto,
   ): Promise<UserInvitationsListResponseDto> {
     const result = await this.invitationsService.getUserInvitations(user.sub, paginationDto);
-
     return {
       invitations: result.detail.map(toUserInvitationItemResponseDto),
       pagination: result.pagination,
@@ -50,14 +57,13 @@ export class UserCompanyMembershipController {
   }
 
   @Get(UsersRoutes.COMPANY.JOIN_REQUESTS)
-  @ApiEndpoint(UserJoinRequestsListResponseDto, HttpStatus.OK)
+  @ApiEndpoint(UserJoinRequestsListResponseDto, HttpStatus.OK, UserCompanyMembershipSwagger.COMPANY_JOIN_REQUESTS)
   @ResponseMessage('User join requests fetched successfully')
   async getJoinRequests(
     @CurrentUser() user: JwtPayload,
     @Query() paginationDto: CompanyPaginationDto,
   ): Promise<UserJoinRequestsListResponseDto> {
     const result = await this.joinRequestsService.getUserJoinRequests(user.sub, paginationDto);
-
     return {
       joinRequests: result.detail.map(toUserJoinRequestItemResponseDto),
       pagination: result.pagination,
@@ -65,14 +71,13 @@ export class UserCompanyMembershipController {
   }
 
   @Get(UsersRoutes.COMPANY.MEMBERSHIP)
-  @ApiEndpoint(UserMembershipListResponseDto, HttpStatus.OK)
+  @ApiEndpoint(UserMembershipListResponseDto, HttpStatus.OK, UserCompanyMembershipSwagger.COMPANY_MEMBERSHIP)
   @ResponseMessage('User membership fetched successfully')
   async getMembership(
     @CurrentUser() user: JwtPayload,
     @Query() paginationDto: CompanyMembersPaginationDto,
   ): Promise<UserMembershipListResponseDto> {
     const result = await this.membersService.getUserMembership(user.sub, paginationDto);
-
     return {
       membership: result.detail.map(toUserMembershipResponseDto),
       pagination: result.pagination,
@@ -80,14 +85,14 @@ export class UserCompanyMembershipController {
   }
 
   @Get(UsersRoutes.COMPANY.QUIZZES)
-  @ApiEndpoint(UserQuizzesListResponseDto, HttpStatus.OK)
+  @ApiEndpoint(UserQuizzesListResponseDto, HttpStatus.OK, UserCompanyMembershipSwagger.COMPANY_QUIZZES)
   @ResponseMessage('User quizzes fetched successfully')
   async getMyQuizzes(
     @CurrentUser() user: JwtPayload,
     @Query() paginationDto: QuizzesPaginationDto,
+    @Query('companySlug') companySlug?: string,
   ): Promise<UserQuizzesListResponseDto> {
-    const result = await this.quizzesService.findAllByUser(user.sub, paginationDto);
-
+    const result = await this.quizzesService.findAllByUser(user.sub, paginationDto, companySlug);
     return {
       quizzes: result.detail.map(toUserQuizListItemResponseDto),
       pagination: result.pagination,
@@ -95,11 +100,37 @@ export class UserCompanyMembershipController {
   }
 
   @Get(UsersRoutes.COMPANY.RATING)
-  @ApiEndpoint(UserRatingResponseDto, HttpStatus.OK)
+  @ApiEndpoint(UserRatingResponseDto, HttpStatus.OK, UserCompanyMembershipSwagger.COMPANY_RATING)
   @ResponseMessage('User rating fetched successfully')
   async getMyRating(@CurrentUser() user: JwtPayload): Promise<{ rating: UserRatingResponseDto }> {
     const rating = await this.quizAttemptsService.getUserRating(user.sub);
-
     return { rating };
+  }
+
+  @Get(UsersRoutes.COMPANY.EXPORT.ME)
+  @ApiEndpoint(UserExportResponseDto, HttpStatus.OK, UserCompanyMembershipSwagger.COMPANY_EXPORT)
+  @ResponseMessage('Export completed successfully')
+  async exportMyResults(
+    @CurrentUser() user: JwtPayload,
+    @Query() query: PersonalExportQueryDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<UserExportResponseDto | void> {
+    if (query.format === ExportFormat.CSV) {
+      const { snapshots, firstName, lastName } = await this.quizExportService.getSnapshotsForMemberExport(
+        user.sub,
+        query,
+      );
+      const csv = this.quizExportService.buildCsv(snapshots);
+
+      const slugName = query.companySlug || 'all-companies';
+      const filename = buildExportFilename('personal', slugName, snapshots, { firstName, lastName });
+
+      response.setHeader('Content-Type', 'text/csv');
+      response.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      response.send(csv);
+      return;
+    }
+
+    return this.quizExportService.exportMyResults(user.sub, query);
   }
 }

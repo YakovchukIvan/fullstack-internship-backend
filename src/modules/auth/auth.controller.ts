@@ -2,8 +2,8 @@ import type { Response, Request } from 'express';
 import { Body, Controller, Get, HttpStatus, Post, Req, Res } from '@nestjs/common';
 import { LoginDto } from './dto/req/login.dto';
 import { AuthResponseDto } from './dto/res/auth-response.dto';
-import { CurrentUser } from './decorators/current-user.decorator';
-import { UserResponseDto } from '../users/dto/res/users/user.res.dto';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { UserResponseDto } from '@/modules/users/dto/res/users/user.res.dto';
 import { AuthRoutes } from './routes/auth.routes';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { RegisterDto } from './dto/req/register.dto';
@@ -12,12 +12,13 @@ import { ForgotPasswordDto } from './dto/req/forgot-password.dto';
 import { ResetPasswordDto } from './dto/req/reset-password.dto';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { AuthFacadeService } from './services/auth-facade.service';
+import { AuthSwagger } from '@/common/constants/swagger-docs/auth.swagger';
 import { CurrentUserResponseDto } from './dto/res/current-user.res.dto';
 import { Public } from './decorators/public.decorator';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { Roles } from './decorators/roles.decorator';
 import { UnauthorizedException } from '@nestjs/common';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 import type { AccessTokenPayload } from './interfaces/token-payload.interface';
 
 interface RequestWithCookies extends Request {
@@ -29,7 +30,7 @@ export class AuthController {
   constructor(private readonly authFacadeService: AuthFacadeService) {}
 
   @Get(AuthRoutes.ME)
-  @ApiEndpoint(UserResponseDto)
+  @ApiEndpoint(UserResponseDto, HttpStatus.OK, AuthSwagger.ME)
   @Roles(UserRole.USER, UserRole.OWNER)
   @ResponseMessage('Current user fetched')
   getCurrentUser(@CurrentUser() user: JwtPayload): { user: CurrentUserResponseDto } {
@@ -45,7 +46,7 @@ export class AuthController {
   @Public()
   @Post(AuthRoutes.REGISTER)
   @ApiSecurity({})
-  @ApiEndpoint(AuthResponseDto, HttpStatus.CREATED)
+  @ApiEndpoint(AuthResponseDto, HttpStatus.CREATED, AuthSwagger.REGISTER)
   @ResponseMessage('User registered successfully')
   async register(
     @Body() registerDto: RegisterDto,
@@ -57,7 +58,7 @@ export class AuthController {
   @Public()
   @Post(AuthRoutes.LOGIN)
   @ApiSecurity({})
-  @ApiEndpoint(AuthResponseDto, HttpStatus.OK)
+  @ApiEndpoint(AuthResponseDto, HttpStatus.OK, AuthSwagger.LOGIN)
   @ResponseMessage('Login successful')
   async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) response: Response): Promise<AuthResponseDto> {
     return this.authFacadeService.handleLogin(loginDto, response);
@@ -66,7 +67,7 @@ export class AuthController {
   @Public()
   @Post(AuthRoutes.REFRESH)
   @ApiSecurity({})
-  @ApiEndpoint(AuthResponseDto, HttpStatus.OK)
+  @ApiEndpoint(AuthResponseDto, HttpStatus.OK, AuthSwagger.REFRESH)
   @ResponseMessage('Token refreshed successfully')
   async refresh(
     @Req() request: RequestWithCookies,
@@ -84,7 +85,7 @@ export class AuthController {
   @Public()
   @Post(AuthRoutes.FORGOT_PASSWORD)
   @ApiSecurity({})
-  @ApiEndpoint(Object, HttpStatus.OK)
+  @ApiEndpoint(Object, HttpStatus.OK, AuthSwagger.FORGOT_PASSWORD)
   @ResponseMessage('Password reset request processed')
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto): Promise<{ message: string }> {
     const result = await this.authFacadeService.handleForgotPassword(forgotPasswordDto.email);
@@ -94,7 +95,7 @@ export class AuthController {
   @Public()
   @Post(AuthRoutes.RESET_PASSWORD)
   @ApiSecurity({})
-  @ApiEndpoint(Object, HttpStatus.OK)
+  @ApiEndpoint(Object, HttpStatus.OK, AuthSwagger.RESET_PASSWORD)
   @ResponseMessage('Password has been reset successfully')
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
     await this.authFacadeService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);
@@ -102,6 +103,7 @@ export class AuthController {
   }
 
   @Post(AuthRoutes.LOGOUT)
+  @ApiEndpoint(Object, HttpStatus.OK, AuthSwagger.LOGOUT)
   @Roles(UserRole.USER, UserRole.OWNER)
   @ResponseMessage('Logout successful')
   async logout(

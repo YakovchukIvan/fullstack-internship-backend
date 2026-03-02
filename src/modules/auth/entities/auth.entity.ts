@@ -25,10 +25,6 @@ export class Auth extends BaseEntity {
   @Exclude()
   resetPasswordExpiresAt: Date | null;
 
-  @Column({ name: 'refresh_token_hash', type: 'varchar', length: 64, nullable: true })
-  @Exclude()
-  refreshTokenHash: string | null;
-
   @Column({ name: 'user_id', type: 'uuid', unique: true })
   @Exclude()
   userId: string;

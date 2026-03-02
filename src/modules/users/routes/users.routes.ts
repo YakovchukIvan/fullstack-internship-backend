@@ -9,5 +9,8 @@ export const UsersRoutes = {
     MEMBERSHIP: 'membership',
     QUIZZES: 'quizzes',
     RATING: 'rating',
+    EXPORT: {
+      ME: 'export/me',
+    },
   },
 } as const;

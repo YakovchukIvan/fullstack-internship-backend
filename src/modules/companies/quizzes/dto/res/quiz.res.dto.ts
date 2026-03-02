@@ -3,7 +3,6 @@ import { CompanyRole } from '@/common/enums/company-role.enum';
 export class QuizQuestionResponseDto {
   question: string;
   options: string[];
-  correctAnswers: number[];
 }
 
 export class QuizCreatedBySnapshotDto {

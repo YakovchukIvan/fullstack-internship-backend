@@ -4,7 +4,9 @@ import { UserRole } from '@/common/enums/user-role.enum';
 import { UserAuthRepository } from '../repositories/user-auth.repository';
 import { AuthRepository } from '../repositories/auth.repository';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
-import { Auth0Payload } from '../interfaces/auth0-payload.interface';
+import { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
+
+type Auth0IncomingPayload = Omit<JwtPayload, 'role'>;
 
 @Injectable()
 export class AuthOAuthService {
@@ -13,7 +15,7 @@ export class AuthOAuthService {
     private readonly authRepository: AuthRepository,
   ) {}
 
-  async validateAuth0User(auth0Payload: Auth0Payload): Promise<{ id: string; email: string; role: UserRole }> {
+  async validateAuth0User(auth0Payload: Auth0IncomingPayload): Promise<{ id: string; email: string; role: UserRole }> {
     const email = auth0Payload.email.toLowerCase();
     const user = await this.userAuthRepository.findByEmailSelect(email);
 
@@ -25,7 +27,7 @@ export class AuthOAuthService {
   }
 
   private async createUserFromAuth0(
-    auth0Payload: Auth0Payload,
+    auth0Payload: Auth0IncomingPayload,
   ): Promise<{ id: string; email: string; role: UserRole }> {
     const email = auth0Payload.email.toLowerCase();
 

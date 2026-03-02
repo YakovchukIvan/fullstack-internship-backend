@@ -7,4 +7,8 @@ export const QuizzesRoutes = {
     BASE: ':quizId/attempts',
     MY: ':quizId/attempts/my',
   },
+  EXPORT: {
+    COMPANY: 'export/company',
+    USER: 'export/users/:userId',
+  },
 } as const;

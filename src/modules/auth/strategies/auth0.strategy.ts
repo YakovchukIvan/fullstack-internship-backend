@@ -4,7 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { passportJwtSecret } from 'jwks-rsa';
 import { AuthOAuthService } from '../services/auth-oauth.service';
-import { Auth0Payload } from '../interfaces/auth0-payload.interface';
+import { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 @Injectable()
 export class Auth0Strategy extends PassportStrategy(Strategy, 'auth0') {
@@ -30,7 +30,7 @@ export class Auth0Strategy extends PassportStrategy(Strategy, 'auth0') {
     });
   }
 
-  async validate(payload: Auth0Payload): Promise<Auth0Payload> {
+  async validate(payload: Omit<JwtPayload, 'role'>): Promise<JwtPayload> {
     if (!payload.email) {
       throw new UnauthorizedException('Email not found in Auth0 token');
     }
@@ -41,8 +41,6 @@ export class Auth0Strategy extends PassportStrategy(Strategy, 'auth0') {
       sub: user.id,
       email: user.email,
       role: user.role,
-      iss: payload.iss,
-      aud: payload.aud,
     };
   }
 }

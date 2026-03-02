@@ -11,16 +11,17 @@ import { UserRole } from '@/common/enums/user-role.enum';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { UsersPaginatedBaseResponseDto } from '../dto/res/users/users-paginated.res.dto';
 import { Roles } from '@/modules/auth/decorators/roles.decorator';
-import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { toUserResponseDto } from '../mappers/user.mapper';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import { UsersSwagger } from '@/common/constants/swagger-docs/users.swagger';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 @Controller(UsersRoutes.ROOT)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  @ApiEndpoint(UserResponseDto, HttpStatus.CREATED)
+  @ApiEndpoint(UserResponseDto, HttpStatus.CREATED, UsersSwagger.CREATE)
   @Roles(UserRole.OWNER)
   @ResponseMessage('User created successfully')
   async create(@Body() dto: CreateUserDto): Promise<{ user: UserResponseDto }> {
@@ -29,7 +30,7 @@ export class UsersController {
   }
 
   @Get()
-  @ApiEndpoint(UsersPaginatedBaseResponseDto, HttpStatus.OK)
+  @ApiEndpoint(UsersPaginatedBaseResponseDto, HttpStatus.OK, UsersSwagger.FIND_ALL)
   async findAll(@Query() paginationQuery: UsersPaginationQueryDto): Promise<UsersPaginatedBaseResponseDto> {
     const result = await this.usersService.findAll(paginationQuery);
     return {
@@ -39,7 +40,7 @@ export class UsersController {
   }
 
   @Get(UsersRoutes.ME)
-  @ApiEndpoint(UserResponseDto, HttpStatus.OK)
+  @ApiEndpoint(UserResponseDto, HttpStatus.OK, UsersSwagger.FIND_ME)
   async findMe(@CurrentUser() currentUser: JwtPayload): Promise<{ user: UserResponseDto }> {
     const user = await this.usersService.findOne(currentUser.sub);
     return { user: toUserResponseDto(user) };
@@ -47,14 +48,14 @@ export class UsersController {
 
   @Get(UsersRoutes.ID)
   @Roles(UserRole.OWNER)
-  @ApiEndpoint(UserResponseDto, HttpStatus.OK)
+  @ApiEndpoint(UserResponseDto, HttpStatus.OK, UsersSwagger.FIND_ONE)
   async findOne(@UUIDParam() id: string): Promise<{ user: UserResponseDto }> {
     const user = await this.usersService.findOne(id);
     return { user: toUserResponseDto(user) };
   }
 
   @Patch(UsersRoutes.ME)
-  @ApiEndpoint(UserResponseDto, HttpStatus.OK)
+  @ApiEndpoint(UserResponseDto, HttpStatus.OK, UsersSwagger.UPDATE_ME)
   @ResponseMessage('Profile updated successfully')
   async updateMe(
     @CurrentUser() currentUser: JwtPayload,
@@ -65,6 +66,7 @@ export class UsersController {
   }
 
   @Delete(UsersRoutes.ME)
+  @ApiEndpoint(Object, HttpStatus.OK, UsersSwagger.REMOVE_ME)
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Profile deleted successfully')
   async removeMe(@CurrentUser() currentUser: JwtPayload): Promise<void> {

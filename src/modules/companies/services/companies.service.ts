@@ -4,7 +4,7 @@ import { UserRole } from '@/common/enums/user-role.enum';
 import { generateSlug } from '@/common/helpers/generate-slug.helper';
 import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
 import { CompaniesPaginationDto } from '../dto/req/company/companies-pagination.req.dto';
-import { Company } from '@/modules/companies/entities/company.entity';
+import { Company } from '../entities/company.entity';
 import { CreateCompanyDto } from '../dto/req/company/create-company.req.dto';
 import { UpdateCompanyDto } from '../dto/req/company/update-company.req.dto';
 import { CompanyRepository } from '../repositories/company.repository';
