@@ -8,7 +8,7 @@ import { UserQuizzesResponseDto } from '../dto/res/quiz-overview.res.dto';
 import { DurationDynamicsResponseDto } from '../dto/res/dynamics.res.dto';
 import { AnalyticsRoutes } from '../routes/analytics.routes';
 import { AnalyticsSwagger } from '@/common/constants/swagger-docs/analytics.swagger';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 import { MemberAnalyticsService } from '../services/member-analytics.service';
 
 @Controller(AnalyticsRoutes.ROOT)

@@ -10,8 +10,8 @@ import {
 import { PerformanceDistributionItemDto } from '../dto/res/performance.res.dto';
 import { ScoreDynamicsItemDto } from '../dto/res/dynamics.res.dto';
 import { StreakResponseDto } from '../dto/res/streak.res.dto';
-import { calculateAccuracy, calculateRating } from '@/modules/companies/quizzes/helper/quiz-math.helper';
-import { getPerformanceResult } from '@/modules/companies/quizzes/helper/quiz-performance.helper';
+import { calculateAccuracy, calculateRating } from '@/modules/companies/quizzes/shared/helpers/quiz-math.helper';
+import { getPerformanceResult } from '@/modules/companies/quizzes/shared/helpers/quiz-performance.helper';
 import { PerformanceLevel } from '@/modules/companies/quizzes/enums/quiz-performance-level.enum';
 import { calculateStreak } from '../helpers/streak.helper';
 import { User } from '@/modules/users/entities/user.entity';

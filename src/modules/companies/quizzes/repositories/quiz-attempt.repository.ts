@@ -3,7 +3,7 @@ import { DataSource, Repository } from 'typeorm';
 import { QuizAttempt } from '../entities/quiz-attempt.entity';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { UserRatingResponseDto } from '../dto/res/user-rating.res.dto';
-import { calculateRating } from '../helper/quiz-math.helper';
+import { calculateRating } from '../shared/helpers/quiz-math.helper';
 
 @Injectable()
 export class QuizAttemptRepository extends Repository<QuizAttempt> {

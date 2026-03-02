@@ -13,7 +13,7 @@ import { UserAnalyticsProfileDto } from '../dto/res/user-profile.res.dto';
 import { UserQuizzesResponseDto, QuizAttemptsOverviewResponseDto } from '../dto/res/quiz-overview.res.dto';
 import { AnalyticsRoutes } from '../routes/analytics.routes';
 import { AnalyticsSwagger } from '@/common/constants/swagger-docs/analytics.swagger';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 @UseGuards(CompanyRoleGuard)
 @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)

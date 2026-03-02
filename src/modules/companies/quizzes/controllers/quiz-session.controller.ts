@@ -5,16 +5,16 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { RequireCompanyRoles } from '../../decorators/company-roles.decorator';
 import { CompanyRoleGuard } from '../../guards/company-role.guard';
-import { QuizzesService } from '../services/quizzes.service';
-import { QuizAttemptsService } from '../services/quiz-attempts.service';
 import { SubmitQuizDto } from '../dto/req/submit-quiz.req.dto';
 import { QuizAttemptResponseDto } from '../dto/res/quiz-attempt.res.dto';
 import { QuizStartResponseDto } from '../dto/res/quiz.res.dto';
-import { QuizAnswerSnapshot } from '../interfaces/quiz-answer-snapshot.interface';
 import { QuizzesRoutes } from '../routes/quizzes.routes';
-import { toQuizStartResponseDto } from '../mappers/quiz.mapper';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
 import { QuizSessionSwagger } from '@/common/constants/swagger-docs/quizzes.swagger';
+import { QuizzesService } from '../quiz/quizzes.service';
+import { QuizAttemptsService } from '../attempts/quiz-attempts.service';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
+import { toQuizStartResponseDto } from '../shared/mappers/quiz.mapper';
+import { QuizAnswerSnapshot } from '../shared/interfaces/quiz-answer-snapshot.interface';
 
 @Controller(QuizzesRoutes.ROOT)
 @UseGuards(CompanyRoleGuard)

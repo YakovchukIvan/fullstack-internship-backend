@@ -1,6 +1,6 @@
 import { LeaderboardRawRow } from '../interfaces/company.interfaces';
 import { LeaderboardTableEntryDto, LeaderboardTableResponseDto } from '../dto/res/leaderboard.res.dto';
-import { calculateAccuracy, calculateRating } from '@/modules/companies/quizzes/helper/quiz-math.helper';
+import { calculateAccuracy, calculateRating } from '@/modules/companies/quizzes/shared/helpers/quiz-math.helper';
 import { ANALYTICS_CONSTANTS } from '../constants/analytics.constants';
 
 export function toLeaderboardTableEntryDto(row: LeaderboardRawRow, rank: number): LeaderboardTableEntryDto {
