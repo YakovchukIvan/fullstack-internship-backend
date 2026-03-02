@@ -2,7 +2,7 @@ import { Entity, Column, Index } from 'typeorm';
 import { BaseEntity } from '@/common/entities/base.entity';
 import { Company } from '../../entities/company.entity';
 import { ManyToOne, JoinColumn } from 'typeorm';
-import type { QuizCreatedBySnapshot, QuizQuestion } from '../interfaces/quiz.interfaces';
+import type { QuizCreatedBySnapshot, QuizQuestion } from '../shared/interfaces/quiz.interfaces';
 
 @Entity('quizzes')
 @Index(['companyId'])

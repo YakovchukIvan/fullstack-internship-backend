@@ -14,7 +14,7 @@ import { Roles } from '@/modules/auth/decorators/roles.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { toUserResponseDto } from '../mappers/user.mapper';
 import { UsersSwagger } from '@/common/constants/swagger-docs/users.swagger';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 @Controller(UsersRoutes.ROOT)
 export class UsersController {

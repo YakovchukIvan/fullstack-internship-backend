@@ -20,7 +20,7 @@ import { RequireCompanyRoles } from './../decorators/company-roles.decorator';
 import { CompanyRoleGuard } from './../guards/company-role.guard';
 import { CompaniesPaginationDto } from '../dto/req/company/companies-pagination.req.dto';
 import { CompaniesPaginatedBaseResponseDto, CompanyResponseDto } from '../dto/res/company/company-response.res.dto';
-import { CompaniesService } from '@/modules/companies/services/companies.service';
+import { CompaniesService } from '../services/companies.service';
 import { CompaniesRoutes } from './../routes/companies.routes';
 import { toCompanyResponseDto } from '../mappers/company.mapper';
 import { CompanyMembersPaginationDto } from '../dto/req/members/company-members-pagination.req.dto';
@@ -30,7 +30,7 @@ import { toCompanyMemberResponseDto } from '../mappers/company-member.mapper';
 import { CompanyMembersListResponseDto } from '../dto/res/members/company-member.res.dto';
 import { CreateCompanyDto } from '../dto/req/company/create-company.req.dto';
 import { UpdateCompanyDto } from '../dto/req/company/update-company.req.dto';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 @Controller(CompaniesRoutes.ROOT)
 export class CompaniesController {

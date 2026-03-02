@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '@/modules/redis/redis.service';
 import { RedisKeys, REDIS_TTL } from '@/modules/redis/redis.constants';
-import { QuizAnswerSnapshot } from '../interfaces/quiz-answer-snapshot.interface';
+import { QuizAnswerSnapshot } from '../shared/interfaces/quiz-answer-snapshot.interface';
 
 @Injectable()
 export class QuizAnswerRedisRepository {

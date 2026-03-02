@@ -1,5 +1,5 @@
-import { Quiz } from '../entities/quiz.entity';
-import { PerformanceLevel } from '../enums/quiz-performance-level.enum';
+import { Quiz } from '../../entities/quiz.entity';
+import { PerformanceLevel } from '../../enums/quiz-performance-level.enum';
 
 export interface QuizAttemptAnswer {
   questionIndex: number;

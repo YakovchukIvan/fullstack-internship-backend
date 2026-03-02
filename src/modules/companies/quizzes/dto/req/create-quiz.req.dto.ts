@@ -13,7 +13,7 @@ import {
   MaxLength,
   IsOptional,
 } from 'class-validator';
-import { QuizConfig } from '../../constants/quiz.constants';
+import { QuizConfig } from '../../shared/constants/quiz.constants';
 import { QuizQuestionDto } from './quiz-question.dto';
 
 export class CreateQuizDto {

@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { QuizAnswerRedisRepository } from '../repositories/quiz-answer-redis.repository';
 import { CompaniesService } from '../../services/companies.service';
 import { CompanyMembersService } from '../../services/company-members.service';
-import { CsvExportService } from './csv-export.service';
-import { QuizAnswerSnapshot } from '../interfaces/quiz-answer-snapshot.interface';
+import { CsvExportService } from '../export/csv-export.service';
+import { QuizAnswerSnapshot } from '../shared/interfaces/quiz-answer-snapshot.interface';
 import { ExportQueryDto, PersonalExportQueryDto } from '../dto/req/export-query.req.dto';
 import { CompanyExportResponseDto, ExportSummaryDto } from '../dto/res/export.res.dto';
 import { UserExportResponseDto } from '@/modules/users/dto/res/quizzes/user-export.res.dto';
@@ -11,8 +11,8 @@ import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '@/modules/users/entities/user.entity';
-import { toExportAttemptResponseDto } from '../mappers/quiz-export-answer.mapper';
-import { calculateAccuracy } from '../helper/quiz-math.helper';
+import { toExportAttemptResponseDto } from '../shared/mappers/quiz-export-answer.mapper';
+import { calculateAccuracy } from '../shared/helpers/quiz-math.helper';
 
 @Injectable()
 export class QuizExportService {

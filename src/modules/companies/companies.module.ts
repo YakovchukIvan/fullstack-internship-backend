@@ -4,7 +4,7 @@ import { Company } from './entities/company.entity';
 import { CompanyMember } from './entities/company-member.entity';
 import { CompanyInvitation } from './entities/company-invitation.entity';
 import { CompanyJoinRequest } from './entities/company-join-request.entity';
-import { User } from '../users/entities/user.entity';
+import { User } from '@/modules/users/entities/user.entity';
 import { CompanyRepository } from './repositories/company.repository';
 import { CompanyMemberRepository } from './repositories/company-member.repository';
 import { CompanyInvitationRepository } from './repositories/company-invitation.repository';

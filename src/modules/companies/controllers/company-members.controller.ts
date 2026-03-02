@@ -11,7 +11,7 @@ import { CompanyMembersService } from '../services/company-members.service';
 import { CompanyInvitationsService } from '../services/company-invitations.service';
 import { CompanyJoinRequestsService } from '../services/company-join-requests.service';
 import { CompanyJoinRequestItemResponseDto } from '../dto/res/requests/company-join-request.res.dto';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 @Controller(CompaniesRoutes.ROOT)
 export class CompanyMembersController {

@@ -1,4 +1,4 @@
-import { PerformanceLevel } from '../enums/quiz-performance-level.enum';
+import { PerformanceLevel } from '../../enums/quiz-performance-level.enum';
 import { PerformanceResult, PerformanceThreshold } from '../interfaces/quiz-attempt.interfaces';
 
 const PERFORMANCE_THRESHOLDS: PerformanceThreshold[] = [

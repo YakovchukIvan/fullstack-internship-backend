@@ -1,4 +1,4 @@
-import { QuizQuestionDto } from '../dto/req/quiz-question.dto';
+import { QuizQuestionDto } from '../../dto/req/quiz-question.dto';
 import { QuizQuestion } from '../interfaces/quiz.interfaces';
 
 export function mapToQuizQuestions(questions: QuizQuestionDto[]): QuizQuestion[] {

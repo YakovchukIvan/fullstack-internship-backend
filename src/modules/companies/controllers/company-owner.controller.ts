@@ -12,8 +12,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CompanyMemberResponseDto } from '../dto/res/members/company-member.res.dto';
-import { toCompanyInvitationItemResponseDto } from '@/modules/companies/mappers/company-invitation.mapper';
-import { toCompanyJoinRequestItemResponseDto } from '@/modules/companies/mappers/company-join-request.mapper';
+import { toCompanyInvitationItemResponseDto } from '../mappers/company-invitation.mapper';
+import { toCompanyJoinRequestItemResponseDto } from '../mappers/company-join-request.mapper';
 import { RequireCompanyRoles } from '../decorators/company-roles.decorator';
 import { CompanyRoleGuard } from '../guards/company-role.guard';
 import { InviteUserDto } from '../dto/req/requests/invite-user.req.dto';
@@ -35,7 +35,7 @@ import {
   CompanyInvitationsPaginationResponseDto,
 } from '../dto/res/requests/company-invitation.res.dto';
 import { CompanyJoinRequestPaginationResponseDto } from '../dto/res/requests/company-join-request.res.dto';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 @Controller(CompaniesRoutes.ROOT)
 @UseGuards(CompanyRoleGuard)

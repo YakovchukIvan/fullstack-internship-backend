@@ -1,4 +1,4 @@
-import { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 export interface AccessTokenPayload extends JwtPayload {
   jti: string;

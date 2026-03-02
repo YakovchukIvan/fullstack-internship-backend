@@ -2,8 +2,8 @@ import type { Response, Request } from 'express';
 import { Body, Controller, Get, HttpStatus, Post, Req, Res } from '@nestjs/common';
 import { LoginDto } from './dto/req/login.dto';
 import { AuthResponseDto } from './dto/res/auth-response.dto';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { UserResponseDto } from '../users/dto/res/users/user.res.dto';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { UserResponseDto } from '@/modules/users/dto/res/users/user.res.dto';
 import { AuthRoutes } from './routes/auth.routes';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { RegisterDto } from './dto/req/register.dto';
@@ -18,7 +18,7 @@ import { Public } from './decorators/public.decorator';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { Roles } from './decorators/roles.decorator';
 import { UnauthorizedException } from '@nestjs/common';
-import type { JwtPayload } from '@/common/interface/jwt-payload.interface';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 import type { AccessTokenPayload } from './interfaces/token-payload.interface';
 
 interface RequestWithCookies extends Request {

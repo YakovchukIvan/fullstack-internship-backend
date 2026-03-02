@@ -1,8 +1,8 @@
-import { QuizAttempt } from '../entities/quiz-attempt.entity';
-import { QuizAttemptResponseDto } from '../dto/res/quiz-attempt.res.dto';
+import { QuizAttempt } from '../../entities/quiz-attempt.entity';
+import { QuizAttemptResponseDto } from '../../dto/res/quiz-attempt.res.dto';
 import { toIso } from '@/common/helpers/date.transformer';
-import { getPerformanceResult } from '../helper/quiz-performance.helper';
-import { calculateAccuracy } from '../helper/quiz-math.helper';
+import { getPerformanceResult } from '../helpers/quiz-performance.helper';
+import { calculateAccuracy } from '../helpers/quiz-math.helper';
 
 export function toQuizAttemptResponseDto(attempt: QuizAttempt): QuizAttemptResponseDto {
   const accuracyPercent = calculateAccuracy(attempt.totalPoints, attempt.maxPossiblePoints);
