@@ -1,4 +1,4 @@
-import { IsISO8601, IsOptional, IsString } from 'class-validator';
+import { IsISO8601, IsOptional } from 'class-validator';
 
 export class AnalyticsQueryDto {
   @IsOptional()
@@ -8,10 +8,4 @@ export class AnalyticsQueryDto {
   @IsOptional()
   @IsISO8601()
   to?: string;
-}
-
-export class PersonalAnalyticsQueryDto extends AnalyticsQueryDto {
-  @IsOptional()
-  @IsString()
-  slug?: string;
 }

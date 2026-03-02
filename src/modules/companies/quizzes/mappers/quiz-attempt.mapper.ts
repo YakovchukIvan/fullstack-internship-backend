@@ -17,19 +17,7 @@ export function toQuizAttemptResponseDto(attempt: QuizAttempt): QuizAttemptRespo
     accuracyPercent,
     performanceLevel: performance.level,
     performanceMessage: performance.message,
-    durationSeconds: attempt.durationSeconds ?? null,
+    durationSeconds: attempt.durationSeconds,
     completedAt: toIso(attempt.completedAt),
   };
-}
-
-export function toAttemptCreatePayload(
-  userId: string,
-  quizId: string,
-  companyId: string,
-  totalPoints: number,
-  maxPossiblePoints: number,
-  completedAt: Date,
-  durationSeconds?: number,
-) {
-  return { userId, quizId, companyId, totalPoints, maxPossiblePoints, durationSeconds, completedAt };
 }

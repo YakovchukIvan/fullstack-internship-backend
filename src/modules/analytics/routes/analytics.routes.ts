@@ -1,13 +1,15 @@
 export const AnalyticsRoutes = {
   ROOT: 'analytics',
 
-  ME: 'me',
-  ME_STREAK: 'me/streak',
-  ME_DURATION: 'me/duration',
-  ME_DYNAMICS: 'me/dynamics',
-  ME_PERFORMANCE: 'me/performance',
+  ME_COMPANY: 'me/companies/:slug',
+  ME_COMPANY_QUIZZES: 'me/companies/:slug/quizzes',
+  ME_COMPANY_DURATION_DYNAMICS: 'me/companies/:slug/duration-dynamics',
 
   COMPANY_LEADERBOARD: 'companies/:slug/leaderboard',
   COMPANY_DYNAMICS: 'companies/:slug/dynamics',
-  COMPANY_USER_DYNAMICS: 'companies/:slug/users/:userId/dynamics',
+
+  COMPANY_USER_PROFILE: 'companies/:slug/users/:userId',
+  COMPANY_USER_QUIZZES: 'companies/:slug/users/:userId/quizzes',
+
+  COMPANY_QUIZ_ATTEMPTS: 'companies/:slug/quizzes/:quizId/attempts',
 } as const;

@@ -18,13 +18,11 @@ import { CompanyMembersController } from './controllers/company-members.controll
 import { CompanyOwnerController } from './controllers/company-owner.controller';
 import { CompanyRoleGuard } from './guards/company-role.guard';
 import { QuizzesModule } from './quizzes/quizzes.module';
-import { AnalyticsModule } from '../analytics/analytics.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Company, CompanyMember, CompanyInvitation, CompanyJoinRequest, User]),
     QuizzesModule,
-    AnalyticsModule,
   ],
   controllers: [CompaniesController, CompanyOwnerController, CompanyMembersController],
   providers: [

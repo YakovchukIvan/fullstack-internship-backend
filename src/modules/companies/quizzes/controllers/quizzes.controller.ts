@@ -50,6 +50,7 @@ export class QuizzesController {
   }
 
   @Get(QuizzesRoutes.BY_ID)
+  @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
   @ApiEndpoint(QuizResponseDto, HttpStatus.OK, QuizzesSwagger.FIND_ONE)
   @ResponseMessage('Quiz fetched successfully')
   async findOne(

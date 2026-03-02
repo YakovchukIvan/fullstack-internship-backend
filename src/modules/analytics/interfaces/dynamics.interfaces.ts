@@ -1,14 +1,3 @@
-export interface LeaderboardRawRow {
-  userId: string;
-  firstName: string;
-  lastName: string;
-  avatarUrl: string | null;
-  sumPoints: string;
-  sumMaxPoints: string;
-  totalAttempts: string;
-  avgDuration: string | null;
-}
-
 export interface ScoreDynamicsRow {
   date: string;
   avgAccuracy: string;
@@ -24,7 +13,7 @@ export interface DurationStatsRaw {
 export interface DurationDynamicsRaw {
   attemptId: string;
   completedAt: Date;
-  durationSeconds: number | null;
+  durationSeconds: number;
   totalPoints: string;
   maxPossiblePoints: string;
 }
@@ -32,10 +21,4 @@ export interface DurationDynamicsRaw {
 export interface PerformanceRaw {
   totalPoints: string;
   maxPossiblePoints: string;
-}
-
-export interface StreakResult {
-  currentStreak: number;
-  longestStreak: number;
-  completedToday: boolean;
 }

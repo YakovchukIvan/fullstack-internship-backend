@@ -7,7 +7,8 @@ export const QuizzesSwagger: Record<string, Partial<OperationObject>> = {
   },
   FIND_ONE: {
     summary: 'Get quiz by ID',
-    description: 'Returns full quiz details including all questions and answer options.',
+    description:
+      'Returns full quiz details including all questions and answer options. Requires company OWNER or company ADMIN.',
   },
   CREATE: {
     summary: 'Create quiz',

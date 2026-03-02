@@ -4,7 +4,7 @@ import { CompaniesService } from '../../services/companies.service';
 import { SubmitQuizDto } from '../dto/req/submit-quiz.req.dto';
 import { QuizAttemptResponseDto } from '../dto/res/quiz-attempt.res.dto';
 import { UserRatingResponseDto } from '../dto/res/user-rating.res.dto';
-import { toAttemptCreatePayload, toQuizAttemptResponseDto } from '../mappers/quiz-attempt.mapper';
+import { toQuizAttemptResponseDto } from '../mappers/quiz-attempt.mapper';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { AppLogger } from '@/common/logger/app-logger';
 import { BuildSnapshotParams, QuizAttemptAnswer } from '../interfaces/quiz-attempt.interfaces';
@@ -45,17 +45,15 @@ export class QuizAttemptsService {
     const totalPoints = Number(answers.reduce((sum, a) => sum + a.questionScore, 0).toFixed(4));
     const completedAt = new Date();
 
-    const attempt = this.attemptRepository.create(
-      toAttemptCreatePayload(
-        userId,
-        quizId,
-        company.id,
-        totalPoints,
-        quiz.questions.length,
-        completedAt,
-        durationSeconds,
-      ),
-    );
+    const attempt = this.attemptRepository.create({
+      userId,
+      quizId,
+      companyId: company.id,
+      totalPoints,
+      maxPossiblePoints: quiz.questions.length,
+      durationSeconds,
+      completedAt,
+    });
 
     const saved = await this.attemptRepository.save(attempt);
     this.logger.log(`Quiz attempt saved: ${saved.id} for user ${userId}`);
@@ -84,13 +82,11 @@ export class QuizAttemptsService {
     return this.attemptRepository.getUserRatingStats(userId);
   }
 
-  private async calculateDuration(userId: string, quizId: string): Promise<number | undefined> {
+  private async calculateDuration(userId: string, quizId: string): Promise<number> {
     const key = RedisKeys.quizStart(userId, quizId);
     const startedAt = await this.redisService.get<string>(key);
 
-    if (!startedAt) {
-      return undefined;
-    }
+    GuardAssertions.isTrueBadRequest(!!startedAt, 'Quiz session expired or not started');
 
     await this.redisService.del(key);
     return Math.round((Date.now() - Number(startedAt)) / 1000);

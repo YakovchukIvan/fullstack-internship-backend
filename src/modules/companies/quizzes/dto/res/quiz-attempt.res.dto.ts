@@ -16,6 +16,6 @@ export class QuizAttemptResponseDto {
   accuracyPercent: number;
   performanceLevel: PerformanceLevel;
   performanceMessage: string;
-  durationSeconds: number | null;
+  durationSeconds: number;
   completedAt: string;
 }

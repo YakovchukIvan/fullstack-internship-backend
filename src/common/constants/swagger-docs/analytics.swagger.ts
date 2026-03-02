@@ -1,36 +1,41 @@
 import { OperationObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 
 export const AnalyticsSwagger: Record<string, Partial<OperationObject>> = {
-  ME: {
-    summary: 'Get personal analytics overview',
-    description: 'Returns streak, performance distribution and score dynamics for current user.',
+  ME_COMPANY: {
+    summary: 'Get my analytics in company',
+    description:
+      'Returns full personal analytics for current user in specific company: streak, rating, dynamics, performance distribution, duration stats and last 10 attempts.',
   },
-  ME_STREAK: {
-    summary: 'Get personal streak',
-    description: 'Returns current streak, longest streak and whether user completed a quiz today.',
+  ME_COMPANY_QUIZZES: {
+    summary: 'Get my quizzes in company',
+    description:
+      'Returns list of quizzes completed by current user in specific company with total attempts, last completion date, best and average accuracy.',
   },
-  ME_DURATION: {
-    summary: 'Get personal duration stats',
-    description: 'Returns average, best and worst quiz duration with dynamics over time.',
-  },
-  ME_DYNAMICS: {
-    summary: 'Get personal score dynamics',
-    description: 'Returns score dynamics grouped by date. Supports ?from and ?to filters.',
-  },
-  ME_PERFORMANCE: {
-    summary: 'Get personal performance distribution',
-    description: 'Returns count and percent of attempts per performance level (POOR → PERFECT).',
+  ME_COMPANY_DURATION_DYNAMICS: {
+    summary: 'Get my duration dynamics in company',
+    description: 'Returns the duration dynamics of quiz attempts for the current user in a specific company.',
   },
   COMPANY_LEADERBOARD: {
-    summary: 'Get company leaderboard table',
-    description: 'Returns full leaderboard with rating, attempts, duration per member. Requires OWNER or ADMIN.',
+    summary: 'Get company leaderboard',
+    description:
+      'Returns leaderboard table with rating, attempts count and average duration per member. Requires OWNER or ADMIN.',
   },
   COMPANY_DYNAMICS: {
     summary: 'Get company score dynamics',
-    description: 'Returns average score dynamics for all users in company over time. Requires OWNER or ADMIN.',
+    description:
+      'Returns average score dynamics for all users in company grouped by day. Supports ?from and ?to filters. Requires OWNER or ADMIN.',
   },
-  COMPANY_USER_DYNAMICS: {
-    summary: 'Get specific user dynamics in company',
-    description: 'Returns score dynamics for a specific user in the company. Requires OWNER or ADMIN.',
+  COMPANY_USER_PROFILE: {
+    summary: 'Get user analytics profile',
+    description:
+      'Returns full analytics profile for specific company member: streak, rating, dynamics, performance, duration and last attempts. Requires OWNER or ADMIN.',
+  },
+  COMPANY_USER_QUIZZES: {
+    summary: 'Get user quizzes in company',
+    description: 'Returns list of quizzes completed by specific user in company. Requires OWNER or ADMIN.',
+  },
+  COMPANY_QUIZ_ATTEMPTS: {
+    summary: 'Get quiz attempts overview',
+    description: 'Returns list of all members who attempted specific quiz with their stats. Requires OWNER or ADMIN.',
   },
 };
