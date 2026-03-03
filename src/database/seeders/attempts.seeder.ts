@@ -1,48 +1,65 @@
 import { DataSource } from 'typeorm';
 import { faker } from '@faker-js/faker';
-import { subDays, addMinutes } from 'date-fns';
+import { addDays, addMinutes, addSeconds } from 'date-fns';
 import { User } from '@/modules/users/entities/user.entity';
 import { Company } from '@/modules/companies/entities/company.entity';
 import { Quiz } from '@/modules/companies/quizzes/entities/quiz.entity';
 import { QuizAttempt } from '@/modules/companies/quizzes/entities/quiz-attempt.entity';
 import { AppLogger } from '@/common/logger/app-logger';
 
-type UserType = 'excellent' | 'average' | 'poor' | 'inactive';
+const ATTEMPTS_START_DATE = new Date('2025-03-01T00:00:00.000Z');
 
-function assignUserType(): UserType {
-  return faker.helpers.arrayElement<UserType>([
-    'excellent',
-    'excellent',
-    'average',
-    'average',
-    'average',
-    'poor',
-    'inactive',
-  ]);
+type ActivityPattern = 'daily_active' | 'regular' | 'weekly' | 'inactive';
+
+interface PatternConfig {
+  dailyProbability: number;
+  quizzesPerDay: { min: number; max: number };
 }
 
-function calcTotalPoints(userType: UserType, maxPoints: number): number {
+const PATTERN_CONFIG: Record<ActivityPattern, PatternConfig> = {
+  daily_active: {
+    dailyProbability: 0.9,
+    quizzesPerDay: { min: 4, max: 5 },
+  },
+  regular: {
+    dailyProbability: 0.55,
+    quizzesPerDay: { min: 2, max: 3 },
+  },
+  weekly: {
+    dailyProbability: 1 / 7,
+    quizzesPerDay: { min: 3, max: 5 },
+  },
+  inactive: {
+    dailyProbability: 0,
+    quizzesPerDay: { min: 0, max: 0 },
+  },
+};
+
+const PATTERN_WEIGHTS: ActivityPattern[] = [
+  'daily_active',
+  'daily_active',
+  'regular',
+  'regular',
+  'regular',
+  'regular',
+  'weekly',
+  'weekly',
+  'inactive',
+];
+
+function assignPattern(): ActivityPattern {
+  return faker.helpers.arrayElement<ActivityPattern>(PATTERN_WEIGHTS);
+}
+
+function calcTotalPoints(pattern: ActivityPattern, maxPoints: number): number {
   const pct =
-    userType === 'excellent'
-      ? faker.number.int({ min: 85, max: 100 })
-      : userType === 'average'
-        ? faker.number.int({ min: 50, max: 84 })
-        : faker.number.int({ min: 10, max: 49 });
+    pattern === 'daily_active'
+      ? faker.number.int({ min: 75, max: 100 })
+      : pattern === 'regular'
+        ? faker.number.int({ min: 50, max: 85 })
+        : faker.number.int({ min: 20, max: 65 });
 
   return Number(((maxPoints * pct) / 100).toFixed(4));
-}
-
-function activityProbability(userType: UserType): number {
-  if (userType === 'excellent') {
-    return 0.85;
-  }
-  if (userType === 'average') {
-    return 0.5;
-  }
-  if (userType === 'poor') {
-    return 0.15;
-  }
-  return 0;
 }
 
 export async function seedAttempts(
@@ -53,63 +70,74 @@ export async function seedAttempts(
   companyMembersMap: Map<string, string[]>,
   logger: AppLogger,
 ): Promise<void> {
-  logger.log('🎯 Generating quiz attempts (60 days)...', 'AttemptsSeeder');
+  const today = new Date();
+  const totalDays = Math.floor((today.getTime() - ATTEMPTS_START_DATE.getTime()) / (1000 * 60 * 60 * 24));
 
-  const DAYS = 60;
-  const TODAY = new Date();
+  logger.log(`Generating quiz attempts (${totalDays} days, 2025-03-01 to today)...`, 'AttemptsSeeder');
 
-  const userTypeMap = new Map<string, UserType>();
+  const userPatternMap = new Map<string, ActivityPattern>();
   for (const u of users) {
-    userTypeMap.set(u.id, assignUserType());
+    userPatternMap.set(u.id, assignPattern());
   }
 
   const attemptsData: Partial<QuizAttempt>[] = [];
 
   for (const company of companies) {
     const companyQuizzes = allQuizzes.filter((q) => q.companyId === company.id);
+    if (companyQuizzes.length === 0) {
+      continue;
+    }
+
     const memberIds = companyMembersMap.get(company.id) ?? [];
 
     for (const userId of memberIds) {
-      const userType = userTypeMap.get(userId) ?? 'average';
-      if (userType === 'inactive') {
+      const pattern = userPatternMap.get(userId) ?? 'regular';
+      if (pattern === 'inactive') {
         continue;
       }
 
-      const probability = activityProbability(userType);
+      const config = PATTERN_CONFIG[pattern];
 
-      for (let day = DAYS; day >= 0; day--) {
-        const currentDate = subDays(TODAY, day);
-        const willBeActive = faker.datatype.boolean({ probability });
+      for (let day = 0; day <= totalDays; day++) {
+        const currentDate = addDays(ATTEMPTS_START_DATE, day);
+
+        const willBeActive = faker.datatype.boolean({ probability: config.dailyProbability });
         if (!willBeActive) {
           continue;
         }
 
-        const quizzesToTake = faker.helpers.arrayElements(
-          companyQuizzes,
-          faker.number.int({ min: 1, max: Math.min(5, companyQuizzes.length) }),
-        );
+        const quizCount = faker.number.int({
+          min: config.quizzesPerDay.min,
+          max: Math.min(config.quizzesPerDay.max, companyQuizzes.length),
+        });
+
+        const quizzesToTake = faker.helpers.arrayElements(companyQuizzes, quizCount);
 
         for (const quiz of quizzesToTake) {
           const maxPossiblePoints = quiz.questions.length;
-
           const timeLimitSeconds = quiz.timeLimitMinutes * 60;
           const maxDuration = Math.max(timeLimitSeconds - 10, 30);
+
+          const createdAt = addMinutes(currentDate, faker.number.int({ min: 0, max: 23 * 60 }));
+          const durationSeconds = faker.number.int({ min: 30, max: maxDuration });
+          const completedAt = addSeconds(createdAt, durationSeconds);
 
           attemptsData.push({
             userId,
             quizId: quiz.id,
             companyId: company.id,
-            totalPoints: calcTotalPoints(userType, maxPossiblePoints),
+            totalPoints: calcTotalPoints(pattern, maxPossiblePoints),
             maxPossiblePoints,
-            durationSeconds: faker.number.int({ min: 30, max: maxDuration }),
-            completedAt: addMinutes(currentDate, faker.number.int({ min: 1, max: 600 })),
+            durationSeconds,
+            createdAt,
+            completedAt,
           });
         }
       }
     }
   }
 
-  logger.log(`⏳ Saving ${attemptsData.length} attempts in chunks...`, 'AttemptsSeeder');
+  logger.log(`Saving ${attemptsData.length} attempts in chunks...`, 'AttemptsSeeder');
 
   const CHUNK = 5000;
   for (let i = 0; i < attemptsData.length; i += CHUNK) {
@@ -121,5 +149,5 @@ export async function seedAttempts(
       .execute();
   }
 
-  logger.log(`✅ ${attemptsData.length} attempts created`, 'AttemptsSeeder');
+  logger.log(`${attemptsData.length} attempts created`, 'AttemptsSeeder');
 }

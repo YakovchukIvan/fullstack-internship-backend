@@ -7,6 +7,8 @@ import { QuizQuestion } from '@/modules/companies/quizzes/shared/interfaces/quiz
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { AppLogger } from '@/common/logger/app-logger';
 
+const QUIZZES_CREATED_AT = new Date('2025-03-01T00:00:00.000Z');
+
 function generateQuestions(): QuizQuestion[] {
   const count = faker.number.int({ min: 3, max: 8 });
 
@@ -60,6 +62,8 @@ export async function seedQuizzes(
       isAiGenerated: false,
       aiPrompt: null,
       aiMetadata: null,
+      createdAt: QUIZZES_CREATED_AT,
+      updatedAt: QUIZZES_CREATED_AT,
     }));
 
     const inserted = await dataSource

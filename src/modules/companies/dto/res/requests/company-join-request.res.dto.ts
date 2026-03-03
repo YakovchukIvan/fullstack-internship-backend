@@ -8,7 +8,6 @@ export class CompanyJoinRequestItemResponseDto {
   user: UserBasicResponseDto;
   status: InvitationStatus;
   createdAt: string;
-  updatedAt: string;
 }
 
 export class CompanyJoinRequestPaginationResponseDto extends PaginatedBaseResponseDto {

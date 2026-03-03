@@ -9,6 +9,5 @@ export function toCompanyJoinRequestItemResponseDto(request: CompanyJoinRequest)
     user: toUserBasicResponseDto(request.user),
     status: request.status,
     createdAt: toIso(request.createdAt),
-    updatedAt: toIso(request.updatedAt),
   };
 }

@@ -12,6 +12,8 @@ export interface CompanySeedResult {
   companyMembersMap: Map<string, string[]>;
 }
 
+const COMPANIES_CREATED_AT = new Date('2025-02-01T00:00:00.000Z');
+
 function toSlug(name: string): string {
   return name
     .toLowerCase()
@@ -54,6 +56,8 @@ export async function seedCompanies(
         isVisible: true,
         ownerId: owner.id,
         membersCount: 0,
+        createdAt: COMPANIES_CREATED_AT,
+        updatedAt: COMPANIES_CREATED_AT,
       })
       .returning('*')
       .execute();
@@ -64,19 +68,43 @@ export async function seedCompanies(
     const memberUserIds: string[] = [owner.id, admin.id];
 
     allMembers.push(
-      { userId: owner.id, companyId: company.id, role: CompanyRole.OWNER },
-      { userId: admin.id, companyId: company.id, role: CompanyRole.ADMIN },
+      {
+        userId: owner.id,
+        companyId: company.id,
+        role: CompanyRole.OWNER,
+        createdAt: COMPANIES_CREATED_AT,
+        updatedAt: COMPANIES_CREATED_AT,
+      },
+      {
+        userId: admin.id,
+        companyId: company.id,
+        role: CompanyRole.ADMIN,
+        createdAt: COMPANIES_CREATED_AT,
+        updatedAt: COMPANIES_CREATED_AT,
+      },
     );
 
     const crossovers = faker.helpers.arrayElements(crossoverPool, faker.number.int({ min: 3, max: 5 }));
     for (const u of crossovers) {
-      allMembers.push({ userId: u.id, companyId: company.id, role: CompanyRole.MEMBER });
+      allMembers.push({
+        userId: u.id,
+        companyId: company.id,
+        role: CompanyRole.MEMBER,
+        createdAt: COMPANIES_CREATED_AT,
+        updatedAt: COMPANIES_CREATED_AT,
+      });
       memberUserIds.push(u.id);
     }
 
     const regulars = regularPool.splice(0, faker.number.int({ min: 5, max: 7 }));
     for (const u of regulars) {
-      allMembers.push({ userId: u.id, companyId: company.id, role: CompanyRole.MEMBER });
+      allMembers.push({
+        userId: u.id,
+        companyId: company.id,
+        role: CompanyRole.MEMBER,
+        createdAt: COMPANIES_CREATED_AT,
+        updatedAt: COMPANIES_CREATED_AT,
+      });
       memberUserIds.push(u.id);
     }
 

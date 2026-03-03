@@ -10,7 +10,6 @@ export class CompanyInvitationItemResponseDto {
   message: string | null;
   status: InvitationStatus;
   createdAt: string;
-  updatedAt: string;
 }
 
 export class CompanyInvitationsPaginationResponseDto extends PaginatedBaseResponseDto {

@@ -8,6 +8,9 @@ import { CompanyJoinRequest } from '@/modules/companies/entities/company-join-re
 import { InvitationStatus } from '@/modules/companies/enums/invitation-status.enum';
 import { AppLogger } from '@/common/logger/app-logger';
 
+// Інвайти та запити з'являються після того як компанії створені (01.02.2025)
+const INVITATIONS_START_DATE = new Date('2025-02-01T00:00:00.000Z');
+
 export async function seedInvitations(
   dataSource: DataSource,
   users: User[],
@@ -28,6 +31,7 @@ export async function seedInvitations(
   const requestedPairs = new Set<string>();
 
   const status = InvitationStatus.PENDING;
+  const today = new Date();
 
   for (const company of companies) {
     const memberIds = companyMembersMap.get(company.id) ?? [];
@@ -47,12 +51,16 @@ export async function seedInvitations(
       }
       invitedPairs.add(pair);
 
+      // рандомна дата між 01.02.2025 і сьогодні
+      const createdAt = faker.date.between({ from: INVITATIONS_START_DATE, to: today });
+
       invitationsData.push({
         userId: u.id,
         companyId: company.id,
         invitedBy: inviterId,
         message: faker.helpers.maybe(() => faker.lorem.sentence(), { probability: 0.5 }) ?? null,
         status,
+        createdAt,
       });
     }
 
@@ -67,10 +75,13 @@ export async function seedInvitations(
       }
       requestedPairs.add(pair);
 
+      const createdAt = faker.date.between({ from: INVITATIONS_START_DATE, to: today });
+
       joinRequestsData.push({
         userId: u.id,
         companyId: company.id,
         status,
+        createdAt,
       });
     }
   }

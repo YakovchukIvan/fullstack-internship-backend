@@ -11,6 +11,5 @@ export function toCompanyInvitationItemResponseDto(invitation: CompanyInvitation
     message: invitation.message,
     status: invitation.status,
     createdAt: toIso(invitation.createdAt),
-    updatedAt: toIso(invitation.updatedAt),
   };
 }

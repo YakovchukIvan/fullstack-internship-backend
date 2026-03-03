@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
-import { BaseEntity } from '@/common/entities/base.entity';
+import { BaseEntityWithoutUpdate } from '@/common/entities/base.entity';
 import { Quiz } from '../entities/quiz.entity';
 import { Company } from '../../entities/company.entity';
 import { User } from '@/modules/users/entities/user.entity';
@@ -11,7 +11,7 @@ import { User } from '@/modules/users/entities/user.entity';
 @Index(['userId', 'companyId'])
 @Index(['userId', 'quizId'])
 @Index(['userId', 'completedAt'])
-export class QuizAttempt extends BaseEntity {
+export class QuizAttempt extends BaseEntityWithoutUpdate {
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
 
