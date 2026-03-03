@@ -5,7 +5,7 @@ import { DataSource } from 'typeorm';
 import { seedDatabase } from './seed';
 
 async function run() {
-  // Створюємо контекст додатка без запуску HTTP сервера
+  // Creating a context add-on without starting an HTTP server
   const app = await NestFactory.createApplicationContext(AppModule);
 
   const logger = app.get(AppLogger);
@@ -15,7 +15,6 @@ async function run() {
   try {
     await seedDatabase(dataSource, logger);
   } catch (error) {
-    // Використовуємо твій логер для виводу помилки
     logger.logError('❌ Seed process failed', error, 'SeedRunner');
     process.exit(1);
   } finally {
