@@ -49,6 +49,19 @@ export class QuizzesController {
     };
   }
 
+  @Get(QuizzesRoutes.BY_ID)
+  @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
+  @ApiEndpoint(QuizResponseDto, HttpStatus.OK, QuizzesSwagger.FIND_ONE)
+  @ResponseMessage('Quiz fetched successfully')
+  async findOne(
+    @Param('slug') slug: string,
+    @Param('quizId') quizId: string,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<{ quiz: QuizResponseDto }> {
+    const quiz = await this.quizzesService.findOneForView(quizId, slug, user.sub);
+    return { quiz: toQuizResponseDto(quiz) };
+  }
+
   @Post()
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
   @ApiEndpoint(QuizResponseDto, HttpStatus.CREATED, QuizzesSwagger.CREATE)

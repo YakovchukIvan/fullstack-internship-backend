@@ -5,6 +5,11 @@ export const QuizzesSwagger: Record<string, Partial<OperationObject>> = {
     summary: 'Get all quizzes',
     description: 'Returns paginated list of quizzes for the company. All members can view.',
   },
+  FIND_ONE: {
+    summary: 'Get quiz by ID',
+    description:
+      'Returns full quiz details including questions and correct answers. For preview and editing. Requires company OWNER or ADMIN.',
+  },
   CREATE: {
     summary: 'Create quiz',
     description:

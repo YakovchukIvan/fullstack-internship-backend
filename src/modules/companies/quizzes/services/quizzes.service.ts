@@ -125,7 +125,7 @@ export class QuizzesService {
   }
 
   async update(id: string, slug: string, userId: string, dto: UpdateQuizDto): Promise<Quiz> {
-    const quiz = await this.findOneInternal(id, slug, userId);
+    const quiz = await this.findOneForView(id, slug, userId);
 
     if (dto.questions !== undefined) {
       validateQuizQuestions(dto.questions);
@@ -150,7 +150,7 @@ export class QuizzesService {
   }
 
   async remove(id: string, slug: string, userId: string): Promise<void> {
-    const quiz = await this.findOneInternal(id, slug, userId);
+    const quiz = await this.findOneForView(id, slug, userId);
     await this.quizRepository.remove(quiz);
     this.logger.log(`Quiz deleted: ${id} by user ${userId}`);
   }
@@ -160,7 +160,7 @@ export class QuizzesService {
     return this.aiRateLimitService.getRemainingQuota(company.id);
   }
 
-  private async findOneInternal(id: string, slug: string, userId: string): Promise<Quiz> {
+  async findOneForView(id: string, slug: string, userId: string): Promise<Quiz> {
     const company = await this.companiesService.findBySlug(slug, userId);
     return this.quizRepository.findOneInCompanyOrFail(id, company.id);
   }

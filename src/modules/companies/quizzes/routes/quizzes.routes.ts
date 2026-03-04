@@ -4,7 +4,7 @@ export const QuizzesRoutes = {
   GENERATE_AI: 'generate',
   AI_QUOTA: 'ai/quota',
   SESSION: {
-    START: ':quizId',
+    START: ':quizId/start',
     SUBMIT: ':quizId/attempts',
     ME_ATTEMPTS: ':quizId/attempts/me',
     MEMBER_ATTEMPTS: ':quizId/attempts/members/:userId',
