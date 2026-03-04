@@ -1,3 +1,5 @@
+import { PaginatedBaseResponseDto } from '@/common/dto/res/pagination-metadata.dto';
+
 export class LeaderboardTableEntryDto {
   userId: string;
   displayName: string;
@@ -10,7 +12,7 @@ export class LeaderboardTableEntryDto {
   hasMinimumAttempts: boolean;
 }
 
-export class LeaderboardTableResponseDto {
+export class LeaderboardTableResponseDto extends PaginatedBaseResponseDto {
   leaderboard: LeaderboardTableEntryDto[];
   totalMembers: number;
   minimumAttemptsRequired: number;

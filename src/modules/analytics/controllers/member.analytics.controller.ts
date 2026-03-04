@@ -10,6 +10,7 @@ import { AnalyticsRoutes } from '../routes/analytics.routes';
 import { AnalyticsSwagger } from '@/common/constants/swagger-docs/analytics.swagger';
 import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 import { MemberAnalyticsService } from '../services/member-analytics.service';
+import { AnalyticsPaginationDto } from '../dto/req/analytics-pagination.req.dto';
 
 @Controller(AnalyticsRoutes.ROOT)
 export class MemberAnalyticsController {
@@ -31,8 +32,9 @@ export class MemberAnalyticsController {
   async getMyCompanyQuizzes(
     @Param('slug') slug: string,
     @CurrentUser() user: JwtPayload,
+    @Query() query: AnalyticsPaginationDto,
   ): Promise<UserQuizzesResponseDto> {
-    return this.memberAnalyticsService.getMyCompanyQuizzes(user.sub, slug);
+    return this.memberAnalyticsService.getMyCompanyQuizzes(user.sub, slug, query);
   }
 
   @Get(AnalyticsRoutes.ME_COMPANY_DURATION_DYNAMICS)

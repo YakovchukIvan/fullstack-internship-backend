@@ -13,6 +13,7 @@ import {
   UserQuizSummaryRaw,
   UserRatingRaw,
 } from '../interfaces/user.interfaces';
+import { PaginationParams } from '../interfaces/pagination-analytics-params.interface';
 
 @Injectable()
 export class UserAnalyticsRepository extends Repository<QuizAttempt> {
@@ -148,8 +149,14 @@ export class UserAnalyticsRepository extends Repository<QuizAttempt> {
     return result ?? { sumPoints: '0', sumMaxPoints: '0', totalAttempts: '0' };
   }
 
-  async getUserQuizzesSummary(userId: string, companyId: string): Promise<UserQuizSummaryRaw[]> {
-    return this.createQueryBuilder('attempt')
+  async getUserQuizzesSummary(
+    userId: string,
+    companyId: string,
+    pagination: PaginationParams,
+  ): Promise<{ rows: UserQuizSummaryRaw[]; total: number }> {
+    const offset = (pagination.page - 1) * pagination.limit;
+
+    const rows = await this.createQueryBuilder('attempt')
       .select('attempt.quiz_id', 'quizId')
       .addSelect('quiz.title', 'quizTitle')
       .addSelect('COUNT(attempt.id)', 'totalAttempts')
@@ -168,6 +175,16 @@ export class UserAnalyticsRepository extends Repository<QuizAttempt> {
       .groupBy('attempt.quiz_id')
       .addGroupBy('quiz.title')
       .orderBy('MAX(attempt.completed_at)', 'DESC')
+      .limit(pagination.limit)
+      .offset(offset)
       .getRawMany<UserQuizSummaryRaw>();
+
+    const totalResult = await this.createQueryBuilder('attempt')
+      .select('COUNT(DISTINCT attempt.quiz_id)', 'total')
+      .where('attempt.user_id = :userId', { userId })
+      .andWhere('attempt.company_id = :companyId', { companyId })
+      .getRawOne<{ total: string }>();
+
+    return { rows, total: Number(totalResult?.total ?? 0) };
   }
 }

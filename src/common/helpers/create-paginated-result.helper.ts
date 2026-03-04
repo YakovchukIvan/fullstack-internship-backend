@@ -10,6 +10,19 @@ export interface PaginationOptions<T = string> {
   order?: SortOrder;
 }
 
+export function buildPaginationMeta(page: number, limit: number, total: number): PaginationMetadataDto {
+  const totalPages = Math.ceil(total / limit);
+  return {
+    total,
+    limit,
+    offset: (page - 1) * limit,
+    page,
+    totalPages,
+    hasNext: page < totalPages,
+    hasPrev: page > 1,
+  };
+}
+
 export async function createPaginatedResult<T extends ObjectLiteral, K extends keyof T = keyof T>(
   repository: Repository<T>,
   options: PaginationOptions<K> = {},
@@ -17,7 +30,6 @@ export async function createPaginatedResult<T extends ObjectLiteral, K extends k
 ): Promise<PaginatedResultResponseDto<T>> {
   const page = options.page || 1;
   const limit = options.limit || 10;
-  const offset = (page - 1) * limit;
 
   const orderOptions: FindOptionsOrder<T> = options.sortBy
     ? ({ [options.sortBy]: options.order || SortOrder.ASC } as FindOptionsOrder<T>)
@@ -26,21 +38,9 @@ export async function createPaginatedResult<T extends ObjectLiteral, K extends k
   const [detail, total] = await repository.findAndCount({
     ...findOptions,
     order: orderOptions,
-    skip: offset,
+    skip: (page - 1) * limit,
     take: limit,
   });
 
-  const totalPages = Math.ceil(total / limit);
-
-  const pagination: PaginationMetadataDto = {
-    total,
-    limit,
-    offset,
-    page,
-    totalPages,
-    hasNext: page < totalPages,
-    hasPrev: page > 1,
-  };
-
-  return { detail, pagination };
+  return { detail, pagination: buildPaginationMeta(page, limit, total) };
 }

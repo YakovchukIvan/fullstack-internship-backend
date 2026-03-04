@@ -1,11 +1,3 @@
-import { IsISO8601, IsOptional } from 'class-validator';
+import { DateRangeQueryDto } from '@/common/dto/req/date-range-query.dto';
 
-export class AnalyticsQueryDto {
-  @IsOptional()
-  @IsISO8601()
-  from?: string;
-
-  @IsOptional()
-  @IsISO8601()
-  to?: string;
-}
+export class AnalyticsQueryDto extends DateRangeQueryDto {}

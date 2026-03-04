@@ -1,3 +1,5 @@
+import { PaginatedBaseResponseDto } from '@/common/dto/res/pagination-metadata.dto';
+
 export class UserQuizSummaryItemDto {
   quizId: string;
   quizTitle: string;
@@ -7,7 +9,7 @@ export class UserQuizSummaryItemDto {
   avgAccuracy: number;
 }
 
-export class UserQuizzesResponseDto {
+export class UserQuizzesResponseDto extends PaginatedBaseResponseDto {
   quizzes: UserQuizSummaryItemDto[];
 }
 
@@ -22,7 +24,7 @@ export class QuizAttemptSummaryItemDto {
   averageDurationSeconds: number | null;
 }
 
-export class QuizAttemptsOverviewResponseDto {
+export class QuizAttemptsOverviewResponseDto extends PaginatedBaseResponseDto {
   quizId: string;
   quizTitle: string;
   totalParticipants: number;

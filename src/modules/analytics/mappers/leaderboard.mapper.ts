@@ -1,5 +1,5 @@
 import { LeaderboardRawRow } from '../interfaces/company.interfaces';
-import { LeaderboardTableEntryDto, LeaderboardTableResponseDto } from '../dto/res/leaderboard.res.dto';
+import { LeaderboardTableEntryDto } from '../dto/res/leaderboard.res.dto';
 import { calculateAccuracy, calculateRating } from '@/modules/companies/quizzes/shared/helpers/quiz-math.helper';
 import { ANALYTICS_CONSTANTS } from '../constants/analytics.constants';
 
@@ -18,13 +18,6 @@ export function toLeaderboardTableEntryDto(row: LeaderboardRawRow, rank: number)
   };
 }
 
-export function toLeaderboardTableResponseDto(
-  rows: LeaderboardRawRow[],
-  totalMembers: number,
-): LeaderboardTableResponseDto {
-  return {
-    leaderboard: rows.map((row, index) => toLeaderboardTableEntryDto(row, index + 1)),
-    totalMembers,
-    minimumAttemptsRequired: ANALYTICS_CONSTANTS.MINIMUM_ATTEMPTS_FOR_RATING,
-  };
+export function toLeaderboardEntries(rows: LeaderboardRawRow[]): LeaderboardTableEntryDto[] {
+  return rows.map((row, index) => toLeaderboardTableEntryDto(row, index + 1));
 }

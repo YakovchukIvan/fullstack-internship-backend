@@ -14,6 +14,7 @@ import { UserQuizzesResponseDto, QuizAttemptsOverviewResponseDto } from '../dto/
 import { AnalyticsRoutes } from '../routes/analytics.routes';
 import { AnalyticsSwagger } from '@/common/constants/swagger-docs/analytics.swagger';
 import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
+import { AnalyticsPaginationDto } from '../dto/req/analytics-pagination.req.dto';
 
 @UseGuards(CompanyRoleGuard)
 @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
@@ -27,8 +28,9 @@ export class CompanyAnalyticsController {
   async getCompanyLeaderboard(
     @Param('slug') slug: string,
     @CurrentUser() user: JwtPayload,
+    @Query() query: AnalyticsPaginationDto,
   ): Promise<LeaderboardTableResponseDto> {
-    return this.companyAnalyticsService.getCompanyLeaderboard(slug, user.sub);
+    return this.companyAnalyticsService.getCompanyLeaderboard(slug, user.sub, query);
   }
 
   @Get(AnalyticsRoutes.COMPANY_DYNAMICS)
@@ -60,8 +62,9 @@ export class CompanyAnalyticsController {
     @Param('slug') slug: string,
     @Param('userId') userId: string,
     @CurrentUser() user: JwtPayload,
+    @Query() query: AnalyticsPaginationDto,
   ): Promise<UserQuizzesResponseDto> {
-    return this.companyAnalyticsService.getCompanyUserQuizzes(slug, userId, user.sub);
+    return this.companyAnalyticsService.getCompanyUserQuizzes(slug, userId, user.sub, query);
   }
 
   @Get(AnalyticsRoutes.COMPANY_QUIZ_ATTEMPTS)
@@ -71,7 +74,8 @@ export class CompanyAnalyticsController {
     @Param('slug') slug: string,
     @Param('quizId') quizId: string,
     @CurrentUser() user: JwtPayload,
+    @Query() query: AnalyticsPaginationDto,
   ): Promise<QuizAttemptsOverviewResponseDto> {
-    return this.companyAnalyticsService.getCompanyQuizAttempts(slug, quizId, user.sub);
+    return this.companyAnalyticsService.getCompanyQuizAttempts(slug, quizId, user.sub, query);
   }
 }
