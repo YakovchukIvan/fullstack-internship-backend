@@ -6,7 +6,7 @@ import { ResponseMessage } from '@/common/decorators/response-message.decorator'
 import { CompanyRoleGuard } from '../../guards/company-role.guard';
 import { RequireCompanyRoles } from '../../decorators/company-roles.decorator';
 import { CompanyRole } from '@/common/enums/company-role.enum';
-import { QuizExportService } from './quiz-export.service';
+import { QuizExportService } from '../services/quiz-export.service';
 import { ExportQueryDto } from '../dto/req/export-query.req.dto';
 import { CompanyExportResponseDto } from '../dto/res/export.res.dto';
 import { QuizzesRoutes } from '../routes/quizzes.routes';

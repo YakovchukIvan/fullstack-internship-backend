@@ -13,7 +13,7 @@ import { UserInvitationsListResponseDto } from '../dto/res/membership/user-invit
 import { UserJoinRequestsListResponseDto } from '../dto/res/membership/user-join-requests-list.res.dto';
 import { toUserMembershipResponseDto } from '../mappers/user-membership.mapper';
 import { UsersRoutes } from '../routes/users.routes';
-import { QuizzesService } from '@/modules/companies/quizzes/quiz/quizzes.service';
+import { QuizzesService } from '@/modules/companies/quizzes/services/quizzes.service';
 import { QuizzesPaginationDto } from '@/modules/companies/quizzes/dto/req/quizzes-pagination.req.dto';
 import { UserQuizzesListResponseDto } from '../dto/res/quizzes/user-quizzes-list.res.dto';
 import { toUserQuizListItemResponseDto } from '../mappers/user-quiz-list-item.mapper';
@@ -21,9 +21,9 @@ import {
   toUserInvitationItemResponseDto,
   toUserJoinRequestItemResponseDto,
 } from '../mappers/user-company-interactions';
-import { UserRatingResponseDto } from '@/modules/companies/quizzes/dto/res/user-rating.res.dto';
-import { QuizAttemptsService } from '@/modules/companies/quizzes/attempts/quiz-attempts.service';
-import { QuizExportService } from '@/modules/companies/quizzes/export/quiz-export.service';
+import { UserRatingResponseDto } from '@/common/dto/res/user-rating.res.dto';
+import { QuizAttemptsService } from '@/modules/companies/quizzes/services/quiz-attempts.service';
+import { QuizExportService } from '@/modules/companies/quizzes/services/quiz-export.service';
 import { PersonalExportQueryDto } from '@/modules/companies/quizzes/dto/req/export-query.req.dto';
 import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 import { UserExportResponseDto } from '../dto/res/quizzes/user-export.res.dto';

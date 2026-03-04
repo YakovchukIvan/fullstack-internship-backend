@@ -17,7 +17,7 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { RequireCompanyRoles } from '../../decorators/company-roles.decorator';
 import { CompanyRoleGuard } from '../../guards/company-role.guard';
-import { QuizzesService } from './quizzes.service';
+import { QuizzesService } from '../services/quizzes.service';
 import { CreateQuizDto } from '../dto/req/create-quiz.req.dto';
 import { UpdateQuizDto } from '../dto/req/update-quiz.req.dto';
 import { QuizzesPaginationDto } from '../dto/req/quizzes-pagination.req.dto';

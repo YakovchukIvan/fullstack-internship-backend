@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { QuizAnswerRedisRepository } from '../repositories/quiz-answer-redis.repository';
 import { CompaniesService } from '../../services/companies.service';
 import { CompanyMembersService } from '../../services/company-members.service';
-import { CsvExportService } from '../export/csv-export.service';
+import { CsvExportService } from './csv-export.service';
 import { QuizAnswerSnapshot } from '../shared/interfaces/quiz-answer-snapshot.interface';
 import { ExportQueryDto, PersonalExportQueryDto } from '../dto/req/export-query.req.dto';
 import { CompanyExportResponseDto, ExportSummaryDto } from '../dto/res/export.res.dto';

@@ -2,14 +2,7 @@ import { PerformanceLevel } from '@/modules/companies/quizzes/enums/quiz-perform
 import { PerformanceDistributionItemDto } from './performance.res.dto';
 import { ScoreDynamicsItemDto } from './dynamics.res.dto';
 import { StreakResponseDto } from './streak.res.dto';
-
-export class UserRatingAnalyticsDto {
-  rating: number;
-  ratingPercent: number;
-  totalAttempts: number;
-  totalPoints: number;
-  totalMaxPoints: number;
-}
+import { UserRatingResponseDto } from '@/common/dto/res/user-rating.res.dto';
 
 export class DurationSummaryDto {
   averageDurationSeconds: number | null;
@@ -32,7 +25,7 @@ export class UserAnalyticsProfileDto {
   displayName: string;
   avatarUrl: string | null;
   streak: StreakResponseDto;
-  rating: UserRatingAnalyticsDto;
+  rating: UserRatingResponseDto;
   dynamics: ScoreDynamicsItemDto[];
   performance: PerformanceDistributionItemDto[];
   duration: DurationSummaryDto;

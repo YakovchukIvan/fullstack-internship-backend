@@ -1,12 +1,7 @@
 import { DurationStatsRaw, PerformanceRaw, ScoreDynamicsRow } from '../interfaces/dynamics.interfaces';
 import { LastAttemptRaw, UserRatingRaw } from '../interfaces/user.interfaces';
 import { StreakResult } from '../interfaces/streak.interfaces';
-import {
-  DurationSummaryDto,
-  LastAttemptItemDto,
-  UserAnalyticsProfileDto,
-  UserRatingAnalyticsDto,
-} from '../dto/res/user-profile.res.dto';
+import { DurationSummaryDto, LastAttemptItemDto, UserAnalyticsProfileDto } from '../dto/res/user-profile.res.dto';
 import { PerformanceDistributionItemDto } from '../dto/res/performance.res.dto';
 import { ScoreDynamicsItemDto } from '../dto/res/dynamics.res.dto';
 import { StreakResponseDto } from '../dto/res/streak.res.dto';
@@ -15,6 +10,7 @@ import { getPerformanceResult } from '@/modules/companies/quizzes/shared/helpers
 import { PerformanceLevel } from '@/modules/companies/quizzes/enums/quiz-performance-level.enum';
 import { calculateStreak } from '../helpers/streak.helper';
 import { User } from '@/modules/users/entities/user.entity';
+import { UserRatingResponseDto } from '@/common/dto/res/user-rating.res.dto';
 
 interface UserAnalyticsProfileParams {
   user: User;
@@ -34,7 +30,7 @@ function toStreakDto(streak: StreakResult): StreakResponseDto {
   };
 }
 
-function toRatingDto(raw: UserRatingRaw): UserRatingAnalyticsDto {
+function toRatingDto(raw: UserRatingRaw): UserRatingResponseDto {
   const totalPoints = Number(raw.sumPoints);
   const totalMaxPoints = Number(raw.sumMaxPoints);
   return {
