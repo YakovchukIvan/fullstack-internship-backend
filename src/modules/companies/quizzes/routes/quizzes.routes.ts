@@ -6,11 +6,16 @@ export const QuizzesRoutes = {
   SESSION: {
     START: ':quizId/start',
     SUBMIT: ':quizId/attempts',
-    ME_ATTEMPTS: ':quizId/attempts/me',
-    MEMBER_ATTEMPTS: ':quizId/attempts/members/:userId',
   },
+  ATTEMPTS: {
+    ME: ':quizId/attempts/me',
+    MEMBER: ':quizId/attempts/members/:userId',
+    RATING: 'attempts/rating',
+  },
+  AVAILABLE: 'available',
   EXPORT: {
     COMPANY: 'export/company',
     USER: 'export/users/:userId',
+    ME: 'export/me',
   },
 } as const;

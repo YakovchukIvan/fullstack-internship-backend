@@ -1,5 +1,6 @@
 import { Quiz } from '@/modules/companies/quizzes/entities/quiz.entity';
-import { UserQuizListItemResponseDto } from '../dto/res/quizzes/user-quizzes-list.res.dto';
+import { UserQuizListItemResponseDto } from '../../dto/res/quizzes/user-quizzes-list.res.dto';
+
 import { toIso } from '@/common/helpers/date.transformer';
 
 export function toUserQuizListItemResponseDto(quiz: Quiz): UserQuizListItemResponseDto {

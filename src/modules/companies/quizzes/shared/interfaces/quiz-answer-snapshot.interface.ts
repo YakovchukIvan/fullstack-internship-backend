@@ -2,8 +2,8 @@ export interface QuizAnswerRecord {
   questionIndex: number;
   questionText: string;
   options: string[];
-  selectedAnswers: number[];
-  correctAnswers: number[];
+  selectedOptionIndexes: number[];
+  correctOptionIndexes: number[];
   isCorrect: boolean;
   questionScore: number;
 }

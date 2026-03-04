@@ -9,8 +9,8 @@ export function toAnswerRecord(
     questionIndex: answer.questionIndex,
     questionText: question.question,
     options: question.options,
-    selectedAnswers: answer.selectedAnswers,
-    correctAnswers: answer.correctAnswers,
+    selectedOptionIndexes: answer.selectedOptionIndexes,
+    correctOptionIndexes: answer.correctOptionIndexes,
     isCorrect: answer.questionScore === 1,
     questionScore: answer.questionScore,
   };
@@ -38,8 +38,8 @@ export function toQuizAttemptAnswer(index: number, selected: number[], correct: 
 
   return {
     questionIndex: index,
-    selectedAnswers: selected,
-    correctAnswers: correct,
+    selectedOptionIndexes: selected,
+    correctOptionIndexes: correct,
     questionScore,
   };
 }

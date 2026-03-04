@@ -6,14 +6,13 @@ import { CompanyRole } from '@/common/enums/company-role.enum';
 import { RequireCompanyRoles } from '../../decorators/company-roles.decorator';
 import { CompanyRoleGuard } from '../../guards/company-role.guard';
 import { GenerateQuizAiDto } from '../dto/req/generate-quiz-ai.req.dto';
-import { QuizResponseDto } from '../dto/res/quiz.res.dto';
-import { AiQuotaResponseDto } from '../dto/res/ai-quota.res.dto';
-import { toQuizResponseDto } from '../shared/mappers/quiz.mapper';
+import { AiQuotaResponseDto, QuizAiResponseDto } from '../dto/res/quiz-ai.res.dto';
 import { QuizzesRoutes } from '../routes/quizzes.routes';
 import { toIso } from '@/common/helpers/date.transformer';
 import { QuizzesAiSwagger } from '@/common/constants/swagger-docs/quizzes.swagger';
 import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 import { QuizzesService } from '../services/quizzes.service';
+import { toQuizAiResponseDto } from '../shared/mappers/quiz-ai.mapper';
 
 @Controller(QuizzesRoutes.ROOT)
 @UseGuards(CompanyRoleGuard)
@@ -36,17 +35,17 @@ export class QuizzesAiController {
 
   @Post(QuizzesRoutes.GENERATE_AI)
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @ApiEndpoint(QuizResponseDto, HttpStatus.CREATED, QuizzesAiSwagger.GENERATE_AI)
+  @ApiEndpoint(QuizAiResponseDto, HttpStatus.CREATED, QuizzesAiSwagger.GENERATE_AI)
   @ResponseMessage('Quiz generated successfully with AI')
   async generate(
     @Param('slug') slug: string,
     @Body() dto: GenerateQuizAiDto,
     @CurrentUser() user: JwtPayload,
-  ): Promise<{ quiz: QuizResponseDto }> {
+  ): Promise<{ quiz: QuizAiResponseDto }> {
     const { quiz, remaining } = await this.quizzesService.generateWithAi(slug, user.sub, dto, user.role);
 
     return {
-      quiz: toQuizResponseDto(quiz, remaining),
+      quiz: toQuizAiResponseDto(quiz, remaining),
     };
   }
 }

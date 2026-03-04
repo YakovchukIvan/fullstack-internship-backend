@@ -1,7 +1,7 @@
 import { PaginatedBaseResponseDto } from '@/common/dto/res/pagination-metadata.dto';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 
-export class UserMembershipResponseDto {
+export class UserMembersResponseDto {
   id: string;
   company: {
     name: string;
@@ -12,5 +12,5 @@ export class UserMembershipResponseDto {
 }
 
 export class UserMembershipListResponseDto extends PaginatedBaseResponseDto {
-  membership: UserMembershipResponseDto[];
+  membership: UserMembersResponseDto[];
 }

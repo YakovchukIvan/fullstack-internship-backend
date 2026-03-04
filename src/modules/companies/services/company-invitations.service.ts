@@ -6,7 +6,7 @@ import { CompanyInvitation } from '../entities/company-invitation.entity';
 import { CompanyMember } from '../entities/company-member.entity';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
-import { CompanyPaginationDto } from '../dto/req/requests/company-invitations-pagination.req.dto';
+import { CompanyInteractionsPaginationDto } from '../dto/req/company/company-interactions-pagination.req.dto';
 import { CompanyMembersService } from './company-members.service';
 import { CompanyEvents, CompanyInvitationEvent, CompanyMembershipEvent } from '../events/company.events';
 import { Company } from '../entities/company.entity';
@@ -96,16 +96,16 @@ export class CompanyInvitationsService {
 
   async getCompanyInvitations(
     slug: string,
-    dto?: CompanyPaginationDto,
-  ): Promise<{ invitations: PaginatedResultResponseDto<CompanyInvitation>; company: Company }> {
+    dto?: CompanyInteractionsPaginationDto,
+  ): Promise<{ invitation: PaginatedResultResponseDto<CompanyInvitation>; company: Company }> {
     const company = await this.companyRepository.findBySlugOrFail(slug);
-    const invitations = await this.invitationRepository.findPaginatedByCompany(company.id, dto);
-    return { invitations, company };
+    const invitation = await this.invitationRepository.findPaginatedByCompany(company.id, dto);
+    return { invitation, company };
   }
 
   async getUserInvitations(
     userId: string,
-    dto?: CompanyPaginationDto,
+    dto?: CompanyInteractionsPaginationDto,
   ): Promise<PaginatedResultResponseDto<CompanyInvitation>> {
     return this.invitationRepository.findPaginatedByUser(userId, dto);
   }

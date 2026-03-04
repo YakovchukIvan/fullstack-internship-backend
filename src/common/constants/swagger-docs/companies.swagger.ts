@@ -92,4 +92,16 @@ export const CompanyMembersSwagger: Record<string, Partial<OperationObject>> = {
     summary: 'Leave company',
     description: 'Current user leaves the company. OWNER cannot leave — must delete the company instead.',
   },
+  GET_MY_INVITATIONS: {
+    summary: 'My company invitations',
+    description: 'Returns paginated list of company invitations sent to the current user.',
+  },
+  GET_MY_JOIN_REQUESTS: {
+    summary: 'My join requests',
+    description: 'Returns paginated list of join requests the current user has sent to companies.',
+  },
+  GET_MY_MEMBERSHIP: {
+    summary: 'My company memberships',
+    description: 'Returns all companies the current user is a member of.',
+  },
 };

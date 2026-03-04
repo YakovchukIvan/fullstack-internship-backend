@@ -112,8 +112,7 @@ export class QuizzesService {
   }
 
   async findOne(id: string, slug: string, userId: string): Promise<{ quiz: Quiz; startedAt: Date }> {
-    const company = await this.companiesService.findBySlug(slug, userId);
-    const quiz = await this.quizRepository.findOneInCompanyOrFail(id, company.id);
+    const quiz = await this.findOneForView(id, slug, userId);
 
     const startedAt = new Date();
     const key = RedisKeys.quizStart(userId, id);

@@ -1,10 +1,10 @@
 import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
 import { QuizQuestionDto } from '../../dto/req/quiz-question.dto';
 
-export function ValidateCorrectAnswers(validationOptions?: ValidationOptions) {
+export function ValidateCorrectOptionIndexes(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
     registerDecorator({
-      name: 'validateCorrectAnswers',
+      name: 'validateCorrectOptionIndexes',
       target: object.constructor,
       propertyName: propertyName,
       options: validationOptions,
@@ -15,25 +15,25 @@ export function ValidateCorrectAnswers(validationOptions?: ValidationOptions) {
           }
 
           const question = args.object as QuizQuestionDto;
-          const correctAnswers = value as number[];
+          const correctOptionIndexes = value as number[];
 
           if (!question.options || !Array.isArray(question.options)) {
             return false;
           }
 
-          const allValid = correctAnswers.every(
+          const allValid = correctOptionIndexes.every(
             (idx) => Number.isInteger(idx) && idx >= 0 && idx < question.options.length,
           );
           if (!allValid) {
             return false;
           }
 
-          const unique = new Set(correctAnswers);
-          if (unique.size !== correctAnswers.length) {
+          const unique = new Set(correctOptionIndexes);
+          if (unique.size !== correctOptionIndexes.length) {
             return false;
           }
 
-          if (correctAnswers.length > question.options.length) {
+          if (correctOptionIndexes.length > question.options.length) {
             return false;
           }
 

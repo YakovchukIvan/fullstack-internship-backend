@@ -8,7 +8,7 @@ import {
   MinLength,
   MaxLength,
 } from 'class-validator';
-import { ValidateCorrectAnswers } from '../../shared/validators/correct-answers.validator';
+import { ValidateCorrectOptionIndexes } from '../../shared/validators/correct-answers.validator';
 import { QuizConfig } from '../../shared/constants/quiz.constants';
 
 export class QuizQuestionDto {
@@ -33,6 +33,6 @@ export class QuizQuestionDto {
   @ArrayMaxSize(QuizConfig.CORRECT_ANSWERS.MAX, {
     message: `Maximum ${QuizConfig.CORRECT_ANSWERS.MAX} correct answers allowed`,
   })
-  @ValidateCorrectAnswers()
-  correctAnswers: number[];
+  @ValidateCorrectOptionIndexes()
+  correctOptionIndexes: number[];
 }

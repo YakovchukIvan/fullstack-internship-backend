@@ -3,7 +3,7 @@ import { DataSource, Repository } from 'typeorm';
 import { CompanyJoinRequest } from '../entities/company-join-request.entity';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { createPaginatedResult } from '@/common/helpers/create-paginated-result.helper';
-import { CompanyPaginationDto } from '../dto/req/requests/company-invitations-pagination.req.dto';
+import { CompanyInteractionsPaginationDto } from '../dto/req/company/company-interactions-pagination.req.dto';
 import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
 
 @Injectable()
@@ -33,7 +33,7 @@ export class CompanyJoinRequestRepository extends Repository<CompanyJoinRequest>
 
   async findPaginatedByCompany(
     companyId: string,
-    dto?: CompanyPaginationDto,
+    dto?: CompanyInteractionsPaginationDto,
   ): Promise<PaginatedResultResponseDto<CompanyJoinRequest>> {
     return createPaginatedResult(this, dto, {
       where: { companyId },
@@ -43,7 +43,7 @@ export class CompanyJoinRequestRepository extends Repository<CompanyJoinRequest>
 
   async findPaginatedByUser(
     userId: string,
-    dto?: CompanyPaginationDto,
+    dto?: CompanyInteractionsPaginationDto,
   ): Promise<PaginatedResultResponseDto<CompanyJoinRequest>> {
     return createPaginatedResult(this, dto, {
       where: { userId },

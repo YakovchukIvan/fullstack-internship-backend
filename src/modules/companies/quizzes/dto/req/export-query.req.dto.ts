@@ -1,8 +1,6 @@
-import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsEnum, IsOptional, IsUUID } from 'class-validator';
 import { ExportFormat } from '../../enums/export-format.enum';
-import { DateRangeQueryDto } from '@/common/dto/req/date-range-query.dto';
-
-export class ExportQueryDto extends DateRangeQueryDto {
+export class ExportQueryDto {
   @IsOptional()
   @IsEnum(ExportFormat)
   format?: ExportFormat = ExportFormat.JSON;
@@ -10,10 +8,4 @@ export class ExportQueryDto extends DateRangeQueryDto {
   @IsOptional()
   @IsUUID()
   quizId?: string;
-}
-
-export class PersonalExportQueryDto extends ExportQueryDto {
-  @IsOptional()
-  @IsString()
-  slug?: string;
 }

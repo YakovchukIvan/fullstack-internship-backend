@@ -22,12 +22,12 @@ import { CompaniesPaginationDto } from '../dto/req/company/companies-pagination.
 import { CompaniesPaginatedBaseResponseDto, CompanyResponseDto } from '../dto/res/company/company-response.res.dto';
 import { CompaniesService } from '../services/companies.service';
 import { CompaniesRoutes } from './../routes/companies.routes';
-import { toCompanyResponseDto } from '../mappers/company.mapper';
+import { toCompanyResponseDto } from '../mappers/company/company.mapper';
 import { CompanyMembersPaginationDto } from '../dto/req/members/company-members-pagination.req.dto';
 import { CompaniesSwagger } from '@/common/constants/swagger-docs/companies.swagger';
 import { CompanyMembersService } from '../services/company-members.service';
-import { toCompanyMemberResponseDto } from '../mappers/company-member.mapper';
-import { CompanyMembersListResponseDto } from '../dto/res/members/company-member.res.dto';
+import { toCompanyMemberResponseDto } from '../mappers/company/company-member.mapper';
+import { CompanyMembersListResponseDto } from '../dto/res/company/company-member.res.dto';
 import { CreateCompanyDto } from '../dto/req/company/create-company.req.dto';
 import { UpdateCompanyDto } from '../dto/req/company/update-company.req.dto';
 import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';

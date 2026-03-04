@@ -1,18 +1,17 @@
 import { Quiz } from '../../entities/quiz.entity';
-import { QuizResponseDto, QuizStartResponseDto } from '../../dto/res/quiz.res.dto';
+import { QuizStartResponseDto } from '../../dto/res/quiz-session.res.dto';
 import { toIso } from '@/common/helpers/date.transformer';
+import { toQuizQuestionsWithAnswers, toQuizQuestionsWithoutAnswers } from './quiz-questions.mapper';
+import { QuizAdminResponseDto, QuizResponseDto } from '../../dto/res/quiz-detail.res.dto';
+import { QuizListResponseDto } from '../../dto/res/quizzes-paginated.res.dto';
 
-export function toQuizResponseDto(quiz: Quiz, quotaRemaining?: number): QuizResponseDto {
+export function toQuizBaseFields(quiz: Quiz) {
   return {
     id: quiz.id,
     title: quiz.title,
     description: quiz.description,
     frequencyInDays: quiz.frequencyInDays,
     timeLimitMinutes: quiz.timeLimitMinutes,
-    questions: quiz.questions.map((q) => ({
-      question: q.question,
-      options: q.options,
-    })),
     createdByUserId: quiz.createdByUserId,
     createdBy: {
       displayName: quiz.createdBySnapshot.displayName,
@@ -22,13 +21,37 @@ export function toQuizResponseDto(quiz: Quiz, quotaRemaining?: number): QuizResp
     aiPrompt: quiz.aiPrompt,
     createdAt: toIso(quiz.createdAt),
     updatedAt: toIso(quiz.updatedAt),
-    quotaRemaining: quotaRemaining ?? null,
+  };
+}
+
+export function toQuizPublicFields(quiz: Quiz) {
+  return {
+    ...toQuizBaseFields(quiz),
+    questions: toQuizQuestionsWithoutAnswers(quiz.questions),
+  };
+}
+
+export function toQuizResponseDto(quiz: Quiz): QuizResponseDto {
+  return toQuizPublicFields(quiz);
+}
+
+export function toQuizListResponseDto(quiz: Quiz): QuizListResponseDto {
+  return {
+    ...toQuizBaseFields(quiz),
+    questions: toQuizQuestionsWithoutAnswers(quiz.questions),
   };
 }
 
 export function toQuizStartResponseDto(quiz: Quiz, startedAt: Date): QuizStartResponseDto {
   return {
-    ...toQuizResponseDto(quiz),
+    ...toQuizPublicFields(quiz),
     startedAt: toIso(startedAt),
+  };
+}
+
+export function toQuizAdminResponseDto(quiz: Quiz): QuizAdminResponseDto {
+  return {
+    ...toQuizBaseFields(quiz),
+    questions: toQuizQuestionsWithAnswers(quiz.questions),
   };
 }

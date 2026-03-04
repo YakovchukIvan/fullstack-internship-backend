@@ -3,7 +3,7 @@ import { Company } from '../entities/company.entity';
 import { UserBasicResponseDto } from '@/common/dto/res/user-basic.dto';
 import { CompanyBasicResponseDto } from '../dto/res/company/company-basic.dto.res';
 
-export function toUserBasicResponseDto(user: User): UserBasicResponseDto {
+export function toMemberBasicResponseDto(user: User): UserBasicResponseDto {
   return {
     id: user.id,
     email: user.email,

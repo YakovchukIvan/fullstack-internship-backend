@@ -15,12 +15,12 @@ function generateQuestions(): QuizQuestion[] {
   return Array.from({ length: count }, () => {
     const optionCount = faker.number.int({ min: 2, max: 4 });
     const options = Array.from({ length: optionCount }, () => faker.lorem.words({ min: 1, max: 3 }));
-    const correctAnswers = [faker.number.int({ min: 0, max: options.length - 1 })];
+    const correctOptionIndexes = [faker.number.int({ min: 0, max: options.length - 1 })];
 
     return {
       question: faker.lorem.sentence() + '?',
       options,
-      correctAnswers,
+      correctOptionIndexes,
     } satisfies QuizQuestion;
   });
 }

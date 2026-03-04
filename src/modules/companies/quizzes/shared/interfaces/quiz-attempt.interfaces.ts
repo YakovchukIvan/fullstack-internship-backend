@@ -3,8 +3,8 @@ import { PerformanceLevel } from '../../enums/quiz-performance-level.enum';
 
 export interface QuizAttemptAnswer {
   questionIndex: number;
-  selectedAnswers: number[];
-  correctAnswers: number[];
+  selectedOptionIndexes: number[];
+  correctOptionIndexes: number[];
   questionScore: number;
 }
 

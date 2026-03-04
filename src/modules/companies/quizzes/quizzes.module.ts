@@ -21,10 +21,16 @@ import { QuizExportService } from './services/quiz-export.service';
 import { AiQuizGeneratorService } from './services//ai-quiz-generator.service';
 import { AiRateLimitService } from './services/ai-rate-limit.service';
 import { QuizSessionController } from './controllers/quiz-session.controller';
-
+import { QuizAttemptsController } from './controllers/quiz-attempts.controller';
 @Module({
   imports: [TypeOrmModule.forFeature([Quiz, QuizAttempt, User])],
-  controllers: [QuizzesController, QuizzesAiController, QuizSessionController, QuizExportController],
+  controllers: [
+    QuizzesController,
+    QuizzesAiController,
+    QuizSessionController,
+    QuizAttemptsController,
+    QuizExportController,
+  ],
   providers: [
     QuizRepository,
     QuizAttemptRepository,

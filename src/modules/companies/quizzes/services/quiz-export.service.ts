@@ -4,9 +4,9 @@ import { CompaniesService } from '../../services/companies.service';
 import { CompanyMembersService } from '../../services/company-members.service';
 import { CsvExportService } from './csv-export.service';
 import { QuizAnswerSnapshot } from '../shared/interfaces/quiz-answer-snapshot.interface';
-import { ExportQueryDto, PersonalExportQueryDto } from '../dto/req/export-query.req.dto';
+import { ExportQueryDto } from '../dto/req/export-query.req.dto';
 import { CompanyExportResponseDto, ExportSummaryDto } from '../dto/res/export.res.dto';
-import { UserExportResponseDto } from '@/modules/users/dto/res/quizzes/user-export.res.dto';
+import { UserExportResponseDto } from '@/modules/companies/quizzes/dto/res/quizzes/user-export.res.dto';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -24,15 +24,9 @@ export class QuizExportService {
     @InjectRepository(User) private readonly userRepository: Repository<User>,
   ) {}
 
-  async exportMyResults(userId: string, query: PersonalExportQueryDto): Promise<UserExportResponseDto> {
-    let snapshots: QuizAnswerSnapshot[] = [];
-
-    if (query.slug) {
-      const company = await this.companiesService.findBySlug(query.slug, userId);
-      snapshots = await this.quizAnswerRedisRepository.getCompanyAnswers(company.id, userId);
-    } else {
-      snapshots = await this.quizAnswerRedisRepository.getUserAnswers(userId);
-    }
+  async exportMyResults(slug: string, userId: string, query: ExportQueryDto): Promise<UserExportResponseDto> {
+    const company = await this.companiesService.findBySlug(slug, userId);
+    let snapshots = await this.quizAnswerRedisRepository.getCompanyAnswers(company.id, userId);
 
     snapshots = this.applyFilters(snapshots, query);
     return this.buildUserExport(userId, snapshots);
@@ -81,17 +75,12 @@ export class QuizExportService {
   }
 
   async getSnapshotsForMemberExport(
+    slug: string,
     userId: string,
-    query: PersonalExportQueryDto,
+    query: ExportQueryDto,
   ): Promise<{ snapshots: QuizAnswerSnapshot[]; firstName: string; lastName: string }> {
-    let snapshots: QuizAnswerSnapshot[] = [];
-
-    if (query.slug) {
-      const company = await this.companiesService.findBySlug(query.slug, userId);
-      snapshots = await this.quizAnswerRedisRepository.getCompanyAnswers(company.id, userId);
-    } else {
-      snapshots = await this.quizAnswerRedisRepository.getUserAnswers(userId);
-    }
+    const company = await this.companiesService.findBySlug(slug, userId);
+    const snapshots = await this.quizAnswerRedisRepository.getCompanyAnswers(company.id, userId);
 
     const { firstName, lastName } = await this.getUserDisplayName(userId);
 
@@ -125,16 +114,6 @@ export class QuizExportService {
 
     if (query.quizId) {
       result = result.filter((s) => s.quizId === query.quizId);
-    }
-
-    if (query.from) {
-      const from = new Date(query.from).getTime();
-      result = result.filter((s) => new Date(s.completedAt).getTime() >= from);
-    }
-
-    if (query.to) {
-      const to = new Date(query.to).getTime();
-      result = result.filter((s) => new Date(s.completedAt).getTime() <= to);
     }
 
     return result;

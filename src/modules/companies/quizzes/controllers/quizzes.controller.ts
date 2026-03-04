@@ -21,12 +21,15 @@ import { QuizzesService } from '../services/quizzes.service';
 import { CreateQuizDto } from '../dto/req/create-quiz.req.dto';
 import { UpdateQuizDto } from '../dto/req/update-quiz.req.dto';
 import { QuizzesPaginationDto } from '../dto/req/quizzes-pagination.req.dto';
-import { QuizResponseDto } from '../dto/res/quiz.res.dto';
+import { QuizAdminResponseDto } from '../dto/res/quiz-detail.res.dto';
+import { QuizListResponseDto } from '../dto/res/quizzes-paginated.res.dto';
 import { QuizzesPaginatedResponseDto } from '../dto/res/quizzes-paginated.res.dto';
 import { QuizzesRoutes } from '../routes/quizzes.routes';
-import { toQuizResponseDto } from '../shared/mappers/quiz.mapper';
+import { toQuizAdminResponseDto, toQuizListResponseDto } from '../shared/mappers/quiz.mapper';
 import { QuizzesSwagger } from '@/common/constants/swagger-docs/quizzes.swagger';
 import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
+import { UserQuizzesListResponseDto } from '@/modules/companies/quizzes/dto/res/quizzes/user-quizzes-list.res.dto';
+import { toUserQuizListItemResponseDto } from '@/modules/companies/quizzes/shared/mappers/user-quiz-list-item.mapper';
 
 @Controller(QuizzesRoutes.ROOT)
 @UseGuards(CompanyRoleGuard)
@@ -44,55 +47,68 @@ export class QuizzesController {
     const result = await this.quizzesService.findAll(slug, user.sub, dto);
 
     return {
-      quizzes: result.detail.map((quiz) => toQuizResponseDto(quiz)),
+      quizzes: result.detail.map((quiz) => toQuizListResponseDto(quiz)),
+      pagination: result.pagination,
+    };
+  }
+
+  @Get(QuizzesRoutes.AVAILABLE)
+  @ApiEndpoint(UserQuizzesListResponseDto, HttpStatus.OK, QuizzesSwagger.FIND_ALL)
+  @ResponseMessage('Available quizzes fetched successfully')
+  async getAvailableQuizzes(
+    @CurrentUser() user: JwtPayload,
+    @Query() paginationDto: QuizzesPaginationDto,
+    @Param('slug') slug?: string,
+  ): Promise<UserQuizzesListResponseDto> {
+    const result = await this.quizzesService.findAllByUser(user.sub, paginationDto, slug);
+
+    return {
+      quizzes: result.detail.map(toUserQuizListItemResponseDto),
       pagination: result.pagination,
     };
   }
 
   @Get(QuizzesRoutes.BY_ID)
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @ApiEndpoint(QuizResponseDto, HttpStatus.OK, QuizzesSwagger.FIND_ONE)
+  @ApiEndpoint(QuizAdminResponseDto, HttpStatus.OK, QuizzesSwagger.FIND_ONE)
   @ResponseMessage('Quiz fetched successfully')
   async findOne(
     @Param('slug') slug: string,
     @Param('quizId') quizId: string,
     @CurrentUser() user: JwtPayload,
-  ): Promise<{ quiz: QuizResponseDto }> {
+  ): Promise<{ quiz: QuizAdminResponseDto }> {
     const quiz = await this.quizzesService.findOneForView(quizId, slug, user.sub);
-    return { quiz: toQuizResponseDto(quiz) };
+
+    return { quiz: toQuizAdminResponseDto(quiz) };
   }
 
   @Post()
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @ApiEndpoint(QuizResponseDto, HttpStatus.CREATED, QuizzesSwagger.CREATE)
+  @ApiEndpoint(QuizListResponseDto, HttpStatus.CREATED, QuizzesSwagger.CREATE)
   @ResponseMessage('Quiz created successfully')
   async create(
     @Param('slug') slug: string,
     @Body() dto: CreateQuizDto,
     @CurrentUser() user: JwtPayload,
-  ): Promise<{ quiz: QuizResponseDto }> {
+  ): Promise<{ quiz: QuizListResponseDto }> {
     const quiz = await this.quizzesService.create(slug, user.sub, dto);
 
-    return {
-      quiz: toQuizResponseDto(quiz),
-    };
+    return { quiz: toQuizListResponseDto(quiz) };
   }
 
   @Patch(QuizzesRoutes.BY_ID)
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
-  @ApiEndpoint(QuizResponseDto, HttpStatus.OK, QuizzesSwagger.UPDATE)
+  @ApiEndpoint(QuizListResponseDto, HttpStatus.OK, QuizzesSwagger.UPDATE)
   @ResponseMessage('Quiz updated successfully')
   async update(
     @Param('slug') slug: string,
     @Param('quizId') quizId: string,
     @Body() dto: UpdateQuizDto,
     @CurrentUser() user: JwtPayload,
-  ): Promise<{ quiz: QuizResponseDto }> {
+  ): Promise<{ quiz: QuizListResponseDto }> {
     const quiz = await this.quizzesService.update(quizId, slug, user.sub, dto);
 
-    return {
-      quiz: toQuizResponseDto(quiz),
-    };
+    return { quiz: toQuizListResponseDto(quiz) };
   }
 
   @Delete(QuizzesRoutes.BY_ID)

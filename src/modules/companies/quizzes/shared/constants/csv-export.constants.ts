@@ -9,8 +9,8 @@ export const CSV_EXPORT_HEADERS = [
   'questionIndex',
   'questionText',
   'options',
-  'selectedAnswers',
-  'correctAnswers',
+  'selectedOptionIndexes',
+  'correctOptionIndexes',
   'isCorrect',
   'questionScore',
 ] as const;

@@ -11,7 +11,7 @@ import { ExportQueryDto } from '../dto/req/export-query.req.dto';
 import { CompanyExportResponseDto } from '../dto/res/export.res.dto';
 import { QuizzesRoutes } from '../routes/quizzes.routes';
 import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
-import { UserExportResponseDto } from '@/modules/users/dto/res/quizzes/user-export.res.dto';
+import { UserExportResponseDto } from '@/modules/companies/quizzes/dto/res/quizzes/user-export.res.dto';
 import { ExportFormat } from '../enums/export-format.enum';
 import { buildExportFilename } from '../shared/helpers/export-filename.helper';
 import { QuizExportSwagger } from '@/common/constants/swagger-docs/quizzes.swagger';
@@ -69,5 +69,30 @@ export class QuizExportController {
     }
 
     return this.quizExportService.exportUserResults(slug, user.sub, userId, query);
+  }
+
+  @Get(QuizzesRoutes.EXPORT.ME)
+  @ApiEndpoint(UserExportResponseDto, HttpStatus.OK, QuizExportSwagger.EXPORT_USER)
+  @ResponseMessage('Export completed successfully')
+  async exportMyResults(
+    @CurrentUser() user: JwtPayload,
+    @Param('slug') slug: string,
+    @Query() query: ExportQueryDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<UserExportResponseDto | void> {
+    if (query.format === ExportFormat.CSV) {
+      const { snapshots, firstName, lastName } = await this.quizExportService.getSnapshotsForMemberExport(
+        slug,
+        user.sub,
+        query,
+      );
+      const csv = this.quizExportService.buildCsv(snapshots);
+      const filename = buildExportFilename('personal', slug, snapshots, { firstName, lastName });
+
+      sendCsvResponse(response, csv, filename);
+      return;
+    }
+
+    return this.quizExportService.exportMyResults(slug, user.sub, query);
   }
 }

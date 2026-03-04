@@ -120,7 +120,7 @@ export class QuizAttemptsService {
 
   private calculateAnswers(quiz: Quiz, dto: SubmitQuizDto): QuizAttemptAnswer[] {
     return quiz.questions.map((question, index) =>
-      toQuizAttemptAnswer(index, dto.answers[index]?.selectedAnswers ?? [], question.correctAnswers),
+      toQuizAttemptAnswer(index, dto.answers[index]?.selectedOptionIndexes ?? [], question.correctOptionIndexes),
     );
   }
 }

@@ -1,6 +1,6 @@
 import { UserBasicResponseDto } from '@/common/dto/res/user-basic.dto';
 import { PaginatedBaseResponseDto } from '@/common/dto/res/pagination-metadata.dto';
-import { CompanyBasicResponseDto } from '../company/company-basic.dto.res';
+import { CompanyBasicResponseDto } from './company-basic.dto.res';
 import { InvitationStatus } from '@/modules/companies/enums/invitation-status.enum';
 
 export class CompanyInvitationItemResponseDto {
@@ -13,6 +13,6 @@ export class CompanyInvitationItemResponseDto {
 }
 
 export class CompanyInvitationsPaginationResponseDto extends PaginatedBaseResponseDto {
-  invitations: CompanyInvitationItemResponseDto[];
+  invitation: CompanyInvitationItemResponseDto[];
   company: CompanyBasicResponseDto;
 }

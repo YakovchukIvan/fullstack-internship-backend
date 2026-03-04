@@ -5,7 +5,7 @@ export class QuizQuestionAnswerDto {
   @IsArray()
   @IsInt({ each: true })
   @Min(0, { each: true })
-  selectedAnswers: number[];
+  selectedOptionIndexes: number[];
 }
 
 export class SubmitQuizDto {

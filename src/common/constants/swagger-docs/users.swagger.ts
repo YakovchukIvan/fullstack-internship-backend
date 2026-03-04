@@ -26,31 +26,3 @@ export const UsersSwagger: Record<string, Partial<OperationObject>> = {
     description: "Permanently deletes the authenticated user's account.",
   },
 };
-
-export const UserCompanyMembershipSwagger: Record<string, Partial<OperationObject>> = {
-  COMPANY_INVITATIONS: {
-    summary: 'My company invitations',
-    description: 'Returns paginated list of company invitations sent to the current user.',
-  },
-  COMPANY_JOIN_REQUESTS: {
-    summary: 'My join requests',
-    description: 'Returns paginated list of join requests the current user has sent to companies.',
-  },
-  COMPANY_MEMBERSHIP: {
-    summary: 'My company memberships',
-    description: 'Returns all companies the current user is a member of.',
-  },
-  COMPANY_QUIZZES: {
-    summary: 'My available quizzes',
-    description: 'Returns quizzes available to the current user across all their companies.',
-  },
-  COMPANY_RATING: {
-    summary: 'My quiz rating',
-    description: 'Returns cumulative quiz rating stats (correct answers / total questions) across all companies.',
-  },
-  COMPANY_EXPORT: {
-    summary: 'Export my quiz results',
-    description:
-      "Exports current user's quiz answers from Redis for a given company. Supports JSON or CSV format (via ?format=csv).",
-  },
-};
