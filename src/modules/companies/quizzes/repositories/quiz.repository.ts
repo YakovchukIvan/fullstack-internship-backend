@@ -3,7 +3,7 @@ import { DataSource, Repository } from 'typeorm';
 import { Quiz } from '../entities/quiz.entity';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { createPaginatedResult } from '@/common/helpers/create-paginated-result.helper';
-import { QuizzesPaginationDto } from '../dto/req/quizzes-pagination.req.dto';
+import { QuizzesPaginationDto } from '../dto/req/quiz/quizzes-pagination.req.dto';
 import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
 
 @Injectable()
@@ -25,14 +25,13 @@ export class QuizRepository extends Repository<Quiz> {
     return createPaginatedResult(this, dto, { where: { companyId } });
   }
 
-  async findPaginatedByUser(
+  async findPaginatedByCreator(
     userId: string,
+    companyId: string,
     dto: QuizzesPaginationDto,
-    companyId?: string,
   ): Promise<PaginatedResultResponseDto<Quiz>> {
     return createPaginatedResult(this, dto, {
-      where: companyId ? { createdByUserId: userId, companyId } : { createdByUserId: userId },
-      relations: ['company'],
+      where: { createdByUserId: userId, companyId },
     });
   }
 }

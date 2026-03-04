@@ -8,18 +8,13 @@ export class QuizAnswerRedisRepository {
   constructor(private readonly redisService: RedisService) {}
 
   async saveAnswers(snapshot: QuizAnswerSnapshot): Promise<void> {
-    const key = RedisKeys.quizAnswers(snapshot.userId, snapshot.attemptId);
+    const key = RedisKeys.quizAnswers(snapshot.userId, snapshot.quizId, snapshot.attemptId);
     await this.redisService.set(key, snapshot, REDIS_TTL.QUIZ_ANSWERS);
   }
 
-  async getUserAnswers(userId: string): Promise<QuizAnswerSnapshot[]> {
-    const pattern = RedisKeys.allUserQuizAnswers(userId);
-    return this.scanAndParse(pattern);
-  }
-
   async getUserAnswersForQuiz(userId: string, quizId: string): Promise<QuizAnswerSnapshot[]> {
-    const all = await this.getUserAnswers(userId);
-    return all.filter((snapshot) => snapshot.quizId === quizId);
+    const pattern = RedisKeys.allUserQuizAnswersForQuiz(userId, quizId);
+    return this.scanAndParse(pattern);
   }
 
   async getCompanyAnswers(companyId: string, userId?: string): Promise<QuizAnswerSnapshot[]> {
@@ -27,11 +22,6 @@ export class QuizAnswerRedisRepository {
 
     const all = await this.scanAndParse(pattern);
     return all.filter((snapshot) => snapshot.companyId === companyId);
-  }
-
-  async getAttemptAnswers(userId: string, attemptId: string): Promise<QuizAnswerSnapshot | null> {
-    const key = RedisKeys.quizAnswers(userId, attemptId);
-    return this.redisService.get<QuizAnswerSnapshot>(key);
   }
 
   private async scanAndParse(pattern: string): Promise<QuizAnswerSnapshot[]> {

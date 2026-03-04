@@ -5,14 +5,14 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { RequireCompanyRoles } from '../../decorators/company-roles.decorator';
 import { CompanyRoleGuard } from '../../guards/company-role.guard';
-import { GenerateQuizAiDto } from '../dto/req/generate-quiz-ai.req.dto';
-import { AiQuotaResponseDto, QuizAiResponseDto } from '../dto/res/quiz-ai.res.dto';
+import { AiQuotaResponseDto, QuizAiResponseDto } from '../dto/res/ai/ai-quiz.res.dto';
 import { QuizzesRoutes } from '../routes/quizzes.routes';
 import { toIso } from '@/common/helpers/date.transformer';
 import { QuizzesAiSwagger } from '@/common/constants/swagger-docs/quizzes.swagger';
 import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 import { QuizzesService } from '../services/quizzes.service';
-import { toQuizAiResponseDto } from '../shared/mappers/quiz-ai.mapper';
+import { toQuizAiResponseDto } from '../shared/mappers/ai/quiz-ai.mapper';
+import { GenerateQuizAiDto } from '../dto/req/ai/ai-generate-quiz.req.dto';
 
 @Controller(QuizzesRoutes.ROOT)
 @UseGuards(CompanyRoleGuard)

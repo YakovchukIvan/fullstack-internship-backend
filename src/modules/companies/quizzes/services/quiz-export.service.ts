@@ -4,15 +4,12 @@ import { CompaniesService } from '../../services/companies.service';
 import { CompanyMembersService } from '../../services/company-members.service';
 import { CsvExportService } from './csv-export.service';
 import { QuizAnswerSnapshot } from '../shared/interfaces/quiz-answer-snapshot.interface';
-import { ExportQueryDto } from '../dto/req/export-query.req.dto';
-import { CompanyExportResponseDto, ExportSummaryDto } from '../dto/res/export.res.dto';
-import { UserExportResponseDto } from '@/modules/companies/quizzes/dto/res/quizzes/user-export.res.dto';
+import { ExportQueryDto } from '../dto/req/attempt/export-query.req.dto';
+import { CompanyExportResponseDto, ExportSummaryDto, UserExportResponseDto } from '../dto/res/attempt/export.res.dto';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from '@/modules/users/entities/user.entity';
-import { toExportAttemptResponseDto } from '../shared/mappers/quiz-export-answer.mapper';
+import { toExportAttemptResponseDto } from '../shared/mappers/attempt/quiz-export-answer.mapper';
 import { calculateAccuracy } from '../shared/helpers/quiz-math.helper';
+import { UserRepository } from '@/modules/users/repositories/user.repository';
 
 @Injectable()
 export class QuizExportService {
@@ -21,15 +18,22 @@ export class QuizExportService {
     private readonly companiesService: CompaniesService,
     private readonly companyMembersService: CompanyMembersService,
     private readonly csvExportService: CsvExportService,
-    @InjectRepository(User) private readonly userRepository: Repository<User>,
+    private readonly userRepository: UserRepository,
   ) {}
 
-  async exportMyResults(slug: string, userId: string, query: ExportQueryDto): Promise<UserExportResponseDto> {
+  async exportMyResults(
+    slug: string,
+    userId: string,
+    query: ExportQueryDto,
+  ): Promise<{ data: UserExportResponseDto; snapshots: QuizAnswerSnapshot[]; firstName: string; lastName: string }> {
     const company = await this.companiesService.findBySlug(slug, userId);
-    let snapshots = await this.quizAnswerRedisRepository.getCompanyAnswers(company.id, userId);
+    const snapshots = this.applyFilters(
+      await this.quizAnswerRedisRepository.getCompanyAnswers(company.id, userId),
+      query,
+    );
+    const { firstName, lastName } = await this.getUserDisplayName(userId);
 
-    snapshots = this.applyFilters(snapshots, query);
-    return this.buildUserExport(userId, snapshots);
+    return { data: this.buildUserExport(userId, snapshots), snapshots, firstName, lastName };
   }
 
   async exportUserResults(
@@ -37,86 +41,38 @@ export class QuizExportService {
     requesterId: string,
     targetUserId: string,
     query: ExportQueryDto,
-  ): Promise<UserExportResponseDto> {
+  ): Promise<{ data: UserExportResponseDto; snapshots: QuizAnswerSnapshot[]; firstName: string; lastName: string }> {
     const company = await this.companiesService.findBySlug(slug, requesterId);
 
     const membership = await this.companyMembersService.findMembershipBySlug(targetUserId, slug);
     GuardAssertions.isTrueForbidden(!!membership, 'Target user is not a member of this company');
 
-    let snapshots = await this.quizAnswerRedisRepository.getCompanyAnswers(company.id, targetUserId);
-    snapshots = this.applyFilters(snapshots, query);
+    const snapshots = this.applyFilters(
+      await this.quizAnswerRedisRepository.getCompanyAnswers(company.id, targetUserId),
+      query,
+    );
+    const { firstName, lastName } = await this.getUserDisplayName(targetUserId);
 
-    return this.buildUserExport(targetUserId, snapshots);
+    return { data: this.buildUserExport(targetUserId, snapshots), snapshots, firstName, lastName };
   }
 
   async exportCompanyResults(
     slug: string,
     requesterId: string,
     query: ExportQueryDto,
-  ): Promise<CompanyExportResponseDto> {
+  ): Promise<{ data: CompanyExportResponseDto; snapshots: QuizAnswerSnapshot[] }> {
     const company = await this.companiesService.findBySlug(slug, requesterId);
     const snapshots = await this.getFilteredCompanySnapshots(company.id, query);
-    return this.buildCompanyExport(company.id, snapshots);
-  }
 
-  async exportQuizResults(
-    slug: string,
-    requesterId: string,
-    quizId: string,
-    query: ExportQueryDto,
-  ): Promise<CompanyExportResponseDto> {
-    const company = await this.companiesService.findBySlug(slug, requesterId);
-    const snapshots = await this.getFilteredCompanySnapshots(company.id, query, quizId);
-    return this.buildCompanyExport(company.id, snapshots);
+    return { data: this.buildCompanyExport(company.id, snapshots), snapshots };
   }
 
   buildCsv(snapshots: QuizAnswerSnapshot[]): string {
     return this.csvExportService.toCSV(snapshots);
   }
 
-  async getSnapshotsForMemberExport(
-    slug: string,
-    userId: string,
-    query: ExportQueryDto,
-  ): Promise<{ snapshots: QuizAnswerSnapshot[]; firstName: string; lastName: string }> {
-    const company = await this.companiesService.findBySlug(slug, userId);
-    const snapshots = await this.quizAnswerRedisRepository.getCompanyAnswers(company.id, userId);
-
-    const { firstName, lastName } = await this.getUserDisplayName(userId);
-
-    return {
-      snapshots: this.applyFilters(snapshots, query),
-      firstName,
-      lastName,
-    };
-  }
-
-  async getSnapshotsForCompanyExport(
-    slug: string,
-    requesterId: string,
-    query: ExportQueryDto,
-    targetUserId?: string,
-  ): Promise<{ snapshots: QuizAnswerSnapshot[]; firstName?: string; lastName?: string }> {
-    const company = await this.companiesService.findBySlug(slug, requesterId);
-    const snapshots = await this.quizAnswerRedisRepository.getCompanyAnswers(company.id, targetUserId);
-    const filtered = this.applyFilters(snapshots, query);
-
-    if (targetUserId) {
-      const { firstName, lastName } = await this.getUserDisplayName(targetUserId);
-      return { snapshots: filtered, firstName, lastName };
-    }
-
-    return { snapshots: filtered };
-  }
-
   private applyFilters(snapshots: QuizAnswerSnapshot[], query: ExportQueryDto): QuizAnswerSnapshot[] {
-    let result = snapshots;
-
-    if (query.quizId) {
-      result = result.filter((s) => s.quizId === query.quizId);
-    }
-
-    return result;
+    return query.quizId ? snapshots.filter((s) => s.quizId === query.quizId) : snapshots;
   }
 
   private buildUserExport(userId: string, snapshots: QuizAnswerSnapshot[]): UserExportResponseDto {
@@ -146,13 +102,9 @@ export class QuizExportService {
     query: ExportQueryDto,
     quizId?: string,
   ): Promise<QuizAnswerSnapshot[]> {
-    let snapshots = await this.quizAnswerRedisRepository.getCompanyAnswers(companyId);
-
-    if (quizId) {
-      snapshots = snapshots.filter((s) => s.quizId === quizId);
-    }
-
-    return this.applyFilters(snapshots, query);
+    const snapshots = await this.quizAnswerRedisRepository.getCompanyAnswers(companyId);
+    const filtered = quizId ? snapshots.filter((s) => s.quizId === quizId) : snapshots;
+    return this.applyFilters(filtered, query);
   }
 
   private buildCompanyExport(companyId: string, snapshots: QuizAnswerSnapshot[]): CompanyExportResponseDto {
@@ -166,7 +118,7 @@ export class QuizExportService {
   }
 
   private async getUserDisplayName(userId: string): Promise<{ firstName: string; lastName: string }> {
-    const user = await this.userRepository.findOneOrFail({ where: { id: userId } });
+    const user = await this.userRepository.findByIdOrFail(userId);
     return {
       firstName: user.firstName,
       lastName: user.lastName,

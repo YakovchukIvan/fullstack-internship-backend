@@ -1,7 +1,7 @@
 import { IsString, IsNotEmpty, IsEnum, IsInt, Min, Max, MinLength, MaxLength } from 'class-validator';
-import { QuizDifficulty } from '../../enums/quiz-difficulty.enum';
-import { QuizConfig } from '../../shared/constants/quiz.constants';
-import { QuizBaseDto } from './quiz-base.req.dto';
+import { QuizBaseDto } from '../quiz-base.req.dto';
+import { QuizDifficulty } from '@/modules/companies/quizzes/enums/quiz-difficulty.enum';
+import { QuizConfig } from '@/modules/companies/quizzes/shared/constants/quiz.constants';
 
 export class GenerateQuizAiDto extends QuizBaseDto {
   @IsString({ message: 'Topic must be a string' })

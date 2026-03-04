@@ -84,7 +84,7 @@ export class CompanyJoinRequestsService {
 
   async getCompanyJoinRequests(
     slug: string,
-    dto?: CompanyInteractionsPaginationDto,
+    dto: CompanyInteractionsPaginationDto,
   ): Promise<{ joinRequests: PaginatedResultResponseDto<CompanyJoinRequest>; company: Company }> {
     const company = await this.companyRepository.findBySlugOrFail(slug);
     const joinRequests = await this.joinRequestRepository.findPaginatedByCompany(company.id, dto);
@@ -93,7 +93,7 @@ export class CompanyJoinRequestsService {
 
   async getUserJoinRequests(
     userId: string,
-    dto?: CompanyInteractionsPaginationDto,
+    dto: CompanyInteractionsPaginationDto,
   ): Promise<PaginatedResultResponseDto<CompanyJoinRequest>> {
     return this.joinRequestRepository.findPaginatedByUser(userId, dto);
   }

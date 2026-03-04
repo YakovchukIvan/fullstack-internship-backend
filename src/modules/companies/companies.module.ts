@@ -1,10 +1,9 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Company } from './entities/company.entity';
 import { CompanyMember } from './entities/company-member.entity';
 import { CompanyInvitation } from './entities/company-invitation.entity';
 import { CompanyJoinRequest } from './entities/company-join-request.entity';
-import { User } from '@/modules/users/entities/user.entity';
 import { CompanyRepository } from './repositories/company.repository';
 import { CompanyMemberRepository } from './repositories/company-member.repository';
 import { CompanyInvitationRepository } from './repositories/company-invitation.repository';
@@ -18,11 +17,13 @@ import { CompanyMembersController } from './controllers/company-members.controll
 import { CompanyOwnerController } from './controllers/company-owner.controller';
 import { CompanyRoleGuard } from './guards/company-role.guard';
 import { QuizzesModule } from './quizzes/quizzes.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Company, CompanyMember, CompanyInvitation, CompanyJoinRequest, User]),
-    QuizzesModule,
+    TypeOrmModule.forFeature([Company, CompanyMember, CompanyInvitation, CompanyJoinRequest]),
+    UsersModule,
+    forwardRef(() => QuizzesModule),
   ],
   controllers: [CompaniesController, CompanyOwnerController, CompanyMembersController],
   providers: [

@@ -1,6 +1,9 @@
-import { QuizQuestionAdminResponseDto, QuizQuestionResponseDto } from '../../dto/res/quiz-question.res.dto';
-import { QuizQuestionDto } from '../../dto/req/quiz-question.dto';
-import { QuizQuestion } from '../interfaces/quiz.interfaces';
+import {
+  QuizQuestionAdminResponseDto,
+  QuizQuestionResponseDto,
+} from '@/modules/companies/quizzes/dto/res/quiz/quiz-question.res.dto';
+import { QuizQuestionDto } from '@/modules/companies/quizzes/dto/req/quiz/quiz-question.dto';
+import { QuizQuestion } from '../../interfaces/quiz.interfaces';
 
 export function mapToQuizQuestions(questions: QuizQuestionDto[]): QuizQuestion[] {
   return questions.map((q) => ({

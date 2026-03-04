@@ -33,7 +33,7 @@ export class CompanyJoinRequestRepository extends Repository<CompanyJoinRequest>
 
   async findPaginatedByCompany(
     companyId: string,
-    dto?: CompanyInteractionsPaginationDto,
+    dto: CompanyInteractionsPaginationDto,
   ): Promise<PaginatedResultResponseDto<CompanyJoinRequest>> {
     return createPaginatedResult(this, dto, {
       where: { companyId },
@@ -43,7 +43,7 @@ export class CompanyJoinRequestRepository extends Repository<CompanyJoinRequest>
 
   async findPaginatedByUser(
     userId: string,
-    dto?: CompanyInteractionsPaginationDto,
+    dto: CompanyInteractionsPaginationDto,
   ): Promise<PaginatedResultResponseDto<CompanyJoinRequest>> {
     return createPaginatedResult(this, dto, {
       where: { userId },

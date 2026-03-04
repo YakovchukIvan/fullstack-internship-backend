@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Quiz } from '../entities/quiz.entity';
 import { CompaniesService } from '../../services/companies.service';
-import { SubmitQuizDto } from '../dto/req/submit-quiz.req.dto';
-import { QuizAttemptResponseDto } from '../dto/res/quiz-attempt.res.dto';
+import { SubmitQuizDto } from '../dto/req/attempt/submit-quiz.req.dto';
+import { QuizAttemptResponseDto } from '../dto/res/quiz/quiz-attempt.res.dto';
 import { UserRatingResponseDto } from '@/common/dto/res/user-rating.res.dto';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { AppLogger } from '@/common/logger/app-logger';
@@ -12,9 +12,9 @@ import { QuizAttemptRepository } from '../repositories/quiz-attempt.repository';
 import { QuizAnswerRedisRepository } from '../repositories/quiz-answer-redis.repository';
 import { RedisService } from '@/modules/redis/redis.service';
 import { RedisKeys } from '@/modules/redis/redis.constants';
-import { toQuizAttemptResponseDto } from '../shared/mappers/quiz-attempt.mapper';
 import { QuizAnswerSnapshot } from '../shared/interfaces/quiz-answer-snapshot.interface';
-import { toAnswerRecord, toAnswerSnapshot, toQuizAttemptAnswer } from '../shared/mappers/quiz-snapshot.mapper';
+import { toQuizAttemptResponseDto } from '../shared/mappers/attempt/quiz-attempt.mapper';
+import { toAnswerRecord, toAnswerSnapshot, toQuizAttemptAnswer } from '../shared/mappers/attempt/quiz-snapshot.mapper';
 
 @Injectable()
 export class QuizAttemptsService {

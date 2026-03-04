@@ -72,7 +72,7 @@ export class CompanyMemberRepository extends Repository<CompanyMember> {
     dto: CompanyMembersPaginationDto,
   ): Promise<PaginatedResultResponseDto<CompanyMember>> {
     return createPaginatedResult(this, dto, {
-      where: dto?.role ? { userId, role: dto.role } : { userId },
+      where: dto.role ? { userId, role: dto.role } : { userId },
       relations: ['company', 'user'],
     });
   }

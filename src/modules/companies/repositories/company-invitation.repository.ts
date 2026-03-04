@@ -33,7 +33,7 @@ export class CompanyInvitationRepository extends Repository<CompanyInvitation> {
 
   async findPaginatedByCompany(
     companyId: string,
-    dto?: CompanyInteractionsPaginationDto,
+    dto: CompanyInteractionsPaginationDto,
   ): Promise<PaginatedResultResponseDto<CompanyInvitation>> {
     return createPaginatedResult(this, dto, {
       where: { companyId },
@@ -43,7 +43,7 @@ export class CompanyInvitationRepository extends Repository<CompanyInvitation> {
 
   async findPaginatedByUser(
     userId: string,
-    dto?: CompanyInteractionsPaginationDto,
+    dto: CompanyInteractionsPaginationDto,
   ): Promise<PaginatedResultResponseDto<CompanyInvitation>> {
     return createPaginatedResult(this, dto, {
       where: { userId },

@@ -7,11 +7,10 @@ import { CompanyRoleGuard } from '../../guards/company-role.guard';
 import { RequireCompanyRoles } from '../../decorators/company-roles.decorator';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { QuizExportService } from '../services/quiz-export.service';
-import { ExportQueryDto } from '../dto/req/export-query.req.dto';
-import { CompanyExportResponseDto } from '../dto/res/export.res.dto';
+import { ExportQueryDto } from '../dto/req/attempt/export-query.req.dto';
+import { CompanyExportResponseDto, UserExportResponseDto } from '../dto/res/attempt/export.res.dto';
 import { QuizzesRoutes } from '../routes/quizzes.routes';
 import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
-import { UserExportResponseDto } from '@/modules/companies/quizzes/dto/res/quizzes/user-export.res.dto';
 import { ExportFormat } from '../enums/export-format.enum';
 import { buildExportFilename } from '../shared/helpers/export-filename.helper';
 import { QuizExportSwagger } from '@/common/constants/swagger-docs/quizzes.swagger';
@@ -32,16 +31,18 @@ export class QuizExportController {
     @Query() query: ExportQueryDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<CompanyExportResponseDto | void> {
-    if (query.format === ExportFormat.CSV) {
-      const { snapshots } = await this.quizExportService.getSnapshotsForCompanyExport(slug, user.sub, query);
-      const csv = this.quizExportService.buildCsv(snapshots);
-      const filename = buildExportFilename('company', slug, snapshots);
+    const { data, snapshots } = await this.quizExportService.exportCompanyResults(slug, user.sub, query);
 
-      sendCsvResponse(response, csv, filename);
+    if (query.format === ExportFormat.CSV) {
+      sendCsvResponse(
+        response,
+        this.quizExportService.buildCsv(snapshots),
+        buildExportFilename('company', slug, snapshots),
+      );
       return;
     }
 
-    return this.quizExportService.exportCompanyResults(slug, user.sub, query);
+    return data;
   }
 
   @Get(QuizzesRoutes.EXPORT.USER)
@@ -54,21 +55,23 @@ export class QuizExportController {
     @Query() query: ExportQueryDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<UserExportResponseDto | void> {
-    if (query.format === ExportFormat.CSV) {
-      const { snapshots, firstName, lastName } = await this.quizExportService.getSnapshotsForCompanyExport(
-        slug,
-        user.sub,
-        query,
-        userId,
-      );
-      const csv = this.quizExportService.buildCsv(snapshots);
-      const filename = buildExportFilename('member', slug, snapshots, { firstName, lastName });
+    const { data, snapshots, firstName, lastName } = await this.quizExportService.exportUserResults(
+      slug,
+      user.sub,
+      userId,
+      query,
+    );
 
-      sendCsvResponse(response, csv, filename);
+    if (query.format === ExportFormat.CSV) {
+      sendCsvResponse(
+        response,
+        this.quizExportService.buildCsv(snapshots),
+        buildExportFilename('member', slug, snapshots, { firstName, lastName }),
+      );
       return;
     }
 
-    return this.quizExportService.exportUserResults(slug, user.sub, userId, query);
+    return data;
   }
 
   @Get(QuizzesRoutes.EXPORT.ME)
@@ -80,19 +83,21 @@ export class QuizExportController {
     @Query() query: ExportQueryDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<UserExportResponseDto | void> {
-    if (query.format === ExportFormat.CSV) {
-      const { snapshots, firstName, lastName } = await this.quizExportService.getSnapshotsForMemberExport(
-        slug,
-        user.sub,
-        query,
-      );
-      const csv = this.quizExportService.buildCsv(snapshots);
-      const filename = buildExportFilename('personal', slug, snapshots, { firstName, lastName });
+    const { data, snapshots, firstName, lastName } = await this.quizExportService.exportMyResults(
+      slug,
+      user.sub,
+      query,
+    );
 
-      sendCsvResponse(response, csv, filename);
+    if (query.format === ExportFormat.CSV) {
+      sendCsvResponse(
+        response,
+        this.quizExportService.buildCsv(snapshots),
+        buildExportFilename('personal', slug, snapshots, { firstName, lastName }),
+      );
       return;
     }
 
-    return this.quizExportService.exportMyResults(slug, user.sub, query);
+    return data;
   }
 }

@@ -46,7 +46,7 @@ export class CompaniesController {
     @CurrentUser() user: JwtPayload,
     @Query() paginationDto: CompaniesPaginationDto,
   ): Promise<{ companies: CompanyResponseDto[]; pagination: PaginationMetadataDto }> {
-    const result = await this.companiesService.findAll(user.sub, user.role, paginationDto);
+    const result = await this.companiesService.findAll(user.sub, paginationDto, user.role);
     const companies = result.detail.map((company) => toCompanyResponseDto(company));
 
     return {

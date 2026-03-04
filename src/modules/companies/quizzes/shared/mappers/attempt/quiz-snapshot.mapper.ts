@@ -1,5 +1,5 @@
-import { QuizAnswerRecord, QuizAnswerSnapshot } from '../interfaces/quiz-answer-snapshot.interface';
-import { BuildSnapshotParams, QuizAttemptAnswer } from '../interfaces/quiz-attempt.interfaces';
+import { QuizAnswerRecord, QuizAnswerSnapshot } from '../../interfaces/quiz-answer-snapshot.interface';
+import { BuildSnapshotParams, QuizAttemptAnswer } from '../../interfaces/quiz-attempt.interfaces';
 
 export function toAnswerRecord(
   answer: QuizAttemptAnswer,

@@ -1,5 +1,5 @@
 import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
-import { QuizQuestionDto } from '../../dto/req/quiz-question.dto';
+import { QuizQuestionDto } from '../../dto/req/quiz/quiz-question.dto';
 
 export function ValidateCorrectOptionIndexes(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {

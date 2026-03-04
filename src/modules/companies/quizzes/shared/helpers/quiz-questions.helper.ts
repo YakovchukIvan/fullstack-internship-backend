@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { QuizQuestionDto } from '../../dto/req/quiz-question.dto';
+import { QuizQuestionDto } from '../../dto/req/quiz/quiz-question.dto';
 import { QuizQuestion } from '../interfaces/quiz.interfaces';
 import { QuizConfig } from '../constants/quiz.constants';
 

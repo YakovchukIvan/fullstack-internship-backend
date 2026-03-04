@@ -18,18 +18,17 @@ import { CompanyRole } from '@/common/enums/company-role.enum';
 import { RequireCompanyRoles } from '../../decorators/company-roles.decorator';
 import { CompanyRoleGuard } from '../../guards/company-role.guard';
 import { QuizzesService } from '../services/quizzes.service';
-import { CreateQuizDto } from '../dto/req/create-quiz.req.dto';
-import { UpdateQuizDto } from '../dto/req/update-quiz.req.dto';
-import { QuizzesPaginationDto } from '../dto/req/quizzes-pagination.req.dto';
-import { QuizAdminResponseDto } from '../dto/res/quiz-detail.res.dto';
-import { QuizListResponseDto } from '../dto/res/quizzes-paginated.res.dto';
-import { QuizzesPaginatedResponseDto } from '../dto/res/quizzes-paginated.res.dto';
+import { CreateQuizDto } from '../dto/req/quiz/create-quiz.req.dto';
+import { UpdateQuizDto } from '../dto/req/quiz/update-quiz.req.dto';
+import { QuizzesPaginationDto } from '../dto/req/quiz/quizzes-pagination.req.dto';
+import { QuizAdminResponseDto } from '../dto/res/quiz/quiz-detail.res.dto';
+import { QuizListResponseDto, UserQuizzesListResponseDto } from '../dto/res/quiz/quizzes-paginated.res.dto';
+import { QuizzesPaginatedResponseDto } from '../dto/res/quiz/quizzes-paginated.res.dto';
 import { QuizzesRoutes } from '../routes/quizzes.routes';
 import { toQuizAdminResponseDto, toQuizListResponseDto } from '../shared/mappers/quiz.mapper';
 import { QuizzesSwagger } from '@/common/constants/swagger-docs/quizzes.swagger';
 import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
-import { UserQuizzesListResponseDto } from '@/modules/companies/quizzes/dto/res/quizzes/user-quizzes-list.res.dto';
-import { toUserQuizListItemResponseDto } from '@/modules/companies/quizzes/shared/mappers/user-quiz-list-item.mapper';
+import { toUserQuizListItemResponseDto } from '@/modules/companies/quizzes/shared/mappers/quiz/user-quiz-list-item.mapper';
 
 @Controller(QuizzesRoutes.ROOT)
 @UseGuards(CompanyRoleGuard)
@@ -56,11 +55,11 @@ export class QuizzesController {
   @ApiEndpoint(UserQuizzesListResponseDto, HttpStatus.OK, QuizzesSwagger.FIND_ALL)
   @ResponseMessage('Available quizzes fetched successfully')
   async getAvailableQuizzes(
+    @Param('slug') slug: string,
     @CurrentUser() user: JwtPayload,
     @Query() paginationDto: QuizzesPaginationDto,
-    @Param('slug') slug?: string,
   ): Promise<UserQuizzesListResponseDto> {
-    const result = await this.quizzesService.findAllByUser(user.sub, paginationDto, slug);
+    const result = await this.quizzesService.findCreatedByUser(slug, user.sub, paginationDto);
 
     return {
       quizzes: result.detail.map(toUserQuizListItemResponseDto),

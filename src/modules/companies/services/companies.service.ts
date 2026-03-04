@@ -35,8 +35,8 @@ export class CompaniesService {
 
   async findAll(
     userId: string,
+    dto: CompaniesPaginationDto,
     userRole?: UserRole,
-    dto?: CompaniesPaginationDto,
   ): Promise<PaginatedResultResponseDto<Company>> {
     return this.companyRepository.findPaginated(userId, userRole, dto);
   }

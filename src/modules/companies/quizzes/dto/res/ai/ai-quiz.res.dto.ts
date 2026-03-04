@@ -1,4 +1,4 @@
-import { QuizWithQuestionsDto } from './quiz-session.res.dto';
+import { QuizWithQuestionsDto } from '../quiz/quiz-session.res.dto';
 
 export class AiQuotaResponseDto {
   remaining: number;

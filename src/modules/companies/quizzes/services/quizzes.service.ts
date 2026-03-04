@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { Quiz } from '../entities/quiz.entity';
-import { CreateQuizDto } from '../dto/req/create-quiz.req.dto';
-import { UpdateQuizDto } from '../dto/req/update-quiz.req.dto';
-import { GenerateQuizAiDto } from '../dto/req/generate-quiz-ai.req.dto';
-import { QuizzesPaginationDto } from '../dto/req/quizzes-pagination.req.dto';
+import { CreateQuizDto } from '../dto/req/quiz/create-quiz.req.dto';
+import { GenerateQuizAiDto } from '../dto/req/ai/ai-generate-quiz.req.dto';
+import { UpdateQuizDto } from '../dto/req/quiz/update-quiz.req.dto';
+import { QuizzesPaginationDto } from '../dto/req/quiz/quizzes-pagination.req.dto';
 import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
 import { CompaniesService } from '../../services/companies.service';
 import { AiQuizGeneratorService } from './ai-quiz-generator.service';
 import { AiRateLimitService } from './ai-rate-limit.service';
 import { AppLogger } from '@/common/logger/app-logger';
 import { validateQuizQuestions } from '../shared/helpers/quiz-questions.helper';
-import { mapToQuizQuestions } from '../shared/mappers/quiz-questions.mapper';
+import { mapToQuizQuestions } from '../shared/mappers/quiz/quiz-questions.mapper';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { QuizRepository } from '../repositories/quiz.repository';
 import { CompanyMemberRepository } from '../../repositories/company-member.repository';
@@ -98,17 +98,13 @@ export class QuizzesService {
     return this.quizRepository.findPaginatedByCompany(company.id, dto);
   }
 
-  async findAllByUser(
+  async findCreatedByUser(
+    slug: string,
     userId: string,
     dto: QuizzesPaginationDto,
-    slug?: string,
   ): Promise<PaginatedResultResponseDto<Quiz>> {
-    let companyId: string | undefined;
-    if (slug) {
-      const company = await this.companiesService.findBySlug(slug, userId);
-      companyId = company.id;
-    }
-    return this.quizRepository.findPaginatedByUser(userId, dto, companyId);
+    const company = await this.companiesService.findBySlug(slug, userId);
+    return this.quizRepository.findPaginatedByCreator(userId, company.id, dto);
   }
 
   async findOne(id: string, slug: string, userId: string): Promise<{ quiz: Quiz; startedAt: Date }> {

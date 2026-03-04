@@ -1,4 +1,4 @@
-import { PerformanceLevel } from '../../enums/quiz-performance-level.enum';
+import { PerformanceLevel } from '../../../enums/quiz-performance-level.enum';
 
 export class QuizAttemptAnswerDto {
   questionIndex: number;

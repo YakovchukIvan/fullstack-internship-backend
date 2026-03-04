@@ -10,9 +10,9 @@ import {
   MaxLength,
   IsOptional,
 } from 'class-validator';
-import { QuizConfig } from '../../shared/constants/quiz.constants';
+import { QuizConfig } from '@/modules/companies/quizzes/shared/constants/quiz.constants';
 import { QuizQuestionDto } from './quiz-question.dto';
-import { QuizBaseDto } from './quiz-base.req.dto';
+import { QuizBaseDto } from '../quiz-base.req.dto';
 
 export class CreateQuizDto extends QuizBaseDto {
   @IsString({ message: 'Title must be a string' })

@@ -2,7 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ConfigService } from '@nestjs/config';
 import { getGeminiConfig } from '@/config/gemini.config';
-import { GenerateQuizAiDto } from '../dto/req/generate-quiz-ai.req.dto';
+import { GenerateQuizAiDto } from '../dto/req/ai/ai-generate-quiz.req.dto';
 import { AppLogger } from '@/common/logger/app-logger';
 import { QuizConfig } from '../shared/constants/quiz.constants';
 import { QuizQuestion } from '../shared/interfaces/quiz.interfaces';

@@ -1,9 +1,9 @@
-import { Quiz } from '../../entities/quiz.entity';
-import { QuizStartResponseDto } from '../../dto/res/quiz-session.res.dto';
 import { toIso } from '@/common/helpers/date.transformer';
-import { toQuizQuestionsWithAnswers, toQuizQuestionsWithoutAnswers } from './quiz-questions.mapper';
-import { QuizAdminResponseDto, QuizResponseDto } from '../../dto/res/quiz-detail.res.dto';
-import { QuizListResponseDto } from '../../dto/res/quizzes-paginated.res.dto';
+import { Quiz } from '../../entities/quiz.entity';
+import { QuizStartResponseDto } from '../../dto/res/quiz/quiz-session.res.dto';
+import { toQuizQuestionsWithAnswers, toQuizQuestionsWithoutAnswers } from './quiz/quiz-questions.mapper';
+import { QuizAdminResponseDto } from '../../dto/res/quiz/quiz-detail.res.dto';
+import { QuizListResponseDto } from '../../dto/res/quiz/quizzes-paginated.res.dto';
 
 export function toQuizBaseFields(quiz: Quiz) {
   return {
@@ -31,14 +31,14 @@ export function toQuizPublicFields(quiz: Quiz) {
   };
 }
 
-export function toQuizResponseDto(quiz: Quiz): QuizResponseDto {
+export function toQuizListResponseDto(quiz: Quiz): QuizListResponseDto {
   return toQuizPublicFields(quiz);
 }
 
-export function toQuizListResponseDto(quiz: Quiz): QuizListResponseDto {
+export function toQuizAdminResponseDto(quiz: Quiz): QuizAdminResponseDto {
   return {
     ...toQuizBaseFields(quiz),
-    questions: toQuizQuestionsWithoutAnswers(quiz.questions),
+    questions: toQuizQuestionsWithAnswers(quiz.questions),
   };
 }
 
@@ -46,12 +46,5 @@ export function toQuizStartResponseDto(quiz: Quiz, startedAt: Date): QuizStartRe
   return {
     ...toQuizPublicFields(quiz),
     startedAt: toIso(startedAt),
-  };
-}
-
-export function toQuizAdminResponseDto(quiz: Quiz): QuizAdminResponseDto {
-  return {
-    ...toQuizBaseFields(quiz),
-    questions: toQuizQuestionsWithAnswers(quiz.questions),
   };
 }

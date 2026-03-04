@@ -33,3 +33,10 @@ export class CompanyExportResponseDto {
   summary: ExportSummaryDto;
   attempts: ExportAttemptDto[];
 }
+
+export class UserExportResponseDto {
+  userId: string;
+  exportedAt: string;
+  summary: ExportSummaryDto;
+  attempts: ExportAttemptDto[];
+}

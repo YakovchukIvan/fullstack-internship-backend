@@ -1,6 +1,5 @@
-import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CompanyInvitation } from '../entities/company-invitation.entity';
 import { CompanyMember } from '../entities/company-member.entity';
@@ -14,13 +13,12 @@ import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { CompanyRepository } from '../repositories/company.repository';
 import { CompanyInvitationRepository } from '../repositories/company-invitation.repository';
 import { CompanyJoinRequestRepository } from '../repositories/company-join-request.repository';
-import { User } from '@/modules/users/entities/user.entity';
+import { UserRepository } from '@/modules/users/repositories/user.repository';
 
 @Injectable()
 export class CompanyInvitationsService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly userRepository: UserRepository,
     private readonly companyRepository: CompanyRepository,
     private readonly invitationRepository: CompanyInvitationRepository,
     private readonly joinRequestRepository: CompanyJoinRequestRepository,
@@ -31,10 +29,7 @@ export class CompanyInvitationsService {
 
   async inviteUser(slug: string, email: string, invitedById: string, message?: string): Promise<CompanyInvitation> {
     const company = await this.companyRepository.findBySlugOrFail(slug);
-
-    const user = await this.userRepository.findOne({ where: { email } });
-    GuardAssertions.exists(user, 'User with this email not found');
-
+    const user = await this.userRepository.findByEmailOrFail(email);
     const isMember = await this.companyMembersService.isMember(user.id, company.id);
     GuardAssertions.isTrueConflict(!isMember, 'User is already a member of this company');
 
@@ -96,7 +91,7 @@ export class CompanyInvitationsService {
 
   async getCompanyInvitations(
     slug: string,
-    dto?: CompanyInteractionsPaginationDto,
+    dto: CompanyInteractionsPaginationDto,
   ): Promise<{ invitation: PaginatedResultResponseDto<CompanyInvitation>; company: Company }> {
     const company = await this.companyRepository.findBySlugOrFail(slug);
     const invitation = await this.invitationRepository.findPaginatedByCompany(company.id, dto);
@@ -105,7 +100,7 @@ export class CompanyInvitationsService {
 
   async getUserInvitations(
     userId: string,
-    dto?: CompanyInteractionsPaginationDto,
+    dto: CompanyInteractionsPaginationDto,
   ): Promise<PaginatedResultResponseDto<CompanyInvitation>> {
     return this.invitationRepository.findPaginatedByUser(userId, dto);
   }
