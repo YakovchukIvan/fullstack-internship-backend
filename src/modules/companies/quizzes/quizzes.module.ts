@@ -14,9 +14,21 @@ import { AiRateLimitService } from './services/ai-rate-limit.service';
 import { UsersModule } from '@/modules/users/users.module';
 import { Module, forwardRef } from '@nestjs/common';
 import { CompaniesModule } from '../companies.module';
+import { QuizzesController } from './controllers/quizzes.controller';
+import { QuizzesAiController } from './controllers/ai-quizzes.controller';
+import { QuizSessionController } from './controllers/quiz-session.controller';
+import { QuizAttemptsController } from './controllers/quiz-attempts.controller';
+import { QuizExportController } from './controllers/quiz-export.controller';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Quiz, QuizAttempt]), forwardRef(() => CompaniesModule), UsersModule],
+  controllers: [
+    QuizzesController,
+    QuizzesAiController,
+    QuizSessionController,
+    QuizAttemptsController,
+    QuizExportController,
+  ],
   providers: [
     QuizRepository,
     QuizAttemptRepository,
