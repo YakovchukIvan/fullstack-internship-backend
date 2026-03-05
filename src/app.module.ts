@@ -14,6 +14,7 @@ import { appProviders } from './app.providers';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RedisModule } from './modules/redis/redis.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { RedisModule } from './modules/redis/redis.module';
     UsersModule,
     MailModule,
     CompaniesModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService, ...appProviders],
