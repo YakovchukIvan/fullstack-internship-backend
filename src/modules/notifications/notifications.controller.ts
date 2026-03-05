@@ -13,24 +13,20 @@ import { CreateTestNotificationDto, NotificationsPaginationDto } from './dto/req
 import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 import { toNotificationResponseDto } from './mappers/notification.mapper';
 import { NotificationsService } from './services/notifications.service';
-import { NotificationsGateway } from './notifications.gateway';
+import { NotificationsSwagger } from '@/common/constants/swagger-docs/notifications.swagger';
 
 @Controller(NotificationsRoutes.ROOT)
 export class NotificationsController {
-  constructor(
-    private readonly notificationsService: NotificationsService,
-    private readonly notificationsGateway: NotificationsGateway,
-  ) {}
+  constructor(private readonly notificationsService: NotificationsService) {}
 
   @Get()
-  @ApiEndpoint(NotificationsListResponseDto, HttpStatus.OK)
+  @ApiEndpoint(NotificationsListResponseDto, HttpStatus.OK, NotificationsSwagger.GET_ALL)
   @ResponseMessage('Notifications fetched successfully')
   async getMyNotifications(
     @CurrentUser() user: JwtPayload,
     @Query() dto: NotificationsPaginationDto,
   ): Promise<NotificationsListResponseDto> {
     const result = await this.notificationsService.findAllByUser(user.sub, dto);
-
     return {
       notifications: result.detail.map(toNotificationResponseDto),
       unreadCount: result.unreadCount,
@@ -39,7 +35,7 @@ export class NotificationsController {
   }
 
   @Get(NotificationsRoutes.UNREAD_COUNT)
-  @ApiEndpoint(UnreadCountResponseDto, HttpStatus.OK)
+  @ApiEndpoint(UnreadCountResponseDto, HttpStatus.OK, NotificationsSwagger.UNREAD_COUNT)
   @ResponseMessage('Unread count fetched successfully')
   async getUnreadCount(@CurrentUser() user: JwtPayload): Promise<{ count: number }> {
     const count = await this.notificationsService.countUnread(user.sub);
@@ -57,12 +53,11 @@ export class NotificationsController {
       text: body.text,
       companyId: body.companyId,
     });
-    this.notificationsGateway.sendNotification(user.sub, notification);
     return { notification: toNotificationResponseDto(notification) };
   }
 
   @Patch(NotificationsRoutes.READ)
-  @ApiEndpoint(NotificationResponseDto, HttpStatus.OK)
+  @ApiEndpoint(NotificationResponseDto, HttpStatus.OK, NotificationsSwagger.MARK_AS_READ)
   @ResponseMessage('Notification marked as read')
   async markAsRead(
     @Param('notificationId') notificationId: string,
@@ -73,7 +68,7 @@ export class NotificationsController {
   }
 
   @Patch(NotificationsRoutes.READ_ALL)
-  @ApiEndpoint(Object, HttpStatus.OK)
+  @ApiEndpoint(Object, HttpStatus.OK, NotificationsSwagger.MARK_ALL_AS_READ)
   @ResponseMessage('All notifications marked as read')
   async markAllAsRead(@CurrentUser() user: JwtPayload): Promise<void> {
     await this.notificationsService.markAllAsRead(user.sub);

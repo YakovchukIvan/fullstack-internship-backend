@@ -20,5 +20,5 @@ export class CreateTestNotificationDto {
 
   @IsOptional()
   @IsUUID()
-  companyId?: string;
+  companyId: string | null;
 }

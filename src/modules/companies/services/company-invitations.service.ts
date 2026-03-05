@@ -7,13 +7,15 @@ import { CompanyRole } from '@/common/enums/company-role.enum';
 import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
 import { CompanyInteractionsPaginationDto } from '../dto/req/company/company-interactions-pagination.req.dto';
 import { CompanyMembersService } from './company-members.service';
-import { CompanyEvents, CompanyInvitationEvent, CompanyMembershipEvent } from '../events/company.events';
+import { CompanyEvents } from '../events/company.events';
 import { Company } from '../entities/company.entity';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { CompanyRepository } from '../repositories/company.repository';
 import { CompanyInvitationRepository } from '../repositories/company-invitation.repository';
 import { CompanyJoinRequestRepository } from '../repositories/company-join-request.repository';
 import { UserRepository } from '@/modules/users/repositories/user.repository';
+import { CompanyInvitationEvent } from '../events/company-invitation.event';
+import { CompanyMembershipEvent } from '../events/company-membership.event';
 
 @Injectable()
 export class CompanyInvitationsService {
@@ -51,7 +53,7 @@ export class CompanyInvitationsService {
     const saved = await this.invitationRepository.save(invitation);
     this.eventEmitter.emit(
       CompanyEvents.INVITATION_SENT,
-      new CompanyInvitationEvent(saved.userId, saved.companyId, invitedById),
+      new CompanyInvitationEvent(saved.userId, saved.companyId, invitedById, company.name),
     );
 
     return this.invitationRepository.findOneOrFail({
@@ -70,10 +72,12 @@ export class CompanyInvitationsService {
         manager,
       );
       await manager.remove(invitation);
+
       this.eventEmitter.emit(
         CompanyEvents.INVITATION_ACCEPTED,
-        new CompanyMembershipEvent(userId, invitation.company.id),
+        new CompanyMembershipEvent(userId, invitation.company.id, invitation.company.name),
       );
+
       return member;
     });
   }

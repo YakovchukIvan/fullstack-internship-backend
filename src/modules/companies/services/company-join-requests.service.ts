@@ -7,12 +7,13 @@ import { CompanyRole } from '@/common/enums/company-role.enum';
 import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
 import { CompanyInteractionsPaginationDto } from '../dto/req/company/company-interactions-pagination.req.dto';
 import { CompanyMembersService } from './company-members.service';
-import { CompanyEvents, CompanyMembershipEvent } from '../events/company.events';
+import { CompanyEvents } from '../events/company.events';
 import { Company } from '../entities/company.entity';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { CompanyRepository } from '../repositories/company.repository';
 import { CompanyInvitationRepository } from '../repositories/company-invitation.repository';
 import { CompanyJoinRequestRepository } from '../repositories/company-join-request.repository';
+import { CompanyMembershipEvent } from '../events/company-membership.event';
 
 @Injectable()
 export class CompanyJoinRequestsService {
@@ -42,7 +43,10 @@ export class CompanyJoinRequestsService {
     const joinRequest = this.joinRequestRepository.create({ userId, companyId: company.id });
     const saved = await this.joinRequestRepository.save(joinRequest);
 
-    this.eventEmitter.emit(CompanyEvents.JOIN_REQUEST_CREATED, new CompanyMembershipEvent(userId, company.id));
+    this.eventEmitter.emit(
+      CompanyEvents.JOIN_REQUEST_SENT,
+      new CompanyMembershipEvent(joinRequest.userId, company.id, company.name),
+    );
 
     return this.joinRequestRepository.findOneOrFail({
       where: { id: saved.id },
@@ -65,8 +69,9 @@ export class CompanyJoinRequestsService {
 
       this.eventEmitter.emit(
         CompanyEvents.JOIN_REQUEST_ACCEPTED,
-        new CompanyMembershipEvent(joinRequest.userId, company.id),
+        new CompanyMembershipEvent(joinRequest.userId, company.id, company.name),
       );
+
       return member;
     });
   }

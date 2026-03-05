@@ -1,12 +1,9 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateNotifications1772706005294 implements MigrationInterface {
-  name = 'CreateNotifications1772706005294';
+export class CreateNotifications1772726268012 implements MigrationInterface {
+  name = 'CreateNotifications1772726268012';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `CREATE TYPE "public"."notifications_type_enum" AS ENUM('quiz_created', 'invitation_received', 'invitation_accepted', 'join_request_accepted')`,
-    );
     await queryRunner.query(
       `CREATE TABLE "notifications" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "user_id" uuid NOT NULL, "type" "public"."notifications_type_enum" NOT NULL, "text" text NOT NULL, "is_read" boolean NOT NULL DEFAULT false, "company_id" uuid, CONSTRAINT "PK_6a72c3c0f683f6462415e653c3a" PRIMARY KEY ("id"))`,
     );
@@ -22,6 +19,5 @@ export class CreateNotifications1772706005294 implements MigrationInterface {
     await queryRunner.query(`DROP INDEX "public"."IDX_9a8a82462cab47c73d25f49261"`);
     await queryRunner.query(`DROP INDEX "public"."IDX_af08fad7c04bb85403970afdc1"`);
     await queryRunner.query(`DROP TABLE "notifications"`);
-    await queryRunner.query(`DROP TYPE "public"."notifications_type_enum"`);
   }
 }

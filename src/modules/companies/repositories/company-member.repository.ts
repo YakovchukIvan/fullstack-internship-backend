@@ -39,6 +39,10 @@ export class CompanyMemberRepository extends Repository<CompanyMember> {
     });
   }
 
+  async findAllByCompanyId(companyId: string): Promise<CompanyMember[]> {
+    return this.find({ where: { companyId } });
+  }
+
   async getUserRoleInCompany(userId: string, companyId: string): Promise<CompanyRole | null> {
     const member = await this.findOne({ where: { userId, companyId } });
     return member?.role ?? null;
