@@ -22,16 +22,14 @@ import { CompaniesPaginationDto } from '../dto/req/company/companies-pagination.
 import { CompaniesPaginatedBaseResponseDto, CompanyResponseDto } from '../dto/res/company/company-response.res.dto';
 import { CompaniesService } from '../services/companies.service';
 import { CompaniesRoutes } from './../routes/companies.routes';
-import { toCompanyResponseDto } from '../mappers/company.mapper';
+import { toCompanyResponseDto } from '../mappers/company/company.mapper';
 import { CompanyMembersPaginationDto } from '../dto/req/members/company-members-pagination.req.dto';
 import { CompaniesSwagger } from '@/common/constants/swagger-docs/companies.swagger';
 import { CompanyMembersService } from '../services/company-members.service';
-import { toCompanyMemberResponseDto } from '../mappers/company-member.mapper';
-import { CompanyMembersListResponseDto } from '../dto/res/members/company-member.res.dto';
+import { toCompanyMemberResponseDto } from '../mappers/company/company-member.mapper';
+import { CompanyMembersListResponseDto } from '../dto/res/company/company-member.res.dto';
 import { CreateCompanyDto } from '../dto/req/company/create-company.req.dto';
 import { UpdateCompanyDto } from '../dto/req/company/update-company.req.dto';
-import { QuizAttemptsService } from '../quizzes/attempts/quiz-attempts.service';
-import { CompanyLeaderboardResponseDto } from '../quizzes/dto/res/leaderboard.res.dto';
 import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 @Controller(CompaniesRoutes.ROOT)
@@ -39,7 +37,6 @@ export class CompaniesController {
   constructor(
     private readonly companiesService: CompaniesService,
     private readonly membersService: CompanyMembersService,
-    private readonly quizAttemptsService: QuizAttemptsService,
   ) {}
 
   @Get()
@@ -49,24 +46,13 @@ export class CompaniesController {
     @CurrentUser() user: JwtPayload,
     @Query() paginationDto: CompaniesPaginationDto,
   ): Promise<{ companies: CompanyResponseDto[]; pagination: PaginationMetadataDto }> {
-    const result = await this.companiesService.findAll(user.sub, user.role, paginationDto);
+    const result = await this.companiesService.findAll(user.sub, paginationDto, user.role);
     const companies = result.detail.map((company) => toCompanyResponseDto(company));
 
     return {
       companies,
       pagination: result.pagination,
     };
-  }
-
-  @Get(CompaniesRoutes.LEADERBOARD)
-  @UseGuards(CompanyRoleGuard)
-  @ApiEndpoint(CompanyLeaderboardResponseDto, HttpStatus.OK, CompaniesSwagger.LEADERBOARD)
-  @ResponseMessage('Leaderboard fetched successfully')
-  async getLeaderboard(
-    @Param('slug') slug: string,
-    @CurrentUser() user: JwtPayload,
-  ): Promise<CompanyLeaderboardResponseDto> {
-    return this.quizAttemptsService.getCompanyLeaderboard(slug, user.sub);
   }
 
   @Get(CompaniesRoutes.MEMBERS.BASE)

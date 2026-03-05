@@ -1,15 +1,15 @@
 import { Entity, Column, ManyToOne, JoinColumn, Unique, Index } from 'typeorm';
-import { BaseEntity } from '@/common/entities/base.entity';
 import { User } from '@/modules/users/entities/user.entity';
 import { Company } from './company.entity';
 import { Exclude } from 'class-transformer';
 import { InvitationStatus } from '../enums/invitation-status.enum';
+import { BaseEntityWithoutUpdate } from '@/common/entities/base.entity';
 
 @Entity('company_join_requests')
 @Unique(['userId', 'companyId'])
 @Index(['companyId'])
 @Index(['userId'])
-export class CompanyJoinRequest extends BaseEntity {
+export class CompanyJoinRequest extends BaseEntityWithoutUpdate {
   @Column({ name: 'user_id', type: 'uuid', nullable: false })
   @Exclude()
   userId: string;

@@ -1,5 +1,5 @@
 export const REDIS_TTL = {
-  QUIZ_ANSWERS: 48 * 3600, // 48 hours
+  QUIZ_ANSWERS: 48 * 3600,
 } as const;
 
 export const RedisKeys = {
@@ -7,7 +7,10 @@ export const RedisKeys = {
   refreshToken: (userId: string, jti: string): string => `auth:refresh:${userId}:${jti}`,
   allUserAccessTokens: (userId: string): string => `auth:access:${userId}:*`,
   allUserRefreshTokens: (userId: string): string => `auth:refresh:${userId}:*`,
-  quizAnswers: (userId: string, attemptId: string): string => `quiz:answers:${userId}:${attemptId}`,
+  quizAnswers: (userId: string, quizId: string, attemptId: string): string =>
+    `quiz:answers:${userId}:${quizId}:${attemptId}`,
   allUserQuizAnswers: (userId: string): string => `quiz:answers:${userId}:*`,
+  allUserQuizAnswersForQuiz: (userId: string, quizId: string): string => `quiz:answers:${userId}:${quizId}:*`,
   allQuizAnswers: (): string => 'quiz:answers:*',
+  quizStart: (userId: string, quizId: string): string => `quiz:start:${userId}:${quizId}`,
 };

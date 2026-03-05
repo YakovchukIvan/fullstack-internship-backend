@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
-import { BaseEntity } from '@/common/entities/base.entity';
+import { BaseEntityWithoutUpdate } from '@/common/entities/base.entity';
 import { Quiz } from '../entities/quiz.entity';
 import { Company } from '../../entities/company.entity';
 import { User } from '@/modules/users/entities/user.entity';
@@ -10,7 +10,8 @@ import { User } from '@/modules/users/entities/user.entity';
 @Index(['companyId'])
 @Index(['userId', 'companyId'])
 @Index(['userId', 'quizId'])
-export class QuizAttempt extends BaseEntity {
+@Index(['userId', 'completedAt'])
+export class QuizAttempt extends BaseEntityWithoutUpdate {
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
 
@@ -29,8 +30,8 @@ export class QuizAttempt extends BaseEntity {
   @Column({ name: 'completed_at', type: 'timestamptz' })
   completedAt: Date;
 
-  @Column({ name: 'duration_seconds', type: 'int', nullable: true })
-  durationSeconds?: number | undefined;
+  @Column({ name: 'duration_seconds', type: 'int' })
+  durationSeconds: number;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })

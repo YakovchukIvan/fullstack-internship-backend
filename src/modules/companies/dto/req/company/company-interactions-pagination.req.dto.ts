@@ -1,0 +1,9 @@
+import { PaginationQueryDto } from '@/common/dto/req/pagination-query.dto';
+import { IsEnum, IsOptional } from 'class-validator';
+import { CompanyRequestSortField } from '@/modules/companies/enums/company-sort-field.enum';
+
+export class CompanyInteractionsPaginationDto extends PaginationQueryDto {
+  @IsOptional()
+  @IsEnum(CompanyRequestSortField)
+  sortBy?: CompanyRequestSortField = CompanyRequestSortField.CREATED_AT;
+}

@@ -11,12 +11,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { CompanyMemberResponseDto } from '../dto/res/members/company-member.res.dto';
-import { toCompanyInvitationItemResponseDto } from '../mappers/company-invitation.mapper';
-import { toCompanyJoinRequestItemResponseDto } from '../mappers/company-join-request.mapper';
+import { CompanyMemberResponseDto } from '../dto/res/company/company-member.res.dto';
+import { toCompanyInvitationItemResponseDto } from '../mappers/company/company-invitation.mapper';
+import { toCompanyJoinRequestItemResponseDto } from '../mappers/company/company-join-request.mapper';
 import { RequireCompanyRoles } from '../decorators/company-roles.decorator';
 import { CompanyRoleGuard } from '../guards/company-role.guard';
-import { InviteUserDto } from '../dto/req/requests/invite-user.req.dto';
+import { InviteUserDto } from '../dto/req/members/invite-user.req.dto';
 import { UpdateMemberRoleDto } from '../dto/req/members/update-member-role.req.dto';
 import { CompaniesRoutes } from '../routes/companies.routes';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
@@ -24,17 +24,17 @@ import { CompanyOwnerSwagger } from '@/common/constants/swagger-docs/companies.s
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { CompanyRole } from '@/common/enums/company-role.enum';
-import { toCompanyMemberResponseDto } from '../mappers/company-member.mapper';
+import { toCompanyMemberResponseDto } from '../mappers/company/company-member.mapper';
 import { CompanyInvitationsService } from '../services/company-invitations.service';
 import { CompanyJoinRequestsService } from '../services/company-join-requests.service';
 import { CompanyMembersService } from '../services/company-members.service';
-import { CompanyPaginationDto } from '../dto/req/requests/company-invitations-pagination.req.dto';
+import { CompanyInteractionsPaginationDto } from '../dto/req/company/company-interactions-pagination.req.dto';
 import { toCompanyBasicResponseDto } from '../mappers/company-basic.mapper';
 import {
   CompanyInvitationItemResponseDto,
   CompanyInvitationsPaginationResponseDto,
-} from '../dto/res/requests/company-invitation.res.dto';
-import { CompanyJoinRequestPaginationResponseDto } from '../dto/res/requests/company-join-request.res.dto';
+} from '../dto/res/company/company-invitation.res.dto';
+import { CompanyJoinRequestPaginationResponseDto } from '../dto/res/company/company-join-request.res.dto';
 import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 @Controller(CompaniesRoutes.ROOT)
@@ -52,14 +52,14 @@ export class CompanyOwnerController {
   @ResponseMessage('Invitations fetched successfully')
   async getCompanyInvitations(
     @Param('slug') slug: string,
-    @Query() paginationDto: CompanyPaginationDto,
+    @Query() paginationDto: CompanyInteractionsPaginationDto,
   ): Promise<CompanyInvitationsPaginationResponseDto> {
-    const { invitations, company } = await this.invitationsService.getCompanyInvitations(slug, paginationDto);
+    const { invitation, company } = await this.invitationsService.getCompanyInvitations(slug, paginationDto);
 
     return {
       company: toCompanyBasicResponseDto(company),
-      invitations: invitations.detail.map(toCompanyInvitationItemResponseDto),
-      pagination: invitations.pagination,
+      invitation: invitation.detail.map(toCompanyInvitationItemResponseDto),
+      pagination: invitation.pagination,
     };
   }
 
@@ -68,7 +68,7 @@ export class CompanyOwnerController {
   @ResponseMessage('Join requests fetched successfully')
   async getCompanyJoinRequests(
     @Param('slug') slug: string,
-    @Query() paginationDto: CompanyPaginationDto,
+    @Query() paginationDto: CompanyInteractionsPaginationDto,
   ): Promise<CompanyJoinRequestPaginationResponseDto> {
     const { joinRequests, company } = await this.joinRequestsService.getCompanyJoinRequests(slug, paginationDto);
 

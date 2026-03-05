@@ -1,17 +1,17 @@
-import { Quiz } from '../../entities/quiz.entity';
-import { QuizResponseDto } from '../../dto/res/quiz.res.dto';
 import { toIso } from '@/common/helpers/date.transformer';
+import { Quiz } from '../../entities/quiz.entity';
+import { QuizStartResponseDto } from '../../dto/res/quiz/quiz-session.res.dto';
+import { toQuizQuestionsWithAnswers, toQuizQuestionsWithoutAnswers } from './quiz/quiz-questions.mapper';
+import { QuizAdminResponseDto } from '../../dto/res/quiz/quiz-detail.res.dto';
+import { QuizListResponseDto } from '../../dto/res/quiz/quizzes-paginated.res.dto';
 
-export function toQuizResponseDto(quiz: Quiz, quotaRemaining?: number): QuizResponseDto {
+export function toQuizBaseFields(quiz: Quiz) {
   return {
     id: quiz.id,
     title: quiz.title,
     description: quiz.description,
     frequencyInDays: quiz.frequencyInDays,
-    questions: quiz.questions.map((q) => ({
-      question: q.question,
-      options: q.options,
-    })),
+    timeLimitMinutes: quiz.timeLimitMinutes,
     createdByUserId: quiz.createdByUserId,
     createdBy: {
       displayName: quiz.createdBySnapshot.displayName,
@@ -21,6 +21,30 @@ export function toQuizResponseDto(quiz: Quiz, quotaRemaining?: number): QuizResp
     aiPrompt: quiz.aiPrompt,
     createdAt: toIso(quiz.createdAt),
     updatedAt: toIso(quiz.updatedAt),
-    quotaRemaining: quotaRemaining ?? null,
+  };
+}
+
+export function toQuizPublicFields(quiz: Quiz) {
+  return {
+    ...toQuizBaseFields(quiz),
+    questions: toQuizQuestionsWithoutAnswers(quiz.questions),
+  };
+}
+
+export function toQuizListResponseDto(quiz: Quiz): QuizListResponseDto {
+  return toQuizPublicFields(quiz);
+}
+
+export function toQuizAdminResponseDto(quiz: Quiz): QuizAdminResponseDto {
+  return {
+    ...toQuizBaseFields(quiz),
+    questions: toQuizQuestionsWithAnswers(quiz.questions),
+  };
+}
+
+export function toQuizStartResponseDto(quiz: Quiz, startedAt: Date): QuizStartResponseDto {
+  return {
+    ...toQuizPublicFields(quiz),
+    startedAt: toIso(startedAt),
   };
 }

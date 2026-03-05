@@ -26,7 +26,7 @@ export class CompanyRepository extends Repository<Company> {
   async findPaginated(
     userId: string,
     userRole: UserRole | undefined,
-    dto?: CompaniesPaginationDto,
+    dto: CompaniesPaginationDto,
   ): Promise<PaginatedResultResponseDto<Company>> {
     if (userRole === UserRole.OWNER) {
       return createPaginatedResult(this, dto, { relations: ['owner'] });

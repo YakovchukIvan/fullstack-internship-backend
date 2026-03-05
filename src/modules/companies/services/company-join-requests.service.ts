@@ -5,7 +5,7 @@ import { CompanyJoinRequest } from '../entities/company-join-request.entity';
 import { CompanyMember } from '../entities/company-member.entity';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
-import { CompanyPaginationDto } from '../dto/req/requests/company-invitations-pagination.req.dto';
+import { CompanyInteractionsPaginationDto } from '../dto/req/company/company-interactions-pagination.req.dto';
 import { CompanyMembersService } from './company-members.service';
 import { CompanyEvents, CompanyMembershipEvent } from '../events/company.events';
 import { Company } from '../entities/company.entity';
@@ -84,7 +84,7 @@ export class CompanyJoinRequestsService {
 
   async getCompanyJoinRequests(
     slug: string,
-    dto?: CompanyPaginationDto,
+    dto: CompanyInteractionsPaginationDto,
   ): Promise<{ joinRequests: PaginatedResultResponseDto<CompanyJoinRequest>; company: Company }> {
     const company = await this.companyRepository.findBySlugOrFail(slug);
     const joinRequests = await this.joinRequestRepository.findPaginatedByCompany(company.id, dto);
@@ -93,7 +93,7 @@ export class CompanyJoinRequestsService {
 
   async getUserJoinRequests(
     userId: string,
-    dto?: CompanyPaginationDto,
+    dto: CompanyInteractionsPaginationDto,
   ): Promise<PaginatedResultResponseDto<CompanyJoinRequest>> {
     return this.joinRequestRepository.findPaginatedByUser(userId, dto);
   }

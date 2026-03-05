@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { QuizQuestionDto } from '../../dto/req/quiz-question.dto';
+import { QuizQuestionDto } from '../../dto/req/quiz/quiz-question.dto';
 import { QuizQuestion } from '../interfaces/quiz.interfaces';
 import { QuizConfig } from '../constants/quiz.constants';
 
@@ -15,11 +15,11 @@ export function validateQuizQuestions(questions: QuizQuestionDto[] | QuizQuestio
       );
     }
 
-    if (!Array.isArray(q.correctAnswers) || q.correctAnswers.length === 0) {
-      throw new BadRequestException(`Question ${index + 1}: correctAnswers must be a non-empty array`);
+    if (!Array.isArray(q.correctOptionIndexes) || q.correctOptionIndexes.length === 0) {
+      throw new BadRequestException(`Question ${index + 1}: correctOptionIndexes must be a non-empty array`);
     }
 
-    q.correctAnswers.forEach((idx) => {
+    q.correctOptionIndexes.forEach((idx) => {
       if (typeof idx !== 'number' || idx < 0 || idx >= q.options.length) {
         throw new BadRequestException(
           `Question ${index + 1}: correctAnswer index ${idx} is out of range (0-${q.options.length - 1})`,
@@ -27,12 +27,12 @@ export function validateQuizQuestions(questions: QuizQuestionDto[] | QuizQuestio
       }
     });
 
-    const uniqueAnswers = new Set(q.correctAnswers);
-    if (uniqueAnswers.size !== q.correctAnswers.length) {
-      throw new BadRequestException(`Question ${index + 1}: correctAnswers must not contain duplicates`);
+    const uniqueAnswers = new Set(q.correctOptionIndexes);
+    if (uniqueAnswers.size !== q.correctOptionIndexes.length) {
+      throw new BadRequestException(`Question ${index + 1}: correctOptionIndexes must not contain duplicates`);
     }
 
-    if (q.correctAnswers.length > q.options.length) {
+    if (q.correctOptionIndexes.length > q.options.length) {
       throw new BadRequestException(`Question ${index + 1}: Cannot have more correct answers than available options`);
     }
   });

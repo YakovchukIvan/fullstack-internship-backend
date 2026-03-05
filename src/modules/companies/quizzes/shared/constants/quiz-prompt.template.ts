@@ -11,8 +11,8 @@ Requirements:
 {{questionsSpec}}
 
 RULES:
-- correctAnswers array must contain EXACTLY the count specified above
-- correctAnswers are zero-based indices into the options array (0, 1, 2, or 3)
+- correctOptionIndexes array must contain EXACTLY the count specified above
+- correctOptionIndexes are zero-based indices into the options array (0, 1, 2, or 3)
 - Do NOT deviate from the specified counts
 
 CRITICAL: Return ONLY valid JSON. No markdown formatting, no explanations, no code blocks.
@@ -25,7 +25,7 @@ JSON structure:
     {
       "question": "Question text?",
       "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correctAnswers": [1]
+      "correctOptionIndexes": [1]
     }
   ]
 }
