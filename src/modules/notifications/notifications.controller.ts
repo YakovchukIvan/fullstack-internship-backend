@@ -11,12 +11,16 @@ import {
 } from './dto/res/notification.res.dto';
 import { CreateTestNotificationDto, NotificationsPaginationDto } from './dto/req/notifications-pagination.req.dto';
 import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
-import { NotificationsService } from './notifications.service';
 import { toNotificationResponseDto } from './mappers/notification.mapper';
+import { NotificationsService } from './services/notifications.service';
+import { NotificationsGateway } from './notifications.gateway';
 
 @Controller(NotificationsRoutes.ROOT)
 export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(
+    private readonly notificationsService: NotificationsService,
+    private readonly notificationsGateway: NotificationsGateway,
+  ) {}
 
   @Get()
   @ApiEndpoint(NotificationsListResponseDto, HttpStatus.OK)
@@ -53,6 +57,7 @@ export class NotificationsController {
       text: body.text,
       companyId: body.companyId,
     });
+    this.notificationsGateway.sendNotification(user.sub, notification);
     return { notification: toNotificationResponseDto(notification) };
   }
 

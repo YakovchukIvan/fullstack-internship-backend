@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationRepository } from './repositories/notification.repository';
-import { NotificationType } from './enums/notification-type.enum';
-import { NotificationsPaginationDto } from './dto/req/notifications-pagination.req.dto';
 import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
-import { Notification } from './entities/notification.entity';
+import { NotificationRepository } from '../repositories/notification.repository';
+import { NotificationType } from '../enums/notification-type.enum';
+import { NotificationsPaginationDto } from '../dto/req/notifications-pagination.req.dto';
+import { Notification } from '../entities/notification.entity';
 
 interface CreateNotificationParams {
   userId: string;
