@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { User } from '@/modules/users/entities/user.entity';
@@ -6,36 +6,46 @@ import { Response } from 'express';
 import { randomUUID } from 'crypto';
 import { AccessTokenPayload, RefreshTokenPayload } from '../interfaces/token-payload.interface';
 import { parseJwtExpiry } from '../helpers/jwt-expiry.helper';
+import { TokenRedisRepository } from '../repositories/token-redis.repository';
 
 @Injectable()
 export class TokenService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly tokenRedisRepository: TokenRedisRepository,
   ) {}
+
+  async validateAccessToken(token: string): Promise<AccessTokenPayload> {
+    const payload = this.jwtService.verify<AccessTokenPayload>(token, {
+      secret: this.configService.getOrThrow<string>('JWT_SECRET'),
+    });
+    await this.assertAccessTokenNotRevoked(payload.sub, payload.jti);
+    return payload;
+  }
+
+  async assertAccessTokenNotRevoked(userId: string, jti: string): Promise<void> {
+    const isValid = await this.tokenRedisRepository.isAccessTokenValid(userId, jti);
+    if (!isValid) {
+      throw new UnauthorizedException('Token has been revoked');
+    }
+  }
 
   generateAccessToken(user: User): { token: string; jti: string } {
     const jti = randomUUID();
     const payload: AccessTokenPayload = { sub: user.id, email: user.email, role: user.role, jti };
-
     const token = this.jwtService.sign(payload);
     return { token, jti };
   }
 
   generateRefreshToken(user: User): { token: string; jti: string } {
     const jti = randomUUID();
-    const payload: RefreshTokenPayload = {
-      sub: user.id,
-      jti,
-    };
-
+    const payload: RefreshTokenPayload = { sub: user.id, jti };
     const expiresIn = this.configService.getOrThrow('JWT_REFRESH_EXPIRES_IN') as JwtSignOptions['expiresIn'];
-
     const token = this.jwtService.sign(payload, {
       secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
       expiresIn,
     });
-
     return { token, jti };
   }
 

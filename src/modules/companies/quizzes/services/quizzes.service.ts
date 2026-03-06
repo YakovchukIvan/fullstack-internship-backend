@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Quiz } from '../entities/quiz.entity';
 import { CreateQuizDto } from '../dto/req/quiz/create-quiz.req.dto';
 import { GenerateQuizAiDto } from '../dto/req/ai/ai-generate-quiz.req.dto';
@@ -16,6 +17,8 @@ import { QuizRepository } from '../repositories/quiz.repository';
 import { CompanyMemberRepository } from '../../repositories/company-member.repository';
 import { RedisService } from '@/modules/redis/redis.service';
 import { RedisKeys } from '@/modules/redis/redis.constants';
+import { QuizEvents } from '../events/quiz.events';
+import { QuizCreatedEvent } from '../events/quiz-created.event';
 
 @Injectable()
 export class QuizzesService {
@@ -26,6 +29,7 @@ export class QuizzesService {
     private readonly aiGenerator: AiQuizGeneratorService,
     private readonly aiRateLimitService: AiRateLimitService,
     private readonly redisService: RedisService,
+    private readonly eventEmitter: EventEmitter2,
     private readonly logger: AppLogger,
   ) {
     this.logger.setLoggerContext(QuizzesService.name);
@@ -53,7 +57,15 @@ export class QuizzesService {
 
     const saved = await this.quizRepository.save(quiz);
     this.logger.log(`Quiz created: ${saved.id} - "${saved.title}"`);
-    return this.quizRepository.findOneInCompanyOrFail(saved.id, company.id);
+
+    const fullQuiz = await this.quizRepository.findOneInCompanyOrFail(saved.id, company.id);
+
+    this.eventEmitter.emit(
+      QuizEvents.QUIZ_CREATED,
+      new QuizCreatedEvent(fullQuiz.id, fullQuiz.title, company.id, createdByUserId, company.name),
+    );
+
+    return fullQuiz;
   }
 
   async generateWithAi(
@@ -87,10 +99,14 @@ export class QuizzesService {
     const saved = await this.quizRepository.save(quiz);
     this.logger.log(`AI quiz generated: ${saved.id} - "${saved.title}"`);
 
-    return {
-      quiz: await this.quizRepository.findOneInCompanyOrFail(saved.id, company.id),
-      remaining,
-    };
+    const fullQuiz = await this.quizRepository.findOneInCompanyOrFail(saved.id, company.id);
+
+    this.eventEmitter.emit(
+      QuizEvents.QUIZ_CREATED,
+      new QuizCreatedEvent(fullQuiz.id, fullQuiz.title, company.id, createdByUserId, company.name),
+    );
+
+    return { quiz: fullQuiz, remaining };
   }
 
   async findAll(slug: string, userId: string, dto: QuizzesPaginationDto): Promise<PaginatedResultResponseDto<Quiz>> {

@@ -7,12 +7,14 @@ import { CompanyRole } from '@/common/enums/company-role.enum';
 import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
 import { CompanyInteractionsPaginationDto } from '../dto/req/company/company-interactions-pagination.req.dto';
 import { CompanyMembersService } from './company-members.service';
-import { CompanyEvents, CompanyMembershipEvent } from '../events/company.events';
+import { CompanyEvents } from '../events/company.events';
 import { Company } from '../entities/company.entity';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { CompanyRepository } from '../repositories/company.repository';
 import { CompanyInvitationRepository } from '../repositories/company-invitation.repository';
 import { CompanyJoinRequestRepository } from '../repositories/company-join-request.repository';
+import { CompanyJoinRequestEvent } from '../events/company-join-request.event';
+import { CompanyJoinRequestAcceptedEvent } from '../events/company-join-request-accepted.event';
 
 @Injectable()
 export class CompanyJoinRequestsService {
@@ -42,18 +44,33 @@ export class CompanyJoinRequestsService {
     const joinRequest = this.joinRequestRepository.create({ userId, companyId: company.id });
     const saved = await this.joinRequestRepository.save(joinRequest);
 
-    this.eventEmitter.emit(CompanyEvents.JOIN_REQUEST_CREATED, new CompanyMembershipEvent(userId, company.id));
-
-    return this.joinRequestRepository.findOneOrFail({
+    const fullRequest = await this.joinRequestRepository.findOneOrFail({
       where: { id: saved.id },
       relations: ['user'],
     });
+
+    this.eventEmitter.emit(
+      CompanyEvents.JOIN_REQUEST_SENT,
+      new CompanyJoinRequestEvent(
+        fullRequest.userId,
+        `${fullRequest.user.firstName} ${fullRequest.user.lastName}`,
+        company.id,
+        company.name,
+      ),
+    );
+
+    return fullRequest;
   }
 
   async acceptJoinRequest(slug: string, requestId: string): Promise<CompanyMember> {
     return this.dataSource.transaction(async (manager) => {
       const company = await this.companyRepository.findBySlugOrFail(slug);
       const joinRequest = await this.joinRequestRepository.findByIdInCompanyOrFail(requestId, company.id);
+
+      const fullRequest = await this.joinRequestRepository.findOneOrFail({
+        where: { id: joinRequest.id },
+        relations: ['user'],
+      });
 
       const member = await this.companyMembersService.addMember(
         joinRequest.userId,
@@ -65,8 +82,14 @@ export class CompanyJoinRequestsService {
 
       this.eventEmitter.emit(
         CompanyEvents.JOIN_REQUEST_ACCEPTED,
-        new CompanyMembershipEvent(joinRequest.userId, company.id),
+        new CompanyJoinRequestAcceptedEvent(
+          fullRequest.userId,
+          `${fullRequest.user.firstName} ${fullRequest.user.lastName}`,
+          company.id,
+          company.name,
+        ),
       );
+
       return member;
     });
   }

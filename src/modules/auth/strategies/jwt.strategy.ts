@@ -1,10 +1,10 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { TokenRedisRepository } from '../repositories/token-redis.repository';
 import { Request } from 'express';
 import { AccessTokenPayload } from '../interfaces/token-payload.interface';
+import { TokenService } from '../services/token.service';
 
 interface JwtCookies {
   access_token?: string;
@@ -14,7 +14,7 @@ interface JwtCookies {
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     configService: ConfigService,
-    private readonly tokenRedisRepository: TokenRedisRepository,
+    private readonly tokenService: TokenService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
@@ -26,12 +26,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(payload: AccessTokenPayload): Promise<AccessTokenPayload> {
-    const isValid = await this.tokenRedisRepository.isAccessTokenValid(payload.sub, payload.jti);
-
-    if (!isValid) {
-      throw new UnauthorizedException('Token has been revoked');
-    }
-
+    await this.tokenService.assertAccessTokenNotRevoked(payload.sub, payload.jti);
     return {
       sub: payload.sub,
       email: payload.email,

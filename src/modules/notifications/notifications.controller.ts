@@ -1,0 +1,61 @@
+import { Controller, Get, HttpStatus, Param, Patch, Query } from '@nestjs/common';
+import { NotificationsRoutes } from './routes/notifications.routes';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
+import { ResponseMessage } from '@/common/decorators/response-message.decorator';
+import {
+  NotificationsListResponseDto,
+  NotificationResponseDto,
+  UnreadCountResponseDto,
+} from './dto/res/notification.res.dto';
+import { NotificationsPaginationDto } from './dto/req/notifications-pagination.req.dto';
+import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
+import { toNotificationResponseDto } from './mappers/notification.mapper';
+import { NotificationsService } from './services/notifications.service';
+import { NotificationsSwagger } from '@/common/constants/swagger-docs/notifications.swagger';
+
+@Controller(NotificationsRoutes.ROOT)
+export class NotificationsController {
+  constructor(private readonly notificationsService: NotificationsService) {}
+
+  @Get()
+  @ApiEndpoint(NotificationsListResponseDto, HttpStatus.OK, NotificationsSwagger.GET_ALL)
+  @ResponseMessage('Notifications fetched successfully')
+  async getMyNotifications(
+    @CurrentUser() user: JwtPayload,
+    @Query() dto: NotificationsPaginationDto,
+  ): Promise<NotificationsListResponseDto> {
+    const result = await this.notificationsService.findAllByUser(user.sub, dto);
+    return {
+      notifications: result.detail.map(toNotificationResponseDto),
+      unreadCount: result.unreadCount,
+      pagination: result.pagination,
+    };
+  }
+
+  @Get(NotificationsRoutes.UNREAD_COUNT)
+  @ApiEndpoint(UnreadCountResponseDto, HttpStatus.OK, NotificationsSwagger.UNREAD_COUNT)
+  @ResponseMessage('Unread count fetched successfully')
+  async getUnreadCount(@CurrentUser() user: JwtPayload): Promise<{ count: number }> {
+    const count = await this.notificationsService.countUnread(user.sub);
+    return { count };
+  }
+
+  @Patch(NotificationsRoutes.READ)
+  @ApiEndpoint(NotificationResponseDto, HttpStatus.OK, NotificationsSwagger.MARK_AS_READ)
+  @ResponseMessage('Notification marked as read')
+  async markAsRead(
+    @Param('notificationId') notificationId: string,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<{ notification: NotificationResponseDto }> {
+    const notification = await this.notificationsService.markAsRead(notificationId, user.sub);
+    return { notification: toNotificationResponseDto(notification) };
+  }
+
+  @Patch(NotificationsRoutes.READ_ALL)
+  @ApiEndpoint(Object, HttpStatus.OK, NotificationsSwagger.MARK_ALL_AS_READ)
+  @ResponseMessage('All notifications marked as read')
+  async markAllAsRead(@CurrentUser() user: JwtPayload): Promise<void> {
+    await this.notificationsService.markAllAsRead(user.sub);
+  }
+}

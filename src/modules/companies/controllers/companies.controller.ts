@@ -14,7 +14,6 @@ import {
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { PaginationMetadataDto } from '@/common/dto/res/pagination-metadata.dto';
 import { CompanyRole } from '@/common/enums/company-role.enum';
 import { RequireCompanyRoles } from './../decorators/company-roles.decorator';
 import { CompanyRoleGuard } from './../guards/company-role.guard';
@@ -45,7 +44,7 @@ export class CompaniesController {
   async findAll(
     @CurrentUser() user: JwtPayload,
     @Query() paginationDto: CompaniesPaginationDto,
-  ): Promise<{ companies: CompanyResponseDto[]; pagination: PaginationMetadataDto }> {
+  ): Promise<CompaniesPaginatedBaseResponseDto> {
     const result = await this.companiesService.findAll(user.sub, paginationDto, user.role);
     const companies = result.detail.map((company) => toCompanyResponseDto(company));
 

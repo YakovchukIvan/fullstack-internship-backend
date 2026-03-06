@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { CompanyMember } from '../entities/company-member.entity';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { createPaginatedResult } from '@/common/helpers/create-paginated-result.helper';
@@ -36,6 +36,19 @@ export class CompanyMemberRepository extends Repository<CompanyMember> {
       where: { userId, company: { slug } },
       relations: ['company'],
       select: { id: true, role: true, company: { id: true } },
+    });
+  }
+
+  async findAllByCompanyId(companyId: string): Promise<CompanyMember[]> {
+    return this.find({ where: { companyId } });
+  }
+
+  async findOwnerAndAdminsByCompanyId(companyId: string): Promise<CompanyMember[]> {
+    return this.find({
+      where: {
+        companyId,
+        role: In([CompanyRole.OWNER, CompanyRole.ADMIN]),
+      },
     });
   }
 
