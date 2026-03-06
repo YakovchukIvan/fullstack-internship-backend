@@ -8,7 +8,9 @@ export function toNotificationResponseDto(notification: Notification): Notificat
     type: notification.type,
     text: notification.text,
     isRead: notification.isRead,
+    isSeen: notification.isSeen,
     companyId: notification.companyId,
+    quizId: notification.quizId,
     createdAt: toIso(notification.createdAt),
   };
 }
