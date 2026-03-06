@@ -4,6 +4,8 @@ import { Injectable } from '@nestjs/common';
 import { Notification } from './entities/notification.entity';
 import { AppLogger } from '@/common/logger/app-logger';
 import { NotificationsAuthService } from './services/notifications-auth.service';
+import { NotificationRepository } from './repositories/notification.repository';
+import { UNSEEN_NOTIFICATIONS_LIMIT } from './constants/unseen_notifications_limit.constant';
 
 @Injectable()
 @WebSocketGateway({
@@ -16,6 +18,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
 
   constructor(
     private readonly notificationsAuthService: NotificationsAuthService,
+    private readonly notificationRepository: NotificationRepository,
     private readonly logger: AppLogger,
   ) {
     this.logger.setLoggerContext(NotificationsGateway.name);
@@ -25,8 +28,23 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
     try {
       const userId = await this.notificationsAuthService.getUserIdFromSocket(client);
       client.data = { userId };
-
       await client.join(userId);
+
+      const unseen = await this.notificationRepository.findUnseenByUser(userId);
+
+      if (unseen.length > 0 && unseen.length <= UNSEEN_NOTIFICATIONS_LIMIT) {
+        unseen.forEach((n) => client.emit('notification', n));
+      } else if (unseen.length > UNSEEN_NOTIFICATIONS_LIMIT) {
+        client.emit('notification', {
+          type: 'summary',
+          text: `You have ${unseen.length} new notifications`,
+        });
+      }
+
+      if (unseen.length > 0) {
+        await this.notificationRepository.markAllAsSeen(userId);
+      }
+
       this.logger.log(`Client connected: ${client.id} userId: ${userId}`);
     } catch {
       this.logger.log(`Client disconnected: ${client.id} reason: Unauthorized`);

@@ -33,4 +33,22 @@ export class NotificationRepository extends Repository<Notification> {
   async markAllAsRead(userId: string): Promise<void> {
     await this.update({ userId, isRead: false }, { isRead: true });
   }
+
+  async markAllAsSeen(userId: string): Promise<void> {
+    await this.update({ userId, isSeen: false }, { isSeen: true });
+  }
+
+  async findUnseenByUser(userId: string): Promise<Notification[]> {
+    return this.find({
+      where: { userId, isSeen: false },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async deleteOldRead(olderThan: Date): Promise<void> {
+    await this.createQueryBuilder()
+      .delete()
+      .where('is_read = true AND created_at < :olderThan', { olderThan })
+      .execute();
+  }
 }
