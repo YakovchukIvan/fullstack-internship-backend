@@ -1,4 +1,3 @@
-import { Body, Post } from '@nestjs/common';
 import { Controller, Get, HttpStatus, Param, Patch, Query } from '@nestjs/common';
 import { NotificationsRoutes } from './routes/notifications.routes';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
@@ -9,7 +8,7 @@ import {
   NotificationResponseDto,
   UnreadCountResponseDto,
 } from './dto/res/notification.res.dto';
-import { CreateTestNotificationDto, NotificationsPaginationDto } from './dto/req/notifications-pagination.req.dto';
+import { NotificationsPaginationDto } from './dto/req/notifications-pagination.req.dto';
 import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 import { toNotificationResponseDto } from './mappers/notification.mapper';
 import { NotificationsService } from './services/notifications.service';
@@ -40,20 +39,6 @@ export class NotificationsController {
   async getUnreadCount(@CurrentUser() user: JwtPayload): Promise<{ count: number }> {
     const count = await this.notificationsService.countUnread(user.sub);
     return { count };
-  }
-
-  @Post('test')
-  async createTest(
-    @CurrentUser() user: JwtPayload,
-    @Body() body: CreateTestNotificationDto,
-  ): Promise<{ notification: NotificationResponseDto }> {
-    const notification = await this.notificationsService.create({
-      userId: user.sub,
-      type: body.type,
-      text: body.text,
-      companyId: body.companyId,
-    });
-    return { notification: toNotificationResponseDto(notification) };
   }
 
   @Patch(NotificationsRoutes.READ)
