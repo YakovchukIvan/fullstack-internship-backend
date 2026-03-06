@@ -4,7 +4,9 @@ import { NotificationsService } from './notifications.service';
 import { CompanyEvents } from '@/modules/companies/events/company.events';
 import { QuizEvents } from '@/modules/companies/quizzes/events/quiz.events';
 import { CompanyInvitationEvent } from '@/modules/companies/events/company-invitation.event';
-import { CompanyMembershipEvent } from '@/modules/companies/events/company-membership.event';
+import { CompanyInvitationAcceptedEvent } from '@/modules/companies/events/company-invitation-accepted.event';
+import { CompanyJoinRequestEvent } from '@/modules/companies/events/company-join-request.event';
+import { CompanyJoinRequestAcceptedEvent } from '@/modules/companies/events/company-join-request-accepted.event';
 import { QuizCreatedEvent } from '@/modules/companies/quizzes/events/quiz-created.event';
 
 @Injectable()
@@ -22,17 +24,17 @@ export class NotificationsListenerService {
   }
 
   @OnEvent(CompanyEvents.INVITATION_ACCEPTED)
-  async handleInvitationAccepted(event: CompanyMembershipEvent): Promise<void> {
+  async handleInvitationAccepted(event: CompanyInvitationAcceptedEvent): Promise<void> {
     await this.notificationsService.notifyInvitationAccepted(event);
   }
 
   @OnEvent(CompanyEvents.JOIN_REQUEST_SENT)
-  async handleJoinRequestCreated(event: CompanyMembershipEvent): Promise<void> {
-    await this.notificationsService.notifyJoinRequestCreated(event);
+  async handleJoinRequestSent(event: CompanyJoinRequestEvent): Promise<void> {
+    await this.notificationsService.notifyJoinRequestSent(event);
   }
 
   @OnEvent(CompanyEvents.JOIN_REQUEST_ACCEPTED)
-  async handleJoinRequestAccepted(event: CompanyMembershipEvent): Promise<void> {
+  async handleJoinRequestAccepted(event: CompanyJoinRequestAcceptedEvent): Promise<void> {
     await this.notificationsService.notifyJoinRequestAccepted(event);
   }
 }

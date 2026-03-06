@@ -15,7 +15,7 @@ import { CompanyInvitationRepository } from '../repositories/company-invitation.
 import { CompanyJoinRequestRepository } from '../repositories/company-join-request.repository';
 import { UserRepository } from '@/modules/users/repositories/user.repository';
 import { CompanyInvitationEvent } from '../events/company-invitation.event';
-import { CompanyMembershipEvent } from '../events/company-membership.event';
+import { CompanyInvitationAcceptedEvent } from '../events/company-invitation-accepted.event';
 
 @Injectable()
 export class CompanyInvitationsService {
@@ -65,6 +65,8 @@ export class CompanyInvitationsService {
   async acceptInvitation(slug: string, userId: string): Promise<CompanyMember> {
     return this.dataSource.transaction(async (manager) => {
       const invitation = await this.invitationRepository.findBySlugAndUserOrFail(slug, userId);
+      const user = await this.userRepository.findOneOrFail({ where: { id: userId } });
+
       const member = await this.companyMembersService.addMember(
         userId,
         invitation.company.id,
@@ -75,7 +77,12 @@ export class CompanyInvitationsService {
 
       this.eventEmitter.emit(
         CompanyEvents.INVITATION_ACCEPTED,
-        new CompanyMembershipEvent(userId, invitation.company.id, invitation.company.name),
+        new CompanyInvitationAcceptedEvent(
+          userId,
+          `${user.firstName} ${user.lastName}`,
+          invitation.company.id,
+          invitation.company.name,
+        ),
       );
 
       return member;

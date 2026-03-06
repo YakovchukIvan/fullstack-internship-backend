@@ -7,7 +7,9 @@ import { Notification } from '../entities/notification.entity';
 import { NotificationsGateway } from '../notifications.gateway';
 import { CompanyMemberRepository } from '@/modules/companies/repositories/company-member.repository';
 import { CompanyInvitationEvent } from '@/modules/companies/events/company-invitation.event';
-import { CompanyMembershipEvent } from '@/modules/companies/events/company-membership.event';
+import { CompanyInvitationAcceptedEvent } from '@/modules/companies/events/company-invitation-accepted.event';
+import { CompanyJoinRequestEvent } from '@/modules/companies/events/company-join-request.event';
+import { CompanyJoinRequestAcceptedEvent } from '@/modules/companies/events/company-join-request-accepted.event';
 import { QuizCreatedEvent } from '@/modules/companies/quizzes/events/quiz-created.event';
 import { CreateNotificationParams } from '../interfaces/create-notifications.interface';
 import { NotificationMessages } from '../constants/notification-messages.constant';
@@ -21,16 +23,28 @@ export class NotificationsService {
   ) {}
 
   async create(params: CreateNotificationParams): Promise<Notification> {
-    return this.notificationRepository.save(this.notificationRepository.create({ ...params }));
+    const notification = await this.notificationRepository.save(this.notificationRepository.create({ ...params }));
+    this.notificationsGateway.sendNotification(notification.userId, notification);
+    return notification;
   }
 
   async createMany(params: CreateNotificationParams[]): Promise<Notification[]> {
-    return this.notificationRepository.save(params.map((p) => this.notificationRepository.create({ ...p })));
+    const notifications = await this.notificationRepository.save(
+      params.map((p) => this.notificationRepository.create({ ...p })),
+    );
+    notifications.forEach((n) => this.notificationsGateway.sendNotification(n.userId, n));
+    return notifications;
+  }
+
+  private async createManyIfNotEmpty(params: CreateNotificationParams[]): Promise<void> {
+    if (params.length === 0) {
+      return;
+    }
+    await this.createMany(params);
   }
 
   async notifyQuizCreated(event: QuizCreatedEvent): Promise<void> {
     const members = await this.companyMemberRepository.findAllByCompanyId(event.companyId);
-
     const params = members
       .filter((m) => m.userId !== event.createdByUserId)
       .map((m) => ({
@@ -39,53 +53,64 @@ export class NotificationsService {
         text: NotificationMessages.quizCreated(event.quizTitle, event.companyName),
         companyId: event.companyId,
       }));
-
-    if (params.length === 0) {
-      return;
-    }
-
-    const notifications = await this.createMany(params);
-    notifications.forEach((n) => this.notificationsGateway.sendNotification(n.userId, n));
+    await this.createManyIfNotEmpty(params);
   }
 
   async notifyInvitationSent(event: CompanyInvitationEvent): Promise<void> {
-    const notification = await this.create({
+    await this.create({
       userId: event.recipientId,
       type: NotificationType.INVITATION_RECEIVED,
       text: NotificationMessages.invitationReceived(event.companyName),
       companyId: event.companyId,
     });
-    this.notificationsGateway.sendNotification(notification.userId, notification);
   }
 
-  async notifyInvitationAccepted(event: CompanyMembershipEvent): Promise<void> {
-    const notification = await this.create({
-      userId: event.userId,
-      type: NotificationType.INVITATION_ACCEPTED,
-      text: NotificationMessages.invitationAccepted(event.companyName),
-      companyId: event.companyId,
-    });
-    this.notificationsGateway.sendNotification(notification.userId, notification);
+  async notifyInvitationAccepted(event: CompanyInvitationAcceptedEvent): Promise<void> {
+    const admins = await this.companyMemberRepository.findOwnerAndAdminsByCompanyId(event.companyId);
+    const params = admins
+      .filter((a) => a.userId !== event.userId)
+      .map((a) => ({
+        userId: a.userId,
+        type: NotificationType.INVITATION_ACCEPTED,
+        text: NotificationMessages.invitationAccepted(event.userName, event.companyName),
+        companyId: event.companyId,
+      }));
+    await this.createManyIfNotEmpty(params);
   }
 
-  async notifyJoinRequestAccepted(event: CompanyMembershipEvent): Promise<void> {
-    const notification = await this.create({
-      userId: event.userId,
-      type: NotificationType.JOIN_REQUEST_ACCEPTED,
-      text: NotificationMessages.joinRequestAccepted(event.companyName),
-      companyId: event.companyId,
-    });
-    this.notificationsGateway.sendNotification(notification.userId, notification);
-  }
-
-  async notifyJoinRequestCreated(event: CompanyMembershipEvent): Promise<void> {
-    const notification = await this.create({
-      userId: event.userId,
+  async notifyJoinRequestSent(event: CompanyJoinRequestEvent): Promise<void> {
+    const admins = await this.companyMemberRepository.findOwnerAndAdminsByCompanyId(event.companyId);
+    const params = admins.map((admin) => ({
+      userId: admin.userId,
       type: NotificationType.JOIN_REQUEST_SENT,
-      text: NotificationMessages.joinRequestCreated(event.companyName),
+      text: NotificationMessages.joinRequestSent(event.requesterName, event.companyName),
       companyId: event.companyId,
-    });
-    this.notificationsGateway.sendNotification(notification.userId, notification);
+    }));
+    await this.createManyIfNotEmpty(params);
+  }
+
+  async notifyJoinRequestAccepted(event: CompanyJoinRequestAcceptedEvent): Promise<void> {
+    const [userParams, adminParams] = await Promise.all([
+      Promise.resolve([
+        {
+          userId: event.userId,
+          type: NotificationType.JOIN_REQUEST_ACCEPTED,
+          text: NotificationMessages.joinRequestAccepted(event.companyName),
+          companyId: event.companyId,
+        },
+      ]),
+      this.companyMemberRepository.findOwnerAndAdminsByCompanyId(event.companyId).then((admins) =>
+        admins
+          .filter((a) => a.userId !== event.userId)
+          .map((a) => ({
+            userId: a.userId,
+            type: NotificationType.JOIN_REQUEST_ACCEPTED,
+            text: NotificationMessages.joinRequestAcceptedAdmin(event.userName, event.companyName),
+            companyId: event.companyId,
+          })),
+      ),
+    ]);
+    await this.createManyIfNotEmpty([...userParams, ...adminParams]);
   }
 
   async countUnread(userId: string): Promise<number> {
