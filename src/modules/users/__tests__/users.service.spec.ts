@@ -9,7 +9,7 @@ import { User } from '../entities/user.entity';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { UpdateUserDto } from '../dto/req/update-user.req.dto';
 
-// ─── Factory functions ────────────────────────────────────────────────────────
+// === Factory functions ===
 
 const makeUser = (overrides: Partial<User> = {}): User =>
   ({
@@ -23,7 +23,7 @@ const makeUser = (overrides: Partial<User> = {}): User =>
     ...overrides,
   }) as User;
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
+// === Tests ===
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -74,13 +74,13 @@ describe('UsersService', () => {
     dataSource = module.get<{ transaction: jest.Mock }>(DataSource);
   });
 
-  // ─── findOne ──────────────────────────────────────────────────────────────
+  // === findOne ===
 
   describe('findOne', () => {
     it('should return user by id; throw NotFoundException if not found', async () => {
       const user = makeUser();
 
-      // ── Success case ──
+      // === Success case ===
       userRepository.findByIdOrFail.mockResolvedValueOnce(user);
 
       const result = await service.findOne(user.id);
@@ -88,7 +88,7 @@ describe('UsersService', () => {
       expect(result.id).toBe(user.id);
       expect(result.email).toBe(user.email);
 
-      // ── User not found ──
+      // === User not found ===
       // findByIdOrFail internally calls GuardAssertions.exists which throws NotFoundException
       userRepository.findByIdOrFail.mockRejectedValueOnce(new NotFoundException('User with ID not found'));
 
@@ -96,13 +96,13 @@ describe('UsersService', () => {
     });
   });
 
-  // ─── update ───────────────────────────────────────────────────────────────
+  // === update ===
 
   describe('update', () => {
     it('should update firstName/lastName; call setPasswordTx if password provided', async () => {
       const user = makeUser();
 
-      // ── Update name fields ──
+      // === Update name fields ===
       const nameDto: UpdateUserDto = { firstName: 'UpdatedName', lastName: 'UpdatedLastName' };
 
       // Transaction mock: invoke callback with fake EntityManager
@@ -124,7 +124,7 @@ describe('UsersService', () => {
       // Password was not provided — setPasswordTx must not be called
       expect(authCredentialsService.setPasswordTx).not.toHaveBeenCalled();
 
-      // ── Update with password ──
+      // === Update with password ===
       const passwordDto: UpdateUserDto = { password: 'NewStrongPass123!' };
 
       dataSource.transaction.mockImplementationOnce(async (cb: (manager: EntityManager) => Promise<User>) => {
@@ -147,7 +147,7 @@ describe('UsersService', () => {
     });
   });
 
-  // ─── remove ───────────────────────────────────────────────────────────────
+  // === remove ===
 
   describe('remove', () => {
     it('should call userRepository.remove with the found user', async () => {

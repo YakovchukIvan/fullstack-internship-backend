@@ -15,7 +15,7 @@ import { CompanyRole } from '@/common/enums/company-role.enum';
 import { CompanyInvitationsService } from '../services/company-invitations.service';
 import { CompanyMembersService } from '../services/company-members.service';
 
-// ─── Factory functions ────────────────────────────────────────────────────────
+// === Factory functions ===
 
 const makeUser = (overrides: Partial<User> = {}): User =>
   ({
@@ -59,7 +59,7 @@ const makeMember = (overrides: Partial<CompanyMember> = {}): CompanyMember =>
     ...overrides,
   }) as CompanyMember;
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
+// === Tests ===
 
 describe('CompanyInvitationsService', () => {
   let service: CompanyInvitationsService;
@@ -138,14 +138,14 @@ describe('CompanyInvitationsService', () => {
     eventEmitter = module.get(EventEmitter2);
   });
 
-  // ─── inviteUser ───────────────────────────────────────────────────────────
+  // === inviteUser ===
 
   describe('inviteUser', () => {
     it('should throw ConflictException if user is already a member or has pending invitation', async () => {
       const company = makeCompany();
       const user = makeUser();
 
-      // ── User is already a member ──
+      // === User is already a member ===
 
       companyRepository.findBySlugOrFail.mockResolvedValue(company);
       userRepository.findByEmailOrFail.mockResolvedValue(user);
@@ -154,7 +154,7 @@ describe('CompanyInvitationsService', () => {
 
       await expect(service.inviteUser('test-company', user.email, 'owner-uuid-1')).rejects.toThrow(ConflictException);
 
-      // ── Pending invitation already exists ──
+      // === Pending invitation already exists ===
 
       companyRepository.findBySlugOrFail.mockResolvedValue(company);
       userRepository.findByEmailOrFail.mockResolvedValue(user);
@@ -167,7 +167,7 @@ describe('CompanyInvitationsService', () => {
     });
   });
 
-  // ─── acceptInvitation ─────────────────────────────────────────────────────
+  // === acceptInvitation ===
 
   describe('acceptInvitation', () => {
     it('should add member, remove invitation and emit INVITATION_ACCEPTED event', async () => {

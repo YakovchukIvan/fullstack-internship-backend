@@ -17,7 +17,7 @@ import { RegisterDto } from '../dto/req/register.dto';
 import { LoginDto } from '../dto/req/login.dto';
 import { AccessTokenPayload } from '../interfaces/token-payload.interface';
 
-// ─── Factory functions for test data ─────────────────────────────────────────
+// === Factory functions for test data ===
 
 const makeUser = (overrides: Partial<User> = {}): User =>
   ({
@@ -69,7 +69,7 @@ const makeResponse = (): jest.Mocked<Pick<Response, 'cookie' | 'clearCookie'>> =
   clearCookie: jest.fn(),
 });
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
+// === Tests ===
 
 describe('AuthFacadeService', () => {
   let service: AuthFacadeService;
@@ -166,7 +166,7 @@ describe('AuthFacadeService', () => {
     dataSource = module.get<{ transaction: jest.Mock }>(DataSource);
   });
 
-  // ─── handleRegister ────────────────────────────────────────────────────────
+  // === handleRegister ===
 
   describe('handleRegister', () => {
     it('should register user and set cookies; throw ConflictException if email already exists', async () => {
@@ -175,7 +175,7 @@ describe('AuthFacadeService', () => {
       const tokens = makeTokenPair();
       const response = makeResponse() as unknown as Response;
 
-      // ── Success case ──
+      // === Success case ===
 
       userAuthRepository.findByEmail.mockResolvedValueOnce(null);
 
@@ -202,7 +202,7 @@ describe('AuthFacadeService', () => {
       expect(result.refreshToken).toBe(tokens.refreshToken);
       expect(tokenService.setAuthCookies).toHaveBeenCalledWith(response, tokens.accessToken, tokens.refreshToken);
 
-      // ── Email already exists ──
+      // === Email already exists ===
 
       userAuthRepository.findByEmail.mockResolvedValueOnce(makeUser());
 
@@ -210,7 +210,7 @@ describe('AuthFacadeService', () => {
     });
   });
 
-  // ─── handleLogin ───────────────────────────────────────────────────────────
+  // === handleLogin ===
 
   describe('handleLogin', () => {
     it('should login user and set cookies; throw UnauthorizedException on wrong password', async () => {
@@ -219,7 +219,7 @@ describe('AuthFacadeService', () => {
       const tokens = makeTokenPair();
       const response = makeResponse() as unknown as Response;
 
-      // ── Success case ──
+      // === Success case ===
 
       userAuthRepository.findByEmailWithAuth.mockResolvedValueOnce(userWithAuth);
       passwordService.compare.mockResolvedValueOnce(true);
@@ -234,7 +234,7 @@ describe('AuthFacadeService', () => {
       expect(result.accessToken).toBe(tokens.accessToken);
       expect(tokenService.setAuthCookies).toHaveBeenCalledWith(response, tokens.accessToken, tokens.refreshToken);
 
-      // ── Wrong password ──
+      // === Wrong password ===
 
       userAuthRepository.findByEmailWithAuth.mockResolvedValueOnce(userWithAuth);
       passwordService.compare.mockResolvedValueOnce(false);
@@ -243,7 +243,7 @@ describe('AuthFacadeService', () => {
     });
   });
 
-  // ─── handleLogout ──────────────────────────────────────────────────────────
+  // === handleLogout ===
 
   describe('handleLogout', () => {
     it('should clear cookies and revoke access token', async () => {
@@ -266,7 +266,7 @@ describe('AuthFacadeService', () => {
     });
   });
 
-  // ─── handleRefresh ─────────────────────────────────────────────────────────
+  // === handleRefresh ===
 
   describe('handleRefresh', () => {
     it('should return new tokens on valid refresh; throw BadRequestException if token is invalid', async () => {
@@ -275,7 +275,7 @@ describe('AuthFacadeService', () => {
       const response = makeResponse() as unknown as Response;
       const oldJti = 'old-refresh-jti';
 
-      // ── Success case ──
+      // === Success case ===
 
       tokenService.verifyRefreshToken.mockResolvedValueOnce({ sub: user.id, jti: oldJti });
       tokenRedisRepository.isRefreshTokenValid.mockResolvedValueOnce(true);
@@ -295,7 +295,7 @@ describe('AuthFacadeService', () => {
       expect(tokenRedisRepository.revokeRefreshToken).toHaveBeenCalledWith(user.id, oldJti);
       expect(tokenService.setAuthCookies).toHaveBeenCalledWith(response, tokens.accessToken, tokens.refreshToken);
 
-      // ── Invalid token (not found in Redis) ──
+      // === Invalid token (not found in Redis) ===
 
       tokenService.verifyRefreshToken.mockResolvedValueOnce({ sub: user.id, jti: 'bad-jti' });
       tokenRedisRepository.isRefreshTokenValid.mockResolvedValueOnce(false);
@@ -304,7 +304,7 @@ describe('AuthFacadeService', () => {
     });
   });
 
-  // ─── validateUser ──────────────────────────────────────────────────────────
+  // === validateUser ===
 
   describe('validateUser', () => {
     it('should return null if user is not found', async () => {

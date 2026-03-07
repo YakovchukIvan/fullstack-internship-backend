@@ -14,7 +14,7 @@ import { CompanyRole } from '@/common/enums/company-role.enum';
 import { CompanyJoinRequestsService } from '../services/company-join-requests.service';
 import { CompanyMembersService } from '../services/company-members.service';
 
-// ─── Factory functions ────────────────────────────────────────────────────────
+// === Factory functions ===
 
 const makeUser = (overrides: Partial<User> = {}): User =>
   ({
@@ -57,7 +57,7 @@ const makeMember = (overrides: Partial<CompanyMember> = {}): CompanyMember =>
     ...overrides,
   }) as CompanyMember;
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
+// === Tests ===
 
 describe('CompanyJoinRequestsService', () => {
   let service: CompanyJoinRequestsService;
@@ -127,14 +127,14 @@ describe('CompanyJoinRequestsService', () => {
     eventEmitter = module.get(EventEmitter2);
   });
 
-  // ─── sendJoinRequest ──────────────────────────────────────────────────────
+  // === sendJoinRequest ===
 
   describe('sendJoinRequest', () => {
     it('should throw ConflictException if user is already a member or has pending request', async () => {
       const company = makeCompany();
       const userId = 'user-uuid-1';
 
-      // ── User is already a member ──
+      // === User is already a member ===
 
       companyRepository.findBySlugOrFail.mockResolvedValue(company);
       // isMember returns true — user already belongs to the company
@@ -142,7 +142,7 @@ describe('CompanyJoinRequestsService', () => {
 
       await expect(service.sendJoinRequest('test-company', userId)).rejects.toThrow(ConflictException);
 
-      // ── Pending join request already exists ──
+      // === Pending join request already exists ===
 
       companyRepository.findBySlugOrFail.mockResolvedValue(company);
       companyMembersService.isMember.mockResolvedValueOnce(false);
@@ -154,7 +154,7 @@ describe('CompanyJoinRequestsService', () => {
     });
   });
 
-  // ─── acceptJoinRequest ────────────────────────────────────────────────────
+  // === acceptJoinRequest ===
 
   describe('acceptJoinRequest', () => {
     it('should add member, remove join request and emit JOIN_REQUEST_ACCEPTED event', async () => {

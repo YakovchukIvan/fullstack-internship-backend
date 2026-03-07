@@ -6,7 +6,7 @@ import { Company } from '../entities/company.entity';
 import { CompanyMembersService } from '../services/company-members.service';
 import { CompaniesService } from '../services/companies.service';
 
-// ─── Factory functions ────────────────────────────────────────────────────────
+// === Factory functions ===
 
 const makeCompany = (overrides: Partial<Company> = {}): Company =>
   ({
@@ -20,7 +20,7 @@ const makeCompany = (overrides: Partial<Company> = {}): Company =>
     ...overrides,
   }) as Company;
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
+// === Tests ===
 
 describe('CompaniesService', () => {
   let service: CompaniesService;
@@ -65,7 +65,7 @@ describe('CompaniesService', () => {
     dataSource = module.get<{ transaction: jest.Mock }>(DataSource);
   });
 
-  // ─── create ───────────────────────────────────────────────────────────────
+  // === create ===
 
   describe('create', () => {
     it('should create company; throw ConflictException if name already exists', async () => {
@@ -92,7 +92,7 @@ describe('CompaniesService', () => {
       expect(result.name).toBe(company.name);
       expect(result.slug).toBe(company.slug);
 
-      // ── Company name already exists ──
+      // === Company name already exists ===
 
       dataSource.transaction.mockImplementationOnce(async (cb: (manager: EntityManager) => Promise<Company>) => {
         const fakeManager = {
@@ -108,7 +108,7 @@ describe('CompaniesService', () => {
     });
   });
 
-  // ─── findBySlug ───────────────────────────────────────────────────────────
+  // === findBySlug ===
 
   describe('findBySlug', () => {
     it('should throw NotFoundException if company is hidden and user is not owner', async () => {
