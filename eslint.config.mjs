@@ -86,4 +86,12 @@ export default tseslint.config(
       semi: ['error', 'always'],
     },
   },
+
+  // ==================== Override for test files ====================
+  {
+    files: ['**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/unbound-method': 'off',
+    },
+  },
 );
