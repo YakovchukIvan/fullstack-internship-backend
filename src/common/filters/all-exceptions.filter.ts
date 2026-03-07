@@ -26,6 +26,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
+    if (request.url.startsWith('/.well-known/')) {
+      response.status(HttpStatus.NOT_FOUND).end();
+      return;
+    }
+
     const { status, message, detail, errorCode } = this.parseException(exception);
 
     this.logException(request, status, message, detail, errorCode, exception);

@@ -28,6 +28,32 @@ export class QuizAttemptRepository extends Repository<QuizAttempt> {
     );
   }
 
+  async findAttemptsAvailableOn(targetDate: Date): Promise<QuizAttempt[]> {
+    const startOfDay = new Date(targetDate);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(targetDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return this.createQueryBuilder('attempt')
+      .innerJoinAndSelect('attempt.quiz', 'quiz')
+      .innerJoinAndSelect('attempt.company', 'company')
+      .where(
+        `attempt.completed_at + (quiz.frequency_in_days * INTERVAL '1 day') >= :startOfDay
+         AND attempt.completed_at + (quiz.frequency_in_days * INTERVAL '1 day') <= :endOfDay`,
+        { startOfDay, endOfDay },
+      )
+      .andWhere(
+        `attempt.completed_at = (
+          SELECT MAX(a2.completed_at)
+          FROM quiz_attempts a2
+          WHERE a2.user_id = attempt.user_id
+          AND a2.quiz_id = attempt.quiz_id
+        )`,
+      )
+      .getMany();
+  }
+
   async getUserRatingStats(userId: string): Promise<UserRatingResponseDto> {
     const result = await this.createQueryBuilder('attempt')
       .select('SUM(attempt.total_points)', 'sumPoints')

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Quiz } from '../entities/quiz.entity';
 import { CompaniesService } from '../../services/companies.service';
 import { SubmitQuizDto } from '../dto/req/attempt/submit-quiz.req.dto';
-import { QuizAttemptResponseDto } from '../dto/res/quiz/quiz-attempt.res.dto';
+import { QuizAttemptResponseDto } from '../dto/res/attempt/quiz-attempt.res.dto';
 import { UserRatingResponseDto } from '@/common/dto/res/user-rating.res.dto';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { AppLogger } from '@/common/logger/app-logger';

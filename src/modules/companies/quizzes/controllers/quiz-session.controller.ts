@@ -4,7 +4,7 @@ import { ResponseMessage } from '@/common/decorators/response-message.decorator'
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { CompanyRoleGuard } from '../../guards/company-role.guard';
 import { SubmitQuizDto } from '../dto/req/attempt/submit-quiz.req.dto';
-import { QuizAttemptResponseDto } from '../dto/res/quiz/quiz-attempt.res.dto';
+import { QuizAttemptResponseDto } from '../dto/res/attempt/quiz-attempt.res.dto';
 import { QuizStartResponseDto } from '../dto/res/quiz/quiz-session.res.dto';
 import { QuizzesRoutes } from '../routes/quizzes.routes';
 import { QuizSessionSwagger } from '@/common/constants/swagger-docs/quizzes.swagger';
