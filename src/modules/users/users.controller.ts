@@ -1,18 +1,18 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, Query } from '@nestjs/common';
-import { UsersService } from '../users.service';
-import { CreateUserDto } from '../dto/req/create-user.req.dto';
-import { UpdateUserDto } from '../dto/req/update-user.req.dto';
-import { UserResponseDto } from '../dto/res/user.res.dto';
+import { UsersService } from './users.service';
+import { CreateUserDto } from './dto/req/create-user.req.dto';
+import { UpdateUserDto } from './dto/req/update-user.req.dto';
+import { UserResponseDto } from './dto/res/user.res.dto';
 import { UUIDParam } from '@/common/decorators/uuid-param.decorator';
-import { UsersRoutes } from '../routes/users.routes';
-import { UsersPaginationQueryDto } from '../dto/req/users-pagination-query.req.dto';
+import { UsersRoutes } from './routes/users.routes';
+import { UsersPaginationQueryDto } from './dto/req/users-pagination-query.req.dto';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
-import { UsersPaginatedBaseResponseDto } from '../dto/res/users-paginated.res.dto';
+import { UsersPaginatedBaseResponseDto } from './dto/res/users-paginated.res.dto';
 import { Roles } from '@/modules/auth/decorators/roles.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { toUserResponseDto } from '../mappers/user.mapper';
+import { toUserResponseDto } from './mappers/user.mapper';
 import { UsersSwagger } from '@/common/constants/swagger-docs/users.swagger';
 import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
