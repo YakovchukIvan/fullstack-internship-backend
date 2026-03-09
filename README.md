@@ -10,6 +10,8 @@
   <img src="https://img.shields.io/badge/Auth-JWT-black" />
   <img src="https://img.shields.io/badge/Auth-OAuth2-blueviolet" />
   <img src="https://img.shields.io/badge/Email-Nodemailer-0A66C2" />
+  <img src="https://img.shields.io/badge/AWS-EC2%20%2B%20RDS%20%2B%20S3-FF9900" />
+  <img src="https://img.shields.io/badge/Redis-Upstash-DC382D" />
 </p>
 
 ## 📖 Description
@@ -26,11 +28,11 @@ git clone https://github.com/YOUR_USERNAME/backend-internship.git
 npm install
 
 # 3. Create a `.env` file based on `.env.sample`
-cp .env.sample .env # Linux / MacOS / WSL
-copy .env.sample .env # Windows (PowerShell)
+cp .env.sample .env.development # Linux / MacOS / WSL
+copy .env.sample .env.development # Windows (PowerShell)
 
-# 4. Fill in the environment variables in `.env`:
-code .env # Open the file in your editor, e.g.:
+# 4. Fill in the environment variables in `.env.development`:
+code .env.development # Open the file in your editor, e.g.:
 ```
 
 ## 🚀 Launching the application
@@ -89,14 +91,124 @@ docker-compose down -v
 # Migration generation
 npm run migration:generate src/database/migrations/YourMigrationName
 
-# Applying migrations
-npm run migration:run
+# Applying migrations (development)
+npm run migration:run:dev
 
-# Rollback of the last migration
-npm run migration:revert
+# Applying migrations (production)
+npm run migration:run:prod
 
-# View all migrations and their status
-npm run migration:show
+# Rollback of the last migration (development)
+npm run migration:revert:dev
+
+# Rollback of the last migration (production)
+npm run migration:revert:prod
+
+# View all migrations and their status (development)
+npm run migration:show:dev
+
+# View all migrations and their status (production)
+npm run migration:show:prod
+```
+
+## ☁️ AWS Deployment
+
+### Infrastructure
+
+| Service                       | Provider                  | Purpose              |
+| ----------------------------- | ------------------------- | -------------------- |
+| EC2 (t3.micro)                | AWS                       | Application server   |
+| RDS PostgreSQL (db.t4g.micro) | AWS                       | Production database  |
+| S3                            | AWS                       | File storage         |
+| Redis                         | Upstash                   | Cache & quiz answers |
+| Domain + SSL                  | Namecheap + Let's Encrypt | HTTPS                |
+
+### Prerequisites
+
+- AWS account with EC2, RDS, S3 configured
+- Upstash Redis database created
+- Domain with A records pointing to EC2 public IP
+- SSH key pair (`.pem` file) for EC2 access
+
+### Manual deployment steps
+
+```bash
+# 1. Connect to EC2 via SSH
+ssh -i your-key.pem ec2-user@YOUR_EC2_PUBLIC_IP
+
+# 2. Install dependencies (first time only)
+sudo yum install -y git nodejs nginx
+sudo npm install -g pm2
+
+# 3. Clone the repository
+git clone https://YOUR_TOKEN@github.com/YOUR_USERNAME/YOUR_REPO.git
+cd YOUR_REPO
+
+# 4. Install project dependencies
+npm install
+
+# 5. Create production environment file
+nano .env.production
+# Fill in all variables from .env.sample with production values
+
+# 6. Build the application
+npm run build
+
+# 7. Run database migrations
+NODE_ENV=production npm run migration:run:prod
+
+# 8. Start the application with PM2
+NODE_ENV=production pm2 start dist/main.js --name backend
+
+# 9. Save PM2 process list (auto-restart on reboot)
+pm2 startup
+pm2 save
+```
+
+### Nginx configuration
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com api.your-domain.com;
+
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+### SSL certificate (Let's Encrypt)
+
+```bash
+# Install Certbot
+sudo yum install -y certbot python3-certbot-nginx
+
+# Obtain SSL certificate
+sudo certbot --nginx -d your-domain.com -d api.your-domain.com
+
+# Certificate auto-renews via systemd timer
+```
+
+### Updating the application
+
+```bash
+# Connect to EC2
+ssh -i your-key.pem ec2-user@YOUR_EC2_PUBLIC_IP
+cd YOUR_REPO
+
+# Pull latest changes
+git pull origin main
+
+# Rebuild and restart
+npm install
+npm run build
+NODE_ENV=production npm run migration:run:prod
+pm2 restart backend
 ```
 
 ## ✅ Code verification
@@ -127,8 +239,10 @@ npm run test
 - NestJS
 - TypeScript
 - Docker
-- PostgreSQL
+- PostgreSQL (AWS RDS)
 - TypeORM
+- Redis (Upstash)
+- AWS S3
 - Swagger
 - OAuth2 / JWT
 - Nodemailer
