@@ -1,0 +1,67 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ec2-user/app
+
+            git pull origin develop
+
+            echo "NODE_ENV=production" > .env.production
+            echo "APP_PORT=${{ secrets.APP_PORT }}" >> .env.production
+            echo "APP_HOST=${{ secrets.APP_HOST }}" >> .env.production
+            echo "GLOBAL_PREFIX=${{ secrets.GLOBAL_PREFIX }}" >> .env.production
+            echo "FRONTEND_DEV_URL=http://localhost:3000" >> .env.production
+            echo "FRONTEND_PROD_URL=https://meduzzen-internship.site" >> .env.production
+            echo "POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}" >> .env.production
+            echo "POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}" >> .env.production
+            echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env.production
+            echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env.production
+            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env.production
+            echo "REDIS_HOST=localhost" >> .env.production
+            echo "REDIS_PORT=6379" >> .env.production
+            echo "REDIS_URL=${{ secrets.REDIS_URL }}" >> .env.production
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.production
+            echo "JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN }}" >> .env.production
+            echo "JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}" >> .env.production
+            echo "JWT_REFRESH_EXPIRES_IN=${{ secrets.JWT_REFRESH_EXPIRES_IN }}" >> .env.production
+            echo "AUTH0_DOMAIN=${{ secrets.AUTH0_DOMAIN }}" >> .env.production
+            echo "AUTH0_ISSUER_URL=${{ secrets.AUTH0_ISSUER_URL }}" >> .env.production
+            echo "AUTH0_AUDIENCE=${{ secrets.AUTH0_AUDIENCE }}" >> .env.production
+            echo "AUTH0_CLIENT_ID=${{ secrets.AUTH0_CLIENT_ID }}" >> .env.production
+            echo "AUTH0_CLIENT_SECRET=${{ secrets.AUTH0_CLIENT_SECRET }}" >> .env.production
+            echo "EMAIL_HOST=smtp.gmail.com" >> .env.production
+            echo "EMAIL_PORT=587" >> .env.production
+            echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> .env.production
+            echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> .env.production
+            echo "EMAIL_FROM=${{ secrets.EMAIL_USER }}" >> .env.production
+            echo "EMAIL_FROM_NAME=Auth Service" >> .env.production
+            echo "THROTTLE_TTL=60000" >> .env.production
+            echo "THROTTLE_LIMIT=10" >> .env.production
+            echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env.production
+            echo "AI_QUIZ_DAILY_LIMIT=5" >> .env.production
+            echo "GEMINI_MODEL=gemini-2.0-flash" >> .env.production
+            echo "STORAGE_TYPE=s3" >> .env.production
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env.production
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env.production
+            echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env.production
+            echo "AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}" >> .env.production
+
+            npm ci
+            npm run build
+            npm run migration:run:prod
+            NODE_ENV=production pm2 restart meduzzen-backend || NODE_ENV=production pm2 start dist/main.js --name meduzzen-backend
+            pm2 save
