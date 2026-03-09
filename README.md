@@ -40,6 +40,10 @@ code .env.development # Open the file in your editor, e.g.:
 ### Development mode
 
 ```bash
+# 1. Start PostgreSQL and Redis via Docker
+npm run docker:dev
+
+# 2. Start the NestJS application
 npm run start:dev
 ```
 
@@ -64,24 +68,34 @@ http://localhost:5000/api/docs
 
 ## 🐳 Docker
 
-### Launching individual services
+Docker is used **only for local infrastructure** (PostgreSQL + Redis). The NestJS application runs directly via Node.js.
+
+### Start local infrastructure (development)
 
 ```bash
-# Build and start container in background
-docker-compose up -d --build
+# Start PostgreSQL + Redis in background
+npm run docker:dev
 
-# Stop container
-docker-compose stop
+# Stop containers
+npm run docker:down
 
-# Restart container
-docker-compose restart
-
-# Stop and delete container
-docker-compose down
-
-# Stop and delete containers + volumes (deletes database data)
-docker-compose down -v
+# Stop containers and delete volumes (clears database data)
+docker compose down -v
 ```
+
+> **Note for VS Code Docker extension users:** The "Run All Services" button requires a `.env` file in the project root. Create it by copying your development environment:
+>
+> ```bash
+> cp .env.development .env
+> ```
+
+### Services included
+
+| Service      | Port | Description                       |
+| ------------ | ---- | --------------------------------- |
+| PostgreSQL   | 5432 | Main database                     |
+| Redis        | 6379 | Cache and quiz answers            |
+| RedisInsight | 5540 | Redis UI at http://localhost:5540 |
 
 ## 🗄️ Migrations
 
@@ -109,6 +123,25 @@ npm run migration:show:dev
 # View all migrations and their status (production)
 npm run migration:show:prod
 ```
+
+## 🌱 Database Seeding
+
+For local development, you can populate the database with fake data using the built-in seeder.
+
+> ⚠️ **Warning:** Running the seed will **truncate all tables** and replace existing data.
+
+```bash
+# Seed the database (development)
+npm run seed:dev
+```
+
+The seeder creates fake data in the following order:
+
+1. **Users** — test accounts with auth records
+2. **Companies** — companies with members and roles
+3. **Invitations & Join Requests** — pending requests between users and companies
+4. **Quizzes** — quizzes assigned to companies
+5. **Attempts** — quiz attempts with scores and analytics data
 
 ## ☁️ AWS Deployment
 
@@ -238,10 +271,10 @@ npm run test
 
 - NestJS
 - TypeScript
-- Docker
-- PostgreSQL (AWS RDS)
+- Docker (local infrastructure only)
+- PostgreSQL (AWS RDS in production, Docker locally)
 - TypeORM
-- Redis (Upstash)
+- Redis (Upstash in production, Docker locally)
 - AWS S3
 - Swagger
 - OAuth2 / JWT

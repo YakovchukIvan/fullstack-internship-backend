@@ -34,7 +34,10 @@
     "migration:revert:dev": "cross-env NODE_ENV=development npm run migration:revert",
     "migration:revert:prod": "cross-env NODE_ENV=production npm run migration:revert",
     "seed": "ts-node -r tsconfig-paths/register src/database/run-seed.ts",
-    "seed:dev": "cross-env NODE_ENV=development npm run seed"
+    "seed:dev": "cross-env NODE_ENV=development npm run seed",
+    "docker:dev": "docker compose --env-file .env.development up -d",
+    "docker:prod": "docker compose --env-file .env.production up -d",
+    "docker:down": "docker compose down"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
