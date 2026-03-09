@@ -8,12 +8,12 @@ const createTypeOrmOptions = (config: ConfigService): TypeOrmModuleOptions => ({
   password: config.getOrThrow<string>('POSTGRES_PASSWORD'),
   host: config.getOrThrow<string>('POSTGRES_HOST'),
   port: Number(config.getOrThrow<string>('POSTGRES_PORT')),
-
   autoLoadEntities: true,
   synchronize: false,
   logging: config.get('NODE_ENV') === 'development' ? ['query', 'error'] : ['error'],
   migrationsRun: true,
   migrations: ['dist/database/migrations/**/*{.ts,.js}'],
+  ssl: config.get('NODE_ENV') === 'production' ? { rejectUnauthorized: false } : false,
 });
 
 export const databaseConfig: TypeOrmModuleAsyncOptions = {
