@@ -22,7 +22,8 @@ import { SchedulerModule } from './modules/scheduler/scheduler.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
+      cache: true,
     }),
     TypeOrmModule.forRootAsync(databaseConfig),
     ThrottlerModule.forRootAsync(throttlerConfig),

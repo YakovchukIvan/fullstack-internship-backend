@@ -11,7 +11,7 @@ const createTypeOrmOptions = (config: ConfigService): TypeOrmModuleOptions => ({
 
   autoLoadEntities: true,
   synchronize: false,
-  logging: config.get('NODE_ENV') === 'development',
+  logging: config.get('NODE_ENV') === 'development' ? ['query', 'error'] : ['error'],
   migrationsRun: true,
   migrations: ['dist/database/migrations/**/*{.ts,.js}'],
 });
