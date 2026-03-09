@@ -16,6 +16,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RedisModule } from './modules/redis/redis.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { SchedulerModule } from './modules/scheduler/scheduler.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     CompaniesModule,
     AnalyticsModule,
     NotificationsModule,
+    SchedulerModule,
   ],
   controllers: [AppController],
   providers: [AppService, ...appProviders],

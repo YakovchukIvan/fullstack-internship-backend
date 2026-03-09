@@ -52,6 +52,7 @@ export class NotificationsService {
         type: NotificationType.QUIZ_CREATED,
         text: NotificationMessages.quizCreated(event.quizTitle, event.companyName),
         companyId: event.companyId,
+        quizId: event.quizId,
       }));
     await this.createManyIfNotEmpty(params);
   }
@@ -62,6 +63,7 @@ export class NotificationsService {
       type: NotificationType.INVITATION_RECEIVED,
       text: NotificationMessages.invitationReceived(event.companyName),
       companyId: event.companyId,
+      quizId: null,
     });
   }
 
@@ -74,6 +76,7 @@ export class NotificationsService {
         type: NotificationType.INVITATION_ACCEPTED,
         text: NotificationMessages.invitationAccepted(event.userName, event.companyName),
         companyId: event.companyId,
+        quizId: null,
       }));
     await this.createManyIfNotEmpty(params);
   }
@@ -85,32 +88,33 @@ export class NotificationsService {
       type: NotificationType.JOIN_REQUEST_SENT,
       text: NotificationMessages.joinRequestSent(event.requesterName, event.companyName),
       companyId: event.companyId,
+      quizId: null,
     }));
     await this.createManyIfNotEmpty(params);
   }
 
   async notifyJoinRequestAccepted(event: CompanyJoinRequestAcceptedEvent): Promise<void> {
-    const [userParams, adminParams] = await Promise.all([
-      Promise.resolve([
-        {
-          userId: event.userId,
-          type: NotificationType.JOIN_REQUEST_ACCEPTED,
-          text: NotificationMessages.joinRequestAccepted(event.companyName),
-          companyId: event.companyId,
-        },
-      ]),
-      this.companyMemberRepository.findOwnerAndAdminsByCompanyId(event.companyId).then((admins) =>
-        admins
-          .filter((a) => a.userId !== event.userId)
-          .map((a) => ({
-            userId: a.userId,
-            type: NotificationType.JOIN_REQUEST_ACCEPTED,
-            text: NotificationMessages.joinRequestAcceptedAdmin(event.userName, event.companyName),
-            companyId: event.companyId,
-          })),
-      ),
-    ]);
-    await this.createManyIfNotEmpty([...userParams, ...adminParams]);
+    const admins = await this.companyMemberRepository.findOwnerAndAdminsByCompanyId(event.companyId);
+
+    const userParam: CreateNotificationParams = {
+      userId: event.userId,
+      type: NotificationType.JOIN_REQUEST_ACCEPTED,
+      text: NotificationMessages.joinRequestAccepted(event.companyName),
+      companyId: event.companyId,
+      quizId: null,
+    };
+
+    const adminParams: CreateNotificationParams[] = admins
+      .filter((a) => a.userId !== event.userId)
+      .map((a) => ({
+        userId: a.userId,
+        type: NotificationType.JOIN_REQUEST_ACCEPTED,
+        text: NotificationMessages.joinRequestAcceptedAdmin(event.userName, event.companyName),
+        companyId: event.companyId,
+        quizId: null,
+      }));
+
+    await this.createManyIfNotEmpty([userParam, ...adminParams]);
   }
 
   async countUnread(userId: string): Promise<number> {

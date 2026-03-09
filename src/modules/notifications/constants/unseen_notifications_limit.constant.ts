@@ -1,0 +1,1 @@
+export const UNSEEN_NOTIFICATIONS_LIMIT = 3;

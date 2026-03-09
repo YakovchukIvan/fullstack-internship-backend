@@ -6,7 +6,9 @@ export class NotificationResponseDto {
   type: NotificationType;
   text: string;
   isRead: boolean;
+  isSeen: boolean;
   companyId: string | null;
+  quizId: string | null;
   createdAt: string;
 }
 

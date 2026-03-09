@@ -9,4 +9,8 @@ export const NotificationMessages = {
   joinRequestAccepted: (companyName: string): string => `Your request to join ${companyName} was accepted`,
   joinRequestAcceptedAdmin: (userName: string, companyName: string): string =>
     `${userName} has joined ${companyName} via join request`,
+  quizAvailable: (quizTitle: string, companyName: string): string =>
+    `Your quiz "${quizTitle}" in ${companyName} is now available to retake`,
+  quizAvailableTomorrow: (quizTitle: string, companyName: string, time: string): string =>
+    `Your quiz "${quizTitle}" in ${companyName} will be available tomorrow at ${time}`,
 } as const;

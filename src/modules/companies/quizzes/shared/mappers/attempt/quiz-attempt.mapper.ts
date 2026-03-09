@@ -1,6 +1,6 @@
 import { toIso } from '@/common/helpers/date.transformer';
 import { QuizAttempt } from '@/modules/companies/quizzes/entities/quiz-attempt.entity';
-import { QuizAttemptResponseDto } from '@/modules/companies/quizzes/dto/res/quiz/quiz-attempt.res.dto';
+import { QuizAttemptResponseDto } from '@/modules/companies/quizzes/dto/res/attempt/quiz-attempt.res.dto';
 import { calculateAccuracy } from '../../helpers/quiz-math.helper';
 import { getPerformanceResult } from '../../helpers/quiz-performance.helper';
 

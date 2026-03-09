@@ -5,4 +5,5 @@ export interface CreateNotificationParams {
   type: NotificationType;
   text: string;
   companyId: string | null;
+  quizId?: string | null;
 }
