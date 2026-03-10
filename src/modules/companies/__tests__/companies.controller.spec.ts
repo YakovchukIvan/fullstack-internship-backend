@@ -2,9 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CompaniesController } from '../controllers/companies.controller';
 import { CompaniesService } from '../services/companies.service';
 import { CompanyMembersService } from '../services/company-members.service';
+import { CompanyRepository } from '../repositories/company.repository';
 import { DataSource } from 'typeorm';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Company } from '../entities/company.entity';
 
 describe('CompaniesController', () => {
   let controller: CompaniesController;
@@ -15,21 +14,28 @@ describe('CompaniesController', () => {
       providers: [
         CompaniesService,
         {
-          provide: getRepositoryToken(Company),
+          provide: CompanyRepository,
           useValue: {
             find: jest.fn(),
             findOne: jest.fn(),
             save: jest.fn(),
-            delete: jest.fn(),
+            remove: jest.fn(),
+            findBySlugOrFail: jest.fn(),
+            findBySlugRaw: jest.fn(),
+            findPaginated: jest.fn(),
           },
         },
         {
           provide: CompanyMembersService,
-          useValue: {},
+          useValue: {
+            createInitialOwner: jest.fn(),
+          },
         },
         {
           provide: DataSource,
-          useValue: {},
+          useValue: {
+            transaction: jest.fn(),
+          },
         },
       ],
     }).compile();
