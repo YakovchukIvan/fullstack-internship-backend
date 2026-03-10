@@ -17,8 +17,7 @@ describe('AppController', () => {
   describe('health check', () => {
     it('should return health check object', () => {
       expect(appController.getHealthCheck()).toEqual({
-        status_code: 200,
-        detail: 'ok',
+        status: 'ok',
         result: 'working',
       });
     });
