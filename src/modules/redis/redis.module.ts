@@ -15,13 +15,13 @@ import { LoggerModule } from '@/common/logger/logger.module';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const config = getRedisConfig(configService);
-        const url = config.password
-          ? `redis://:${config.password}@${config.host}:${config.port}`
-          : `redis://${config.host}:${config.port}`;
+        const url =
+          config.url ??
+          (config.password
+            ? `redis://:${config.password}@${config.host}:${config.port}`
+            : `redis://${config.host}:${config.port}`);
 
-        return {
-          stores: [createKeyv(url)],
-        };
+        return { stores: [createKeyv(url)] };
       },
     }),
     LoggerModule,
