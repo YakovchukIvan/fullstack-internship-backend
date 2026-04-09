@@ -1,7 +1,7 @@
 import { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 export interface AccessTokenPayload extends JwtPayload {
-  jti: string;
+  jti?: string;
 }
 
 export interface RefreshTokenPayload {

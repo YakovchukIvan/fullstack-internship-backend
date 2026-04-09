@@ -24,7 +24,10 @@ export class TokenService {
     return payload;
   }
 
-  async assertAccessTokenNotRevoked(userId: string, jti: string): Promise<void> {
+  async assertAccessTokenNotRevoked(userId: string, jti: string | undefined): Promise<void> {
+    if (!jti) {
+      return;
+    }
     const isValid = await this.tokenRedisRepository.isAccessTokenValid(userId, jti);
     if (!isValid) {
       throw new UnauthorizedException('Token has been revoked');
