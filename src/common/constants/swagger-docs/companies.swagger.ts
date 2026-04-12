@@ -18,6 +18,11 @@ export const CompaniesSwagger: Record<string, Partial<OperationObject>> = {
     summary: 'Update company',
     description: 'Updates company name, description, or avatar. Requires company OWNER or company ADMIN role.',
   },
+  UPDATE_AVATAR: {
+    summary: 'Update company avatar',
+    description:
+      'Uploads a new company avatar image (JPEG, PNG, WebP, max 5MB). Requires company OWNER or ADMIN role. Replaces the old one on S3 automatically.',
+  },
   REMOVE: {
     summary: 'Delete company',
     description: 'Permanently deletes the company and all its data. Requires company OWNER role.',
