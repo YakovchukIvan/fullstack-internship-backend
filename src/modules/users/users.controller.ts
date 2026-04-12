@@ -1,4 +1,17 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/req/create-user.req.dto';
 import { UpdateUserDto } from './dto/req/update-user.req.dto';
@@ -14,6 +27,7 @@ import { Roles } from '@/modules/auth/decorators/roles.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { toUserResponseDto } from './mappers/user.mapper';
 import { UsersSwagger } from '@/common/constants/swagger-docs/users.swagger';
+import { FileUploadPipe } from '@/common/pipes/file-upload.pipe';
 import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 @Controller(UsersRoutes.ROOT)
@@ -51,6 +65,18 @@ export class UsersController {
   @ApiEndpoint(UserResponseDto, HttpStatus.OK, UsersSwagger.FIND_ONE)
   async findOne(@UUIDParam() id: string): Promise<{ user: UserResponseDto }> {
     const user = await this.usersService.findOne(id);
+    return { user: toUserResponseDto(user) };
+  }
+
+  @Patch(UsersRoutes.AVATAR)
+  @UseInterceptors(FileInterceptor('avatar'))
+  @ApiEndpoint(UserResponseDto, HttpStatus.OK, UsersSwagger.UPDATE_AVATAR)
+  @ResponseMessage('Avatar updated successfully')
+  async updateAvatar(
+    @CurrentUser() currentUser: JwtPayload,
+    @UploadedFile(new FileUploadPipe()) file: Express.Multer.File,
+  ): Promise<{ user: UserResponseDto }> {
+    const user = await this.usersService.updateAvatar(currentUser.sub, file);
     return { user: toUserResponseDto(user) };
   }
 

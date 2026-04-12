@@ -21,6 +21,10 @@ export const UsersSwagger: Record<string, Partial<OperationObject>> = {
     summary: 'Update my profile',
     description: "Updates the current user's name or password.",
   },
+  UPDATE_AVATAR: {
+    summary: 'Update my avatar',
+    description: 'Uploads a new avatar image (JPEG, PNG, WebP, max 5MB). Replaces the old one on S3 automatically.',
+  },
   REMOVE_ME: {
     summary: 'Delete my account',
     description: "Permanently deletes the authenticated user's account.",

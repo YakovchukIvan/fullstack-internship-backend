@@ -10,6 +10,7 @@ import { UsersPaginationQueryDto } from './dto/req/users-pagination-query.req.dt
 import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dto';
 import { UserRepository } from './repositories/user.repository';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
+import { S3Service } from '@/modules/s3/s3.service';
 
 @Injectable()
 export class UsersService {
@@ -18,6 +19,7 @@ export class UsersService {
     private readonly dataSource: DataSource,
     private readonly authCredentialsService: AuthCredentialsService,
     private readonly logger: AppLogger,
+    private readonly s3Service: S3Service,
   ) {
     this.logger.setLoggerContext(UsersService.name);
   }
@@ -74,8 +76,29 @@ export class UsersService {
     });
   }
 
+  async updateAvatar(userId: string, file: Express.Multer.File): Promise<User> {
+    const user = await this.userRepository.findByIdOrFail(userId);
+    const oldUrl = user.avatarUrl;
+
+    user.avatarUrl = await this.s3Service.uploadFile(file, 'users');
+
+    const updated = await this.userRepository.save(user);
+    this.logger.log({ userId, avatarUrl: updated.avatarUrl }, 'User avatar updated');
+
+    if (oldUrl) {
+      await this.s3Service.deleteFile(oldUrl);
+    }
+
+    return updated;
+  }
+
   async remove(id: string): Promise<void> {
     const user = await this.userRepository.findByIdOrFail(id);
+
+    if (user.avatarUrl) {
+      await this.s3Service.deleteFile(user.avatarUrl);
+    }
+
     await this.userRepository.remove(user);
     this.logger.log({ userId: id, email: user.email }, 'User removed successfully');
   }

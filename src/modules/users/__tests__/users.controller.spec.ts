@@ -15,6 +15,7 @@ describe('UsersController', () => {
           provide: UsersService,
           useValue: {
             create: jest.fn(),
+            updateAvatar: jest.fn(),
           },
         },
       ],

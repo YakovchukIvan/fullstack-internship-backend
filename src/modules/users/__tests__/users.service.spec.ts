@@ -5,6 +5,7 @@ import { UsersService } from '../users.service';
 import { UserRepository } from '../repositories/user.repository';
 import { AuthCredentialsService } from '@/modules/auth/services/auth-credentials.service';
 import { AppLogger } from '@/common/logger/app-logger';
+import { S3Service } from '@/modules/s3/s3.service';
 import { User } from '../entities/user.entity';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { UpdateUserDto } from '../dto/req/update-user.req.dto';
@@ -65,6 +66,13 @@ describe('UsersService', () => {
             logError: jest.fn(),
           },
         },
+        {
+          provide: S3Service,
+          useValue: {
+            uploadFile: jest.fn(),
+            deleteFile: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -90,6 +98,7 @@ describe('UsersService', () => {
 
       // === User not found ===
       // findByIdOrFail internally calls GuardAssertions.exists which throws NotFoundException
+
       userRepository.findByIdOrFail.mockRejectedValueOnce(new NotFoundException('User with ID not found'));
 
       await expect(service.findOne('nonexistent-id')).rejects.toThrow(NotFoundException);

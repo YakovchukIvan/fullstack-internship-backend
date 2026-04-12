@@ -1,6 +1,7 @@
 export const CompaniesRoutes = {
   ROOT: 'companies',
   BY_SLUG: ':slug',
+  AVATAR: ':slug/avatar',
 
   INVITATIONS: {
     ME: 'invitations/me',

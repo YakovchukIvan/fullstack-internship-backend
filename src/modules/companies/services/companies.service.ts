@@ -10,6 +10,7 @@ import { UpdateCompanyDto } from '../dto/req/company/update-company.req.dto';
 import { CompanyRepository } from '../repositories/company.repository';
 import { CompanyMembersService } from './company-members.service';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
+import { S3Service } from '@/modules/s3/s3.service';
 
 @Injectable()
 export class CompaniesService {
@@ -17,6 +18,7 @@ export class CompaniesService {
     private readonly companyRepository: CompanyRepository,
     private readonly companyMembersService: CompanyMembersService,
     private readonly dataSource: DataSource,
+    private readonly s3Service: S3Service,
   ) {}
 
   async create(dto: CreateCompanyDto, userId: string): Promise<Company> {
@@ -71,9 +73,31 @@ export class CompaniesService {
     return this.companyRepository.save(company);
   }
 
+  async updateAvatar(slug: string, file: Express.Multer.File): Promise<Company> {
+    const company = await this.companyRepository.findBySlugRaw(slug);
+    GuardAssertions.exists(company, 'Company not found');
+
+    const oldUrl = company.avatarUrl;
+
+    company.avatarUrl = await this.s3Service.uploadFile(file, 'companies');
+
+    const updated = await this.companyRepository.save(company);
+
+    if (oldUrl) {
+      await this.s3Service.deleteFile(oldUrl);
+    }
+
+    return updated;
+  }
+
   async removeBySlug(slug: string): Promise<void> {
     const company = await this.companyRepository.findBySlugRaw(slug);
     GuardAssertions.exists(company, 'Company not found');
+
+    if (company.avatarUrl) {
+      await this.s3Service.deleteFile(company.avatarUrl);
+    }
+
     await this.companyRepository.remove(company);
   }
 }

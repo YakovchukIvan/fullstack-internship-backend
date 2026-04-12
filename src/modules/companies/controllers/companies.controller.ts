@@ -9,8 +9,11 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
@@ -29,6 +32,7 @@ import { toCompanyMemberResponseDto } from '../mappers/company/company-member.ma
 import { CompanyMembersListResponseDto } from '../dto/res/company/company-member.res.dto';
 import { CreateCompanyDto } from '../dto/req/company/create-company.req.dto';
 import { UpdateCompanyDto } from '../dto/req/company/update-company.req.dto';
+import { FileUploadPipe } from '@/common/pipes/file-upload.pipe';
 import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 @Controller(CompaniesRoutes.ROOT)
@@ -97,6 +101,20 @@ export class CompaniesController {
     return {
       company: toCompanyResponseDto(company),
     };
+  }
+
+  @Patch(CompaniesRoutes.AVATAR)
+  @UseGuards(CompanyRoleGuard)
+  @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
+  @UseInterceptors(FileInterceptor('avatar'))
+  @ApiEndpoint(CompanyResponseDto, HttpStatus.OK, CompaniesSwagger.UPDATE_AVATAR)
+  @ResponseMessage('Company avatar updated successfully')
+  async updateAvatar(
+    @Param('slug') slug: string,
+    @UploadedFile(new FileUploadPipe()) file: Express.Multer.File,
+  ): Promise<{ company: CompanyResponseDto }> {
+    const company = await this.companiesService.updateAvatar(slug, file);
+    return { company: toCompanyResponseDto(company) };
   }
 
   @Patch(CompaniesRoutes.BY_SLUG)
