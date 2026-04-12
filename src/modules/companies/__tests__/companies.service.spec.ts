@@ -1,3 +1,4 @@
+// companies.service.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
@@ -5,6 +6,7 @@ import { CompanyRepository } from '../repositories/company.repository';
 import { Company } from '../entities/company.entity';
 import { CompanyMembersService } from '../services/company-members.service';
 import { CompaniesService } from '../services/companies.service';
+import { S3Service } from '@/modules/s3/s3.service';
 
 // === Factory functions ===
 
@@ -54,6 +56,13 @@ describe('CompaniesService', () => {
           provide: DataSource,
           useValue: {
             transaction: jest.fn(),
+          },
+        },
+        {
+          provide: S3Service,
+          useValue: {
+            uploadFile: jest.fn(),
+            deleteFile: jest.fn(),
           },
         },
       ],
