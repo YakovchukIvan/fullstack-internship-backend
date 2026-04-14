@@ -50,7 +50,7 @@ export class Auth0ManagementService {
 
   async updateUser(
     auth0UserId: string,
-    data: { given_name?: string; family_name?: string; name?: string },
+    data: { given_name?: string; family_name?: string; name?: string; picture?: string },
   ): Promise<void> {
     const token = await this.getManagementToken();
 

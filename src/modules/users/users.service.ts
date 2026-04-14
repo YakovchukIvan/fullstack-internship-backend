@@ -59,7 +59,7 @@ export class UsersService {
   }
 
   async update(id: string, dto: UpdateUserDto): Promise<User> {
-    return this.dataSource.transaction(async (manager) => {
+    const updated = await this.dataSource.transaction(async (manager) => {
       const relations = dto.password ? ['auth'] : [];
       const user = await manager.findOneOrFail(User, { where: { id }, relations });
       GuardAssertions.exists(user, `User with ID ${id} not found`);
@@ -76,13 +76,14 @@ export class UsersService {
         await this.authCredentialsService.setPasswordTx(manager, user, dto.password);
       }
 
-      const updated = await manager.getRepository(User).save(user);
-      this.logger.log({ userId: updated.id }, 'User updated successfully');
-
-      await this.syncNameToAuth0IfOAuthUser(id, dto);
-
-      return updated;
+      const result = await manager.getRepository(User).save(user);
+      this.logger.log({ userId: result.id }, 'User updated successfully');
+      return result;
     });
+
+    await this.syncNameToAuth0IfOAuthUser(id, dto);
+
+    return updated;
   }
 
   async updateAvatar(userId: string, file: Express.Multer.File): Promise<User> {
@@ -97,6 +98,8 @@ export class UsersService {
     if (oldUrl) {
       await this.s3Service.deleteFile(oldUrl);
     }
+
+    await this.syncAvatarToAuth0IfOAuthUser(userId, updated.avatarUrl);
 
     return updated;
   }
@@ -135,16 +138,38 @@ export class UsersService {
     }
 
     try {
-      const updatedUser = await this.userRepository.findByIdOrFail(userId);
+      const user = await this.userRepository.findByIdOrFail(userId);
       await this.auth0ManagementService.updateUser(auth.googleId, {
-        given_name: updatedUser.firstName,
-        family_name: updatedUser.lastName,
-        name: `${updatedUser.firstName} ${updatedUser.lastName}`,
+        given_name: user.firstName,
+        family_name: user.lastName,
+        name: `${user.firstName} ${user.lastName}`,
       });
     } catch (err) {
       this.logger.error(
         { userId, error: (err as Error).message },
         'Failed to sync name update to Auth0 (non-critical)',
+      );
+    }
+  }
+
+  private async syncAvatarToAuth0IfOAuthUser(userId: string, avatarUrl: string | null): Promise<void> {
+    if (!avatarUrl) {
+      return;
+    }
+
+    const auth = await this.authRepository.findByUserId(userId);
+    if (!auth?.googleId) {
+      return;
+    }
+
+    try {
+      await this.auth0ManagementService.updateUser(auth.googleId, {
+        picture: avatarUrl,
+      });
+    } catch (err) {
+      this.logger.error(
+        { userId, error: (err as Error).message },
+        'Failed to sync avatar update to Auth0 (non-critical)',
       );
     }
   }

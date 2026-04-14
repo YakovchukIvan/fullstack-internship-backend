@@ -23,12 +23,14 @@ const makeUser = (overrides: Partial<User> = {}): User =>
     firstName: 'Ivan',
     lastName: 'Test',
     role: UserRole.USER,
+    avatarUrl: null,
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
     ...overrides,
   }) as User;
 
-const makeAuth0 = (overrides: Partial<Auth> = {}): Auth =>
+// Auth record for a regular email/password user (no googleId)
+const makeLocalAuth = (overrides: Partial<Auth> = {}): Auth =>
   ({
     id: 'auth-uuid-1',
     userId: 'user-uuid-1',
@@ -41,12 +43,17 @@ const makeAuth0 = (overrides: Partial<Auth> = {}): Auth =>
     ...overrides,
   }) as Auth;
 
+// Auth record for an Auth0 OAuth user (has googleId, no passwordHash)
+const makeOAuthAuth = (overrides: Partial<Auth> = {}): Auth =>
+  makeLocalAuth({ passwordHash: null, googleId: 'google-oauth2|123456', ...overrides });
+
 // === Tests ===
 
 describe('UsersService', () => {
   let service: UsersService;
   let userRepository: jest.Mocked<UserRepository>;
   let authCredentialsService: jest.Mocked<AuthCredentialsService>;
+  let s3Service: jest.Mocked<S3Service>;
   let dataSource: { transaction: jest.Mock };
   let tokenRedisRepository: jest.Mocked<TokenRedisRepository>;
   let authRepository: jest.Mocked<AuthRepository>;
@@ -74,16 +81,13 @@ describe('UsersService', () => {
         },
         {
           provide: DataSource,
-          useValue: {
-            transaction: jest.fn(),
-          },
+          useValue: { transaction: jest.fn() },
         },
         {
           provide: AppLogger,
           useValue: {
             setLoggerContext: jest.fn(),
             log: jest.fn(),
-            logError: jest.fn(),
             error: jest.fn(),
           },
         },
@@ -96,15 +100,11 @@ describe('UsersService', () => {
         },
         {
           provide: TokenRedisRepository,
-          useValue: {
-            revokeAllUserTokens: jest.fn(),
-          },
+          useValue: { revokeAllUserTokens: jest.fn() },
         },
         {
           provide: AuthRepository,
-          useValue: {
-            findByUserId: jest.fn(),
-          },
+          useValue: { findByUserId: jest.fn() },
         },
         {
           provide: Auth0ManagementService,
@@ -119,6 +119,7 @@ describe('UsersService', () => {
     service = module.get<UsersService>(UsersService);
     userRepository = module.get(UserRepository);
     authCredentialsService = module.get(AuthCredentialsService);
+    s3Service = module.get(S3Service);
     dataSource = module.get<{ transaction: jest.Mock }>(DataSource);
     tokenRedisRepository = module.get(TokenRedisRepository);
     authRepository = module.get(AuthRepository);
@@ -128,16 +129,17 @@ describe('UsersService', () => {
   // === findOne ===
 
   describe('findOne', () => {
-    it('should return user by id; throw NotFoundException if not found', async () => {
+    it('should return user by id', async () => {
       const user = makeUser();
-
       userRepository.findByIdOrFail.mockResolvedValueOnce(user);
 
       const result = await service.findOne(user.id);
 
       expect(result.id).toBe(user.id);
       expect(result.email).toBe(user.email);
+    });
 
+    it('should throw NotFoundException if user not found', async () => {
       userRepository.findByIdOrFail.mockRejectedValueOnce(new NotFoundException('User with ID not found'));
 
       await expect(service.findOne('nonexistent-id')).rejects.toThrow(NotFoundException);
@@ -147,50 +149,64 @@ describe('UsersService', () => {
   // === update ===
 
   describe('update', () => {
-    it('should update firstName/lastName; call setPasswordTx if password provided; sync to Auth0', async () => {
-      const user = makeUser();
-      const auth = makeAuth0({ googleId: 'auth0|123' });
-
-      // === Update name fields ===
-      const nameDto: UpdateUserDto = { firstName: 'UpdatedName', lastName: 'UpdatedLastName' };
-
-      authRepository.findByUserId.mockResolvedValueOnce(auth);
-
-      // Transaction mock: invoke callback with fake EntityManager
+    const mockTransaction = (updatedUser: User): void => {
       dataSource.transaction.mockImplementationOnce(async (cb: (manager: EntityManager) => Promise<User>) => {
-        const updatedUser = { ...user, ...nameDto };
         const fakeManager = {
-          findOneOrFail: jest.fn().mockResolvedValue(user),
+          findOneOrFail: jest.fn().mockResolvedValue(updatedUser),
           getRepository: jest.fn().mockReturnValue({
             save: jest.fn().mockResolvedValue(updatedUser),
           }),
         } as unknown as EntityManager;
         return cb(fakeManager);
       });
+    };
 
-      userRepository.findByIdOrFail.mockResolvedValueOnce({ ...user, ...nameDto });
+    it('should update firstName/lastName for a regular user (no Auth0 sync)', async () => {
+      const user = makeUser();
+      const dto: UpdateUserDto = { firstName: 'Updated', lastName: 'Name' };
+      mockTransaction({ ...user, ...dto });
 
-      const nameResult = await service.update(user.id, nameDto);
+      // Regular user — no googleId
+      authRepository.findByUserId.mockResolvedValueOnce(makeLocalAuth());
 
-      expect(nameResult.firstName).toBe('UpdatedName');
-      expect(nameResult.lastName).toBe('UpdatedLastName');
-      // Auth0 sync check
+      const result = await service.update(user.id, dto);
+
+      expect(result.firstName).toBe('Updated');
+      expect(result.lastName).toBe('Name');
+      expect(authCredentialsService.setPasswordTx).not.toHaveBeenCalled();
+      // No Auth0 sync for local user
+      expect(auth0ManagementService.updateUser).not.toHaveBeenCalled();
+    });
+
+    it('should sync name to Auth0 when updating an OAuth user', async () => {
+      const user = makeUser();
+      const dto: UpdateUserDto = { firstName: 'UpdatedName', lastName: 'UpdatedLastName' };
+      const updatedUser = { ...user, ...dto };
+      mockTransaction(updatedUser);
+
+      // Auth0 user — has googleId
+      authRepository.findByUserId.mockResolvedValueOnce(makeOAuthAuth());
+      // Called inside syncNameToAuth0IfOAuthUser to read current names
+      userRepository.findByIdOrFail.mockResolvedValueOnce(updatedUser);
+
+      const result = await service.update(user.id, dto);
+
+      expect(result.firstName).toBe('UpdatedName');
       expect(auth0ManagementService.updateUser).toHaveBeenCalledWith(
-        'auth0|123',
+        'google-oauth2|123456',
         expect.objectContaining({
           given_name: 'UpdatedName',
           family_name: 'UpdatedLastName',
         }),
       );
+    });
 
-      // Password was not provided — setPasswordTx must not be called
-      expect(authCredentialsService.setPasswordTx).not.toHaveBeenCalled();
-
-      // === Update with password ===
-      const passwordDto: UpdateUserDto = { password: 'NewStrongPass123!' };
+    it('should call setPasswordTx when password is provided', async () => {
+      const user = makeUser();
+      const dto: UpdateUserDto = { password: 'NewStrongPass123!' };
+      const userWithAuth = { ...user, auth: { passwordHash: 'oldhash' } };
 
       dataSource.transaction.mockImplementationOnce(async (cb: (manager: EntityManager) => Promise<User>) => {
-        const userWithAuth = { ...user, auth: { passwordHash: 'oldhash' } };
         const fakeManager = {
           findOneOrFail: jest.fn().mockResolvedValue(userWithAuth),
           getRepository: jest.fn().mockReturnValue({
@@ -200,38 +216,111 @@ describe('UsersService', () => {
         return cb(fakeManager);
       });
 
-      authCredentialsService.setPasswordTx.mockResolvedValue(auth);
+      authCredentialsService.setPasswordTx.mockResolvedValue(makeLocalAuth());
 
-      await service.update(user.id, passwordDto);
+      await service.update(user.id, dto);
 
-      // Password was provided — setPasswordTx must be called once
       expect(authCredentialsService.setPasswordTx).toHaveBeenCalledTimes(1);
+      expect(authRepository.findByUserId).not.toHaveBeenCalled();
+    });
+  });
+
+  // === updateAvatar ===
+
+  describe('updateAvatar', () => {
+    const fakeFile = { originalname: 'avatar.jpg', buffer: Buffer.from('') } as Express.Multer.File;
+    const newAvatarUrl = 'https://s3.example.com/users/avatar.jpg';
+
+    it('should upload new avatar, delete old one, and return updated user', async () => {
+      const user = makeUser({ avatarUrl: 'https://s3.example.com/users/old.jpg' });
+      userRepository.findByIdOrFail.mockResolvedValueOnce(user);
+      s3Service.uploadFile.mockResolvedValueOnce(newAvatarUrl);
+      userRepository.save.mockResolvedValueOnce({ ...user, avatarUrl: newAvatarUrl });
+
+      // Local user — no Auth0 sync
+      authRepository.findByUserId.mockResolvedValueOnce(makeLocalAuth());
+
+      const result = await service.updateAvatar(user.id, fakeFile);
+
+      expect(s3Service.uploadFile).toHaveBeenCalledWith(fakeFile, 'users');
+      expect(s3Service.deleteFile).toHaveBeenCalledWith('https://s3.example.com/users/old.jpg');
+      expect(result.avatarUrl).toBe(newAvatarUrl);
+      expect(auth0ManagementService.updateUser).not.toHaveBeenCalled();
+    });
+
+    it('should sync avatar (picture) to Auth0 for an OAuth user', async () => {
+      const user = makeUser({ avatarUrl: null });
+      userRepository.findByIdOrFail.mockResolvedValueOnce(user);
+      s3Service.uploadFile.mockResolvedValueOnce(newAvatarUrl);
+      userRepository.save.mockResolvedValueOnce({ ...user, avatarUrl: newAvatarUrl });
+
+      // OAuth user — has googleId
+      authRepository.findByUserId.mockResolvedValueOnce(makeOAuthAuth());
+
+      const result = await service.updateAvatar(user.id, fakeFile);
+
+      expect(result.avatarUrl).toBe(newAvatarUrl);
+      expect(auth0ManagementService.updateUser).toHaveBeenCalledWith(
+        'google-oauth2|123456',
+        expect.objectContaining({ picture: newAvatarUrl }),
+      );
+    });
+
+    it('should not delete old avatar from S3 if user had no avatar', async () => {
+      const user = makeUser({ avatarUrl: null });
+      userRepository.findByIdOrFail.mockResolvedValueOnce(user);
+      s3Service.uploadFile.mockResolvedValueOnce(newAvatarUrl);
+      userRepository.save.mockResolvedValueOnce({ ...user, avatarUrl: newAvatarUrl });
+      authRepository.findByUserId.mockResolvedValueOnce(makeLocalAuth());
+
+      await service.updateAvatar(user.id, fakeFile);
+
+      // No old avatar — deleteFile must not be called
+      expect(s3Service.deleteFile).not.toHaveBeenCalled();
     });
   });
 
   // === remove ===
 
   describe('remove', () => {
-    it('should call userRepository.remove with the found user and clean up external services', async () => {
-      const user = makeUser();
-      const auth = makeAuth0({ googleId: 'auth0|123' });
-
-      // Mock user existence
-      userRepository.findByIdOrFail.mockResolvedValue(user);
-      userRepository.remove.mockResolvedValue(user);
-      // Mock auth presence (Auth0 user)
-      authRepository.findByUserId.mockResolvedValue(auth);
+    it('should revoke tokens, remove user and avatar from S3, skip Auth0 for regular user', async () => {
+      const user = makeUser({ avatarUrl: 'https://s3.example.com/users/avatar.jpg' });
+      userRepository.findByIdOrFail.mockResolvedValueOnce(user);
+      userRepository.remove.mockResolvedValueOnce(user);
+      // Regular user — no googleId
+      authRepository.findByUserId.mockResolvedValueOnce(makeLocalAuth());
 
       await service.remove(user.id);
 
-      // Check Redis revocation
       expect(tokenRedisRepository.revokeAllUserTokens).toHaveBeenCalledWith(user.id);
-
-      // Check Auth0 deletion
-      expect(auth0ManagementService.deleteUser).toHaveBeenCalledWith('auth0|123');
-
-      // Ensure the correct user entity is passed to remove
+      expect(s3Service.deleteFile).toHaveBeenCalledWith(user.avatarUrl);
+      expect(auth0ManagementService.deleteUser).not.toHaveBeenCalled();
       expect(userRepository.remove).toHaveBeenCalledWith(user);
+    });
+
+    it('should delete user from Auth0 when removing an OAuth user', async () => {
+      const user = makeUser();
+      userRepository.findByIdOrFail.mockResolvedValueOnce(user);
+      userRepository.remove.mockResolvedValueOnce(user);
+      // OAuth user — has googleId
+      authRepository.findByUserId.mockResolvedValueOnce(makeOAuthAuth());
+
+      await service.remove(user.id);
+
+      expect(tokenRedisRepository.revokeAllUserTokens).toHaveBeenCalledWith(user.id);
+      expect(auth0ManagementService.deleteUser).toHaveBeenCalledWith('google-oauth2|123456');
+      expect(userRepository.remove).toHaveBeenCalledWith(user);
+    });
+
+    it('should not delete avatar from S3 if user had no avatar', async () => {
+      const user = makeUser({ avatarUrl: null });
+      userRepository.findByIdOrFail.mockResolvedValueOnce(user);
+      userRepository.remove.mockResolvedValueOnce(user);
+      authRepository.findByUserId.mockResolvedValueOnce(makeLocalAuth());
+
+      await service.remove(user.id);
+
+      expect(s3Service.deleteFile).not.toHaveBeenCalled();
     });
   });
 });
