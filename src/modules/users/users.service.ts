@@ -11,6 +11,9 @@ import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dt
 import { UserRepository } from './repositories/user.repository';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { S3Service } from '@/modules/s3/s3.service';
+import { TokenRedisRepository } from '@/modules/auth/repositories/token-redis.repository';
+import { AuthRepository } from '@/modules/auth/repositories/auth.repository';
+import { Auth0ManagementService } from '@/modules/auth/services/auth0-management.service';
 
 @Injectable()
 export class UsersService {
@@ -20,6 +23,9 @@ export class UsersService {
     private readonly authCredentialsService: AuthCredentialsService,
     private readonly logger: AppLogger,
     private readonly s3Service: S3Service,
+    private readonly tokenRedisRepository: TokenRedisRepository,
+    private readonly authRepository: AuthRepository,
+    private readonly auth0ManagementService: Auth0ManagementService,
   ) {
     this.logger.setLoggerContext(UsersService.name);
   }
@@ -53,7 +59,7 @@ export class UsersService {
   }
 
   async update(id: string, dto: UpdateUserDto): Promise<User> {
-    return this.dataSource.transaction(async (manager) => {
+    const updated = await this.dataSource.transaction(async (manager) => {
       const relations = dto.password ? ['auth'] : [];
       const user = await manager.findOneOrFail(User, { where: { id }, relations });
       GuardAssertions.exists(user, `User with ID ${id} not found`);
@@ -70,10 +76,14 @@ export class UsersService {
         await this.authCredentialsService.setPasswordTx(manager, user, dto.password);
       }
 
-      const updated = await manager.getRepository(User).save(user);
-      this.logger.log({ userId: updated.id }, 'User updated successfully');
-      return updated;
+      const result = await manager.getRepository(User).save(user);
+      this.logger.log({ userId: result.id }, 'User updated successfully');
+      return result;
     });
+
+    await this.syncNameToAuth0IfOAuthUser(id, dto);
+
+    return updated;
   }
 
   async updateAvatar(userId: string, file: Express.Multer.File): Promise<User> {
@@ -89,11 +99,21 @@ export class UsersService {
       await this.s3Service.deleteFile(oldUrl);
     }
 
+    await this.syncAvatarToAuth0IfOAuthUser(userId, updated.avatarUrl);
+
     return updated;
   }
 
   async remove(id: string): Promise<void> {
     const user = await this.userRepository.findByIdOrFail(id);
+
+    await this.tokenRedisRepository.revokeAllUserTokens(id);
+    this.logger.log({ userId: id }, 'All user tokens revoked from Redis');
+
+    const auth = await this.authRepository.findByUserId(id);
+    if (auth?.googleId) {
+      await this.auth0ManagementService.deleteUser(auth.googleId);
+    }
 
     if (user.avatarUrl) {
       await this.s3Service.deleteFile(user.avatarUrl);
@@ -101,5 +121,56 @@ export class UsersService {
 
     await this.userRepository.remove(user);
     this.logger.log({ userId: id, email: user.email }, 'User removed successfully');
+  }
+
+  private async syncNameToAuth0IfOAuthUser(
+    userId: string,
+    dto: Pick<UpdateUserDto, 'firstName' | 'lastName'>,
+  ): Promise<void> {
+    const hasNameChange = dto.firstName !== undefined || dto.lastName !== undefined;
+    if (!hasNameChange) {
+      return;
+    }
+
+    const auth = await this.authRepository.findByUserId(userId);
+    if (!auth?.googleId) {
+      return;
+    }
+
+    try {
+      const user = await this.userRepository.findByIdOrFail(userId);
+      await this.auth0ManagementService.updateUser(auth.googleId, {
+        given_name: user.firstName,
+        family_name: user.lastName,
+        name: `${user.firstName} ${user.lastName}`,
+      });
+    } catch (err) {
+      this.logger.error(
+        { userId, error: (err as Error).message },
+        'Failed to sync name update to Auth0 (non-critical)',
+      );
+    }
+  }
+
+  private async syncAvatarToAuth0IfOAuthUser(userId: string, avatarUrl: string | null): Promise<void> {
+    if (!avatarUrl) {
+      return;
+    }
+
+    const auth = await this.authRepository.findByUserId(userId);
+    if (!auth?.googleId) {
+      return;
+    }
+
+    try {
+      await this.auth0ManagementService.updateUser(auth.googleId, {
+        picture: avatarUrl,
+      });
+    } catch (err) {
+      this.logger.error(
+        { userId, error: (err as Error).message },
+        'Failed to sync avatar update to Auth0 (non-critical)',
+      );
+    }
   }
 }

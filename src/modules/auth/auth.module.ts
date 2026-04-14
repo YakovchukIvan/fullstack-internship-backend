@@ -16,6 +16,7 @@ import { Auth0Strategy } from './strategies/auth0.strategy';
 import { RolesGuard } from './guards/roles.guard';
 import { AuthFacadeService } from './services/auth-facade.service';
 import { AuthOAuthService } from './services/auth-oauth.service';
+import { Auth0ManagementService } from './services/auth0-management.service';
 import { UserAuthRepository } from './repositories/user-auth.repository';
 import { AuthRepository } from './repositories/auth.repository';
 import { TokenRedisRepository } from './repositories/token-redis.repository';
@@ -44,7 +45,18 @@ import { TokenRedisRepository } from './repositories/token-redis.repository';
     RolesGuard,
     AuthFacadeService,
     AuthOAuthService,
+    Auth0ManagementService,
   ],
-  exports: [AuthCredentialsService, PasswordService, TokenService, JwtModule, PassportModule, RolesGuard],
+  exports: [
+    AuthCredentialsService,
+    PasswordService,
+    TokenService,
+    JwtModule,
+    PassportModule,
+    RolesGuard,
+    TokenRedisRepository,
+    AuthRepository,
+    Auth0ManagementService,
+  ],
 })
 export class AuthModule {}
