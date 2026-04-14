@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from '../users.service';
 import { User } from '../entities/user.entity';
 import { UsersController } from '../users.controller';
+import { TokenService } from '@/modules/auth/services/token.service';
 
 describe('UsersController', () => {
   let usersController: UsersController;
@@ -16,6 +17,12 @@ describe('UsersController', () => {
           useValue: {
             create: jest.fn(),
             updateAvatar: jest.fn(),
+          },
+        },
+        {
+          provide: TokenService,
+          useValue: {
+            clearAuthCookies: jest.fn(),
           },
         },
       ],

@@ -8,11 +8,14 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import { UsersService } from './users.service';
+import { TokenService } from '@/modules/auth/services/token.service';
 import { CreateUserDto } from './dto/req/create-user.req.dto';
 import { UpdateUserDto } from './dto/req/update-user.req.dto';
 import { UserResponseDto } from './dto/res/user.res.dto';
@@ -32,7 +35,10 @@ import type { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 
 @Controller(UsersRoutes.ROOT)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly tokenService: TokenService,
+  ) {}
 
   @Post()
   @ApiEndpoint(UserResponseDto, HttpStatus.CREATED, UsersSwagger.CREATE)
@@ -95,7 +101,11 @@ export class UsersController {
   @ApiEndpoint(Object, HttpStatus.OK, UsersSwagger.REMOVE_ME)
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Profile deleted successfully')
-  async removeMe(@CurrentUser() currentUser: JwtPayload): Promise<void> {
+  async removeMe(
+    @CurrentUser() currentUser: JwtPayload,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<void> {
     await this.usersService.remove(currentUser.sub);
+    this.tokenService.clearAuthCookies(response);
   }
 }
