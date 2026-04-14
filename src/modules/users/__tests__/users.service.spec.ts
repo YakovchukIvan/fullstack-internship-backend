@@ -7,8 +7,12 @@ import { AuthCredentialsService } from '@/modules/auth/services/auth-credentials
 import { AppLogger } from '@/common/logger/app-logger';
 import { S3Service } from '@/modules/s3/s3.service';
 import { User } from '../entities/user.entity';
+import { Auth } from '@/modules/auth/entities/auth.entity';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { UpdateUserDto } from '../dto/req/update-user.req.dto';
+import { TokenRedisRepository } from '@/modules/auth/repositories/token-redis.repository';
+import { AuthRepository } from '@/modules/auth/repositories/auth.repository';
+import { Auth0ManagementService } from '@/modules/auth/services/auth0-management.service';
 
 // === Factory functions ===
 
@@ -24,6 +28,19 @@ const makeUser = (overrides: Partial<User> = {}): User =>
     ...overrides,
   }) as User;
 
+const makeAuth0 = (overrides: Partial<Auth> = {}): Auth =>
+  ({
+    id: 'auth-uuid-1',
+    userId: 'user-uuid-1',
+    passwordHash: 'hashed-password',
+    googleId: null,
+    resetPasswordTokenHash: null,
+    resetPasswordExpiresAt: null,
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+    ...overrides,
+  }) as Auth;
+
 // === Tests ===
 
 describe('UsersService', () => {
@@ -31,6 +48,9 @@ describe('UsersService', () => {
   let userRepository: jest.Mocked<UserRepository>;
   let authCredentialsService: jest.Mocked<AuthCredentialsService>;
   let dataSource: { transaction: jest.Mock };
+  let tokenRedisRepository: jest.Mocked<TokenRedisRepository>;
+  let authRepository: jest.Mocked<AuthRepository>;
+  let auth0ManagementService: jest.Mocked<Auth0ManagementService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -42,6 +62,7 @@ describe('UsersService', () => {
             findByIdOrFail: jest.fn(),
             findPaginated: jest.fn(),
             remove: jest.fn(),
+            save: jest.fn(),
           },
         },
         {
@@ -51,7 +72,6 @@ describe('UsersService', () => {
             setPasswordTx: jest.fn(),
           },
         },
-        // Typed as plain object to avoid DataSource transaction overload conflict
         {
           provide: DataSource,
           useValue: {
@@ -64,6 +84,7 @@ describe('UsersService', () => {
             setLoggerContext: jest.fn(),
             log: jest.fn(),
             logError: jest.fn(),
+            error: jest.fn(),
           },
         },
         {
@@ -73,6 +94,25 @@ describe('UsersService', () => {
             deleteFile: jest.fn(),
           },
         },
+        {
+          provide: TokenRedisRepository,
+          useValue: {
+            revokeAllUserTokens: jest.fn(),
+          },
+        },
+        {
+          provide: AuthRepository,
+          useValue: {
+            findByUserId: jest.fn(),
+          },
+        },
+        {
+          provide: Auth0ManagementService,
+          useValue: {
+            deleteUser: jest.fn(),
+            updateUser: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -80,6 +120,9 @@ describe('UsersService', () => {
     userRepository = module.get(UserRepository);
     authCredentialsService = module.get(AuthCredentialsService);
     dataSource = module.get<{ transaction: jest.Mock }>(DataSource);
+    tokenRedisRepository = module.get(TokenRedisRepository);
+    authRepository = module.get(AuthRepository);
+    auth0ManagementService = module.get(Auth0ManagementService);
   });
 
   // === findOne ===
@@ -88,16 +131,12 @@ describe('UsersService', () => {
     it('should return user by id; throw NotFoundException if not found', async () => {
       const user = makeUser();
 
-      // === Success case ===
       userRepository.findByIdOrFail.mockResolvedValueOnce(user);
 
       const result = await service.findOne(user.id);
 
       expect(result.id).toBe(user.id);
       expect(result.email).toBe(user.email);
-
-      // === User not found ===
-      // findByIdOrFail internally calls GuardAssertions.exists which throws NotFoundException
 
       userRepository.findByIdOrFail.mockRejectedValueOnce(new NotFoundException('User with ID not found'));
 
@@ -108,11 +147,14 @@ describe('UsersService', () => {
   // === update ===
 
   describe('update', () => {
-    it('should update firstName/lastName; call setPasswordTx if password provided', async () => {
+    it('should update firstName/lastName; call setPasswordTx if password provided; sync to Auth0', async () => {
       const user = makeUser();
+      const auth = makeAuth0({ googleId: 'auth0|123' });
 
       // === Update name fields ===
       const nameDto: UpdateUserDto = { firstName: 'UpdatedName', lastName: 'UpdatedLastName' };
+
+      authRepository.findByUserId.mockResolvedValueOnce(auth);
 
       // Transaction mock: invoke callback with fake EntityManager
       dataSource.transaction.mockImplementationOnce(async (cb: (manager: EntityManager) => Promise<User>) => {
@@ -126,10 +168,21 @@ describe('UsersService', () => {
         return cb(fakeManager);
       });
 
+      userRepository.findByIdOrFail.mockResolvedValueOnce({ ...user, ...nameDto });
+
       const nameResult = await service.update(user.id, nameDto);
 
       expect(nameResult.firstName).toBe('UpdatedName');
       expect(nameResult.lastName).toBe('UpdatedLastName');
+      // Auth0 sync check
+      expect(auth0ManagementService.updateUser).toHaveBeenCalledWith(
+        'auth0|123',
+        expect.objectContaining({
+          given_name: 'UpdatedName',
+          family_name: 'UpdatedLastName',
+        }),
+      );
+
       // Password was not provided — setPasswordTx must not be called
       expect(authCredentialsService.setPasswordTx).not.toHaveBeenCalled();
 
@@ -147,7 +200,7 @@ describe('UsersService', () => {
         return cb(fakeManager);
       });
 
-      authCredentialsService.setPasswordTx.mockResolvedValue({ id: 'auth-uuid-1' } as never);
+      authCredentialsService.setPasswordTx.mockResolvedValue(auth);
 
       await service.update(user.id, passwordDto);
 
@@ -159,13 +212,23 @@ describe('UsersService', () => {
   // === remove ===
 
   describe('remove', () => {
-    it('should call userRepository.remove with the found user', async () => {
+    it('should call userRepository.remove with the found user and clean up external services', async () => {
       const user = makeUser();
+      const auth = makeAuth0({ googleId: 'auth0|123' });
 
+      // Mock user existence
       userRepository.findByIdOrFail.mockResolvedValue(user);
       userRepository.remove.mockResolvedValue(user);
+      // Mock auth presence (Auth0 user)
+      authRepository.findByUserId.mockResolvedValue(auth);
 
       await service.remove(user.id);
+
+      // Check Redis revocation
+      expect(tokenRedisRepository.revokeAllUserTokens).toHaveBeenCalledWith(user.id);
+
+      // Check Auth0 deletion
+      expect(auth0ManagementService.deleteUser).toHaveBeenCalledWith('auth0|123');
 
       // Ensure the correct user entity is passed to remove
       expect(userRepository.remove).toHaveBeenCalledWith(user);
