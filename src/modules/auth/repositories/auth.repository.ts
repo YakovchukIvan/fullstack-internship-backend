@@ -14,4 +14,8 @@ export class AuthRepository extends Repository<Auth> {
       relations: ['user'],
     });
   }
+
+  async findByUserId(userId: string): Promise<Auth | null> {
+    return this.findOne({ where: { userId } });
+  }
 }

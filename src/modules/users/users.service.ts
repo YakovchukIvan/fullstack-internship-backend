@@ -11,6 +11,9 @@ import { PaginatedResultResponseDto } from '@/common/dto/res/paginated-result.dt
 import { UserRepository } from './repositories/user.repository';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { S3Service } from '@/modules/s3/s3.service';
+import { TokenRedisRepository } from '@/modules/auth/repositories/token-redis.repository';
+import { AuthRepository } from '@/modules/auth/repositories/auth.repository';
+import { Auth0ManagementService } from '@/modules/auth/services/auth0-management.service';
 
 @Injectable()
 export class UsersService {
@@ -20,6 +23,9 @@ export class UsersService {
     private readonly authCredentialsService: AuthCredentialsService,
     private readonly logger: AppLogger,
     private readonly s3Service: S3Service,
+    private readonly tokenRedisRepository: TokenRedisRepository,
+    private readonly authRepository: AuthRepository,
+    private readonly auth0ManagementService: Auth0ManagementService,
   ) {
     this.logger.setLoggerContext(UsersService.name);
   }
@@ -72,6 +78,9 @@ export class UsersService {
 
       const updated = await manager.getRepository(User).save(user);
       this.logger.log({ userId: updated.id }, 'User updated successfully');
+
+      await this.syncNameToAuth0IfOAuthUser(id, dto);
+
       return updated;
     });
   }
@@ -95,11 +104,48 @@ export class UsersService {
   async remove(id: string): Promise<void> {
     const user = await this.userRepository.findByIdOrFail(id);
 
+    await this.tokenRedisRepository.revokeAllUserTokens(id);
+    this.logger.log({ userId: id }, 'All user tokens revoked from Redis');
+
+    const auth = await this.authRepository.findByUserId(id);
+    if (auth?.googleId) {
+      await this.auth0ManagementService.deleteUser(auth.googleId);
+    }
+
     if (user.avatarUrl) {
       await this.s3Service.deleteFile(user.avatarUrl);
     }
 
     await this.userRepository.remove(user);
     this.logger.log({ userId: id, email: user.email }, 'User removed successfully');
+  }
+
+  private async syncNameToAuth0IfOAuthUser(
+    userId: string,
+    dto: Pick<UpdateUserDto, 'firstName' | 'lastName'>,
+  ): Promise<void> {
+    const hasNameChange = dto.firstName !== undefined || dto.lastName !== undefined;
+    if (!hasNameChange) {
+      return;
+    }
+
+    const auth = await this.authRepository.findByUserId(userId);
+    if (!auth?.googleId) {
+      return;
+    }
+
+    try {
+      const updatedUser = await this.userRepository.findByIdOrFail(userId);
+      await this.auth0ManagementService.updateUser(auth.googleId, {
+        given_name: updatedUser.firstName,
+        family_name: updatedUser.lastName,
+        name: `${updatedUser.firstName} ${updatedUser.lastName}`,
+      });
+    } catch (err) {
+      this.logger.error(
+        { userId, error: (err as Error).message },
+        'Failed to sync name update to Auth0 (non-critical)',
+      );
+    }
   }
 }
