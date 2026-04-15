@@ -13,6 +13,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiEndpoint } from '@/common/decorators/api-endpoint.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
@@ -107,6 +108,18 @@ export class CompaniesController {
   @UseGuards(CompanyRoleGuard)
   @RequireCompanyRoles(CompanyRole.OWNER, CompanyRole.ADMIN)
   @UseInterceptors(FileInterceptor('avatar'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        avatar: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
   @ApiEndpoint(CompanyResponseDto, HttpStatus.OK, CompaniesSwagger.UPDATE_AVATAR)
   @ResponseMessage('Company avatar updated successfully')
   async updateAvatar(

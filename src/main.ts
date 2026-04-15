@@ -10,9 +10,14 @@ import { setupSwagger } from './config/swagger.config';
 import cookieParser from 'cookie-parser';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { ClassSerializerInterceptor } from '@nestjs/common';
+import { json, urlencoded } from 'express';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+    bodyParser: false,
+  });
+
   const logger = app.get(AppLogger);
   logger.setLoggerContext('MAIN');
 
@@ -21,6 +26,10 @@ async function bootstrap(): Promise<void> {
   const config = getAppConfig(configService);
 
   app.useLogger(logger);
+
+  app.use(json({ limit: '10mb' }));
+  app.use(urlencoded({ extended: true, limit: '10mb' }));
+
   app.use(cookieParser());
   app.enableCors(getCorsConfig(configService));
   app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector), new ResponseInterceptor(reflector));

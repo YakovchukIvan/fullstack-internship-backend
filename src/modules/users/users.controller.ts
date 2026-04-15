@@ -12,6 +12,7 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
+import { ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { UsersService } from './users.service';
@@ -76,6 +77,18 @@ export class UsersController {
 
   @Patch(UsersRoutes.AVATAR)
   @UseInterceptors(FileInterceptor('avatar'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        avatar: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
   @ApiEndpoint(UserResponseDto, HttpStatus.OK, UsersSwagger.UPDATE_AVATAR)
   @ResponseMessage('Avatar updated successfully')
   async updateAvatar(

@@ -30,7 +30,10 @@ import { S3Module } from './modules/s3/s3.module';
     }),
     TypeOrmModule.forRootAsync(databaseConfig),
     ThrottlerModule.forRootAsync(throttlerConfig),
-    MulterModule.register({ storage: memoryStorage() }),
+    MulterModule.register({
+      storage: memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
     EventEmitterModule.forRoot(),
     S3Module,
     RedisModule,
