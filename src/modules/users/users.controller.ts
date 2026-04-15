@@ -68,7 +68,6 @@ export class UsersController {
   }
 
   @Get(UsersRoutes.ID)
-  @Roles(UserRole.OWNER)
   @ApiEndpoint(UserResponseDto, HttpStatus.OK, UsersSwagger.FIND_ONE)
   async findOne(@UUIDParam() id: string): Promise<{ user: UserResponseDto }> {
     const user = await this.usersService.findOne(id);

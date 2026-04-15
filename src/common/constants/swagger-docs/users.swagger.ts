@@ -14,8 +14,8 @@ export const UsersSwagger: Record<string, Partial<OperationObject>> = {
     description: 'Returns full profile of the currently authenticated user from the database.',
   },
   FIND_ONE: {
-    summary: 'Get user by ID (admin only)',
-    description: 'Returns any user by UUID. Requires OWNER role.',
+    summary: 'Get user by ID',
+    description: 'Returns any user by UUID. Accessible by any authenticated user.',
   },
   UPDATE_ME: {
     summary: 'Update my profile',
