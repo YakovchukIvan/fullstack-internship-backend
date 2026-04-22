@@ -7,7 +7,7 @@ import { CompaniesPaginationDto } from '../dto/req/company/companies-pagination.
 import { Company } from '../entities/company.entity';
 import { CreateCompanyDto } from '../dto/req/company/create-company.req.dto';
 import { UpdateCompanyDto } from '../dto/req/company/update-company.req.dto';
-import { CompanyRepository } from '../repositories/company.repository';
+import { CompanyRepository, CompanyWithMemberRole } from '../repositories/company.repository';
 import { CompanyMembersService } from './company-members.service';
 import { GuardAssertions } from '@/common/helpers/assert.helper';
 import { S3Service } from '@/modules/s3/s3.service';
@@ -39,7 +39,7 @@ export class CompaniesService {
     userId: string,
     dto: CompaniesPaginationDto,
     userRole?: UserRole,
-  ): Promise<PaginatedResultResponseDto<Company>> {
+  ): Promise<PaginatedResultResponseDto<CompanyWithMemberRole>> {
     return this.companyRepository.findPaginated(userId, userRole, dto);
   }
 
@@ -49,8 +49,9 @@ export class CompaniesService {
     if (!company.isVisible) {
       const isSystemOwner = userRole === UserRole.OWNER;
       const isCompanyOwner = company.ownerId === userId;
+      const isMember = await this.companyMembersService.isMember(userId, company.id);
 
-      GuardAssertions.isTrue(isSystemOwner || isCompanyOwner, 'Company not found');
+      GuardAssertions.isTrue(isSystemOwner || isCompanyOwner || isMember, 'Company not found');
     }
 
     return company;
@@ -78,9 +79,7 @@ export class CompaniesService {
     GuardAssertions.exists(company, 'Company not found');
 
     const oldUrl = company.avatarUrl;
-
     company.avatarUrl = await this.s3Service.uploadFile(file, 'companies');
-
     const updated = await this.companyRepository.save(company);
 
     if (oldUrl) {

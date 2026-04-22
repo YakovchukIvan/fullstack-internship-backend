@@ -51,12 +51,9 @@ export class CompaniesController {
     @Query() paginationDto: CompaniesPaginationDto,
   ): Promise<CompaniesPaginatedBaseResponseDto> {
     const result = await this.companiesService.findAll(user.sub, paginationDto, user.role);
-    const companies = result.detail.map((company) => toCompanyResponseDto(company));
+    const companies = result.detail.map((company) => toCompanyResponseDto(company, company.companyMemberRole));
 
-    return {
-      companies,
-      pagination: result.pagination,
-    };
+    return { companies, pagination: result.pagination };
   }
 
   @Get(CompaniesRoutes.MEMBERS.BASE)

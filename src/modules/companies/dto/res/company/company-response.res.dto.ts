@@ -1,4 +1,5 @@
 import { PaginatedBaseResponseDto } from '@/common/dto/res/pagination-metadata.dto';
+import { CompanyRole } from '@/common/enums/company-role.enum';
 
 export class CompanyResponseDto {
   id: string;
@@ -9,6 +10,7 @@ export class CompanyResponseDto {
   isVisible: boolean;
   ownerId: string;
   membersCount: number;
+  companyMemberRole: CompanyRole | null;
   createdAt: string;
   updatedAt: string;
 }
